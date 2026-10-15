@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import { formatPrice } from '../../utils/format';
 import styles from './Header.module.css';
 
 function Header() {
@@ -9,6 +10,10 @@ function Header() {
   const [keyword, setKeyword] = useState('');
 
   const isSeller = user?.role === 'SELLER';
+  const showMemberMenu = !isInitializing && isLoggedIn;
+
+  // TODO: 결제 모듈 예치금 조회 API 연결 후 실제 값으로 교체
+  const depositBalance = 0;
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -25,11 +30,27 @@ function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link to="/" className={styles.logo}>
-          <img src="/favicon.svg" alt="" className={styles.logoIcon} />
-          replant
-        </Link>
+        {/* 왼쪽: 로고 + 예치금 */}
+        <div className={styles.left}>
+          <Link to="/" className={styles.logo}>
+            <img src="/favicon.svg" alt="" className={styles.logoIcon} />
+            replant
+          </Link>
 
+          {showMemberMenu && (
+            <div className={styles.wallet}>
+              <span className={`material-symbols-outlined ${styles.walletIcon}`}>
+                account_balance_wallet
+              </span>
+              <span className={styles.walletAmount}>{formatPrice(depositBalance)}</span>
+              <Link to="/deposit/charge" className={styles.chargeLink}>
+                충전
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* 가운데: 검색창 */}
         <form className={styles.search} onSubmit={handleSearch} role="search">
           <input
             type="text"
@@ -44,21 +65,11 @@ function Header() {
           </button>
         </form>
 
+        {/* 오른쪽 */}
         {!isInitializing && (
           <nav className={styles.nav}>
             {isLoggedIn ? (
               <>
-                <div className={styles.wallet}>
-                  <span className={`material-symbols-outlined ${styles.walletIcon}`}>
-                    account_balance_wallet
-                  </span>
-                  {/* TODO: 결제 모듈 예치금 조회 API 연결 */}
-                  <span className={styles.walletAmount}>-원</span>
-                  <Link to="/deposit/charge" className={styles.chargeLink}>
-                    충전
-                  </Link>
-                </div>
-
                 <Link to="/cart" className={styles.iconButton} aria-label="장바구니">
                   <span className="material-symbols-outlined">shopping_bag</span>
                 </Link>

@@ -199,3 +199,10 @@
 .logoutButton:hover {
   color: var(--color-primary);
 }
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
