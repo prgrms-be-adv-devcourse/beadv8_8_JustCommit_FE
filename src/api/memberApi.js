@@ -9,3 +9,8 @@ export function login({ email, password }) {
 export function logout() {
   return client.post('/api/v1/auth/logout');
 }
+
+// 내 정보 조회: Access 토큰 필요 (client가 자동 첨부)
+export function getMyInfo() {
+  return client.get('/api/v1/users/me');
+}

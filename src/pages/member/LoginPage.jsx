@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login } from '../../api/memberApi';
-import { setAccessToken } from '../../api/tokenStore';
+import useAuth from '../../hooks/useAuth';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -18,6 +17,7 @@ function KakaoIcon() {
 function LoginPage() {
   usePageTitle('로그인');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
@@ -34,9 +34,7 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await login(form);
-      const { accessToken } = response.data.data;
-      setAccessToken(accessToken);
+      await login(form);
       navigate('/', { replace: true });
     } catch (error) {
       setErrorMessage(
