@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import { formatPrice } from '../../utils/format';
 import styles from './Header.module.css';
 
+// 로그인해야 볼 수 있는 페이지 (여기서 로그아웃하면 로그인 화면으로 이동)
+const AUTH_REQUIRED_PATHS = ['/mypage', '/seller/register'];
+
 function Header() {
   const { user, isLoggedIn, isInitializing, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [keyword, setKeyword] = useState('');
 
   const isSeller = user?.role === 'SELLER';
@@ -24,7 +28,8 @@ function Header() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/', { replace: true });
+    const isAuthRequiredPage = AUTH_REQUIRED_PATHS.some((path) => location.pathname.startsWith(path));
+    navigate(isAuthRequiredPage ? '/login' : '/', { replace: true });
   };
 
   return (

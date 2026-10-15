@@ -36,3 +36,11 @@ export function formatRelativeTime(value) {
 
   return date.toLocaleDateString('ko-KR');
 }
+
+/**
+ * 휴대폰 번호를 "010-1234-5678" 형태로 변환 (11자리가 아니면 그대로)
+ */
+export function formatPhone(phone) {
+  if (!phone || phone.length !== 11) return phone ?? '';
+  return `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`;
+}

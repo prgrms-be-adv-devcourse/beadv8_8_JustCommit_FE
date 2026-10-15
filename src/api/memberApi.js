@@ -38,3 +38,15 @@ export function registerSeller(intro) {
 export function checkPhone(phone) {
   return client.get('/api/v1/users/checkPhone', { params: { phone } });
 }
+
+export function getAddresses() {
+  return client.get('/api/v1/users/me/addresses');
+}
+
+export function addAddress(form) {
+  return client.post('/api/v1/users/me/addresses', form);
+}
+
+export function setDefaultAddress(addressId) {
+  return client.patch(`/api/v1/users/me/addresses/${addressId}/default`);
+}

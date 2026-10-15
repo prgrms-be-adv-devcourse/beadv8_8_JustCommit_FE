@@ -6,6 +6,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
 import SellerRegisterPage from './pages/member/SellerRegisterPage';
+import MyPage from './pages/member/MyPage';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
 
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
           <Route path="/search" element={<ComingSoonPage title="검색 결과" />} />
-          <Route path="/mypage" element={<ComingSoonPage title="마이페이지" />} />
+          <Route path="/mypage" element={<MyPage />} />
           <Route path="/cart" element={<ComingSoonPage title="장바구니" />} />
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
