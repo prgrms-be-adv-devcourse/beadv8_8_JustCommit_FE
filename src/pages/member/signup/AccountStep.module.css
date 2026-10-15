@@ -1,0 +1,258 @@
+.card {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-container-lowest);
+  box-shadow: 0 4px 16px rgba(27, 67, 50, 0.08);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-lg);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px var(--space-sm);
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-size: var(--text-label-md);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+}
+
+.tab :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+.activeTab {
+  background: var(--color-surface-container-lowest);
+  font-weight: 700;
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.label {
+  font-size: var(--text-label-md);
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--space-md);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 14px;
+  color: var(--color-on-surface);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-outline);
+}
+
+.input:focus {
+  background: var(--color-surface-container-lowest);
+  box-shadow: 0 0 0 2px var(--color-secondary-fixed-dim);
+}
+
+.input:disabled {
+  color: var(--color-on-surface-variant);
+  cursor: not-allowed;
+}
+
+.sideButton {
+  flex-shrink: 0;
+  padding: 0 var(--space-md);
+  white-space: nowrap;
+}
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-label-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-error);
+}
+
+.timer :global(.material-symbols-outlined) {
+  font-size: 16px;
+}
+
+.codeInput {
+  background: var(--color-surface-container-lowest);
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.message :global(.material-symbols-outlined) {
+  font-size: 15px;
+}
+
+.success {
+  color: var(--color-secondary);
+}
+
+.error {
+  color: var(--color-error);
+}
+
+.rules {
+  display: flex;
+  gap: var(--space-sm);
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rules li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  color: var(--color-outline);
+}
+
+.rules li :global(.material-symbols-outlined) {
+  font-size: 14px;
+}
+
+.rules .rulePassed {
+  color: var(--color-secondary);
+}
+
+.terms {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  cursor: pointer;
+}
+
+.terms input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.termsText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-label-md);
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.termsDesc {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-on-surface-variant);
+}
+
+.nextButton {
+  height: 56px;
+  margin-top: var(--space-sm);
+}
+
+.loginLink {
+  margin: 0;
+  text-align: right;
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+}
+
+.loginLink a {
+  margin-left: 4px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.loginLink a:hover {
+  text-decoration: underline;
+}

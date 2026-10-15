@@ -14,3 +14,23 @@ export function logout() {
 export function getMyInfo() {
   return client.get('/api/v1/users/me');
 }
+
+export function sendEmailCode(email) {
+  return client.post('/api/v1/auth/email/send', { email });
+}
+
+export function verifyEmailCode({ email, code }) {
+  return client.post('/api/v1/auth/email/verify', { email, code });
+}
+
+export function checkNickname(nickname) {
+  return client.get('/api/v1/users/checkNickname', { params: { nickname } });
+}
+
+export function signup(form) {
+  return client.post('/api/v1/users', form);
+}
+
+export function registerSeller(intro) {
+  return client.post('/api/v1/sellers', { intro });
+}

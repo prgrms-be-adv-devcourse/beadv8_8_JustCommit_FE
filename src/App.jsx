@@ -12,11 +12,11 @@ function App() {
       <Routes>
         {/* Layout 밖: 헤더·푸터 없는 페이지 */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
 
         {/* Layout 안: 헤더·푸터 있는 페이지 */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/signup" element={<SignupPage />} />
 
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
           <Route path="/search" element={<ComingSoonPage title="검색 결과" />} />

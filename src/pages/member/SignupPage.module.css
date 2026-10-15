@@ -1,0 +1,52 @@
+.page {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--space-lg));
+  min-height: calc(100vh - 80px);
+  padding: var(--space-xl) 0;
+  background: var(--color-surface);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glowTop {
+  position: absolute;
+  top: -8rem;
+  left: 50%;
+  width: 860px;
+  height: 480px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container);
+  opacity: 0.6;
+  filter: blur(64px);
+}
+
+.glowRight {
+  position: absolute;
+  top: 10rem;
+  right: 2.5rem;
+  width: 288px;
+  height: 288px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-fixed);
+  opacity: 0.4;
+  filter: blur(40px);
+}
+
+.content {
+  position: relative;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.stepper {
+  margin-bottom: var(--space-xl);
+}
