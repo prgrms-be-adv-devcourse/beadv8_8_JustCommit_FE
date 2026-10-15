@@ -1,0 +1,70 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  height: 48px;
+  padding: 0 var(--space-lg);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-label-lg);
+  line-height: var(--leading-label-lg);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition:
+    background-color 0.15s,
+    opacity 0.15s,
+    transform 0.15s;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-secondary-fixed-dim);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* 종류별 색상 */
+.primary {
+  color: var(--color-on-primary);
+  background-color: var(--color-primary-container);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--color-primary);
+}
+
+.kakao {
+  font-size: var(--text-label-md);
+  color: #191919;
+  background-color: #fee500;
+}
+
+.kakao:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+/* 아이콘 */
+.leftIcon {
+  position: absolute;
+  left: var(--space-md);
+  display: flex;
+  align-items: center;
+}
+
+.rightIcon {
+  font-size: 18px;
+}
