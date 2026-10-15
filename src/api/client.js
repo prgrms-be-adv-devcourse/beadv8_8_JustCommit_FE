@@ -4,7 +4,7 @@ import { clearAccessToken, getAccessToken, setAccessToken } from './tokenStore';
 const REISSUE_URL = '/api/v1/auth/reissue';
 
 // 401이 나도 재발급을 시도하지 않을 요청
-const NO_RETRY_URLS = ['/api/v1/auth/login', REISSUE_URL, '/api/v1/auth/logout'];
+const NO_RETRY_URLS = ['/api/v1/auth/login', REISSUE_URL, '/api/v1/auth/logout', '/api/v1/users/social'];
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -15,7 +15,7 @@ const client = axios.create({
 // 요청 인터셉터: Access 토큰 첨부
 client.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) {
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

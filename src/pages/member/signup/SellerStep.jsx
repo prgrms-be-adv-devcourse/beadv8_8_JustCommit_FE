@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/common/Button';
 import useAuth from '../../../hooks/useAuth';
-import { registerSeller } from '../../../api/memberApi';
+import { registerSeller, socialSignup } from '../../../api/memberApi';
+import { SIGNUP_TOKEN_KEY } from '../SocialSignupPage';
 import styles from './SignupStep.module.css';
 
 const INTRO_MAX_LENGTH = 500;
@@ -22,11 +23,9 @@ const CHOICES = [
   },
 ];
 
-// 1~3단계에서 모은 값을 백엔드 SignupRequest 형식으로 정리
-function toSignupRequest(data) {
+// 소셜·일반 가입 공통 항목 (백엔드 SocialSignupRequest 형식)
+function toProfileRequest(data) {
   return {
-    email: data.email,
-    password: data.password,
     nickname: data.nickname,
     phone: data.phone,
     bankCode: data.bankCode,
@@ -41,7 +40,12 @@ function toSignupRequest(data) {
   };
 }
 
-function SellerStep({ initialData, onPrev }) {
+// 일반 가입은 공통 항목 + 이메일·비밀번호 (백엔드 SignupRequest 형식)
+function toSignupRequest(data) {
+  return { email: data.email, password: data.password, ...toProfileRequest(data) };
+}
+
+function SellerStep({ initialData, onPrev, socialSignupToken }) {
   const { signup, login, refreshUser } = useAuth();
   const navigate = useNavigate();
 
@@ -51,32 +55,69 @@ function SellerStep({ initialData, onPrev }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isSeller = choice === 'seller';
+  const isSocial = Boolean(socialSignupToken);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setErrorMessage('');
+  const failWith = (error, fallback) => {
+    setErrorMessage(error.response?.data?.message ?? fallback);
+    setIsSubmitting(false);
+  };
 
-    // 1. 회원가입 (실패하면 화면에 에러를 보여 주고 그대로 머묾)
+  // 일반 가입: 가입 → 로그인 (가입 응답에 토큰이 없음). 성공하면 true
+  const localSignup = async () => {
     try {
       await signup(toSignupRequest(initialData));
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message ?? '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-      setIsSubmitting(false);
-      return;
+      failWith(error, '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      return false;
     }
 
-    // 2. 로그인 (회원가입 응답에는 토큰이 없어서 직접 로그인)
     try {
       await login({ email: initialData.email, password: initialData.password });
     } catch {
       alert('회원가입은 완료되었습니다. 로그인 페이지에서 다시 로그인해 주세요.');
       navigate('/login', { replace: true });
-      return;
+      return false;
+    }
+    return true;
+  };
+
+  // 소셜 가입: 가입 응답의 Refresh 쿠키로 재발급 + 내 정보 조회. 성공하면 true
+  const kakaoSignup = async () => {
+    try {
+      await socialSignup(socialSignupToken, toProfileRequest(initialData));
+    } catch (error) {
+      if (error.response?.status === 401) {
+        sessionStorage.removeItem(SIGNUP_TOKEN_KEY);
+        navigate('/login', {
+          replace: true,
+          state: { errorMessage: '가입 시간이 만료되었습니다. 카카오 로그인을 다시 진행해 주세요.' },
+        });
+        return false;
+      }
+      failWith(error, '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      return false;
     }
 
-    // 3. 판매자 등록 (선택). 실패해도 가입·로그인은 이미 완료된 상태
+    sessionStorage.removeItem(SIGNUP_TOKEN_KEY);
+
+    try {
+      await refreshUser();
+    } catch {
+      alert('회원가입은 완료되었습니다. 카카오 로그인을 다시 진행해 주세요.');
+      navigate('/login', { replace: true });
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    const signedIn = isSocial ? await kakaoSignup() : await localSignup();
+    if (!signedIn) return;
+
+    // 판매자 등록 (선택). 실패해도 가입·로그인은 이미 완료된 상태
     if (isSeller) {
       try {
         await registerSeller(intro.trim());

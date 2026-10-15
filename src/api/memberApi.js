@@ -50,3 +50,10 @@ export function addAddress(form) {
 export function setDefaultAddress(addressId) {
   return client.patch(`/api/v1/users/me/addresses/${addressId}/default`);
 }
+
+// 소셜 회원가입: 가입 토큰을 Authorization 헤더로 전달 (응답에 Refresh 쿠키 포함)
+export function socialSignup(signupToken, form) {
+  return client.post('/api/v1/users/social', form, {
+    headers: { Authorization: `Bearer ${signupToken}` },
+  });
+}
