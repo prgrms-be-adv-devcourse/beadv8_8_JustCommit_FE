@@ -1,16 +1,29 @@
-# React + Vite
+# replant - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+반려식물 C2C 안심 거래 마켓 **replant**의 프론트엔드 레포입니다. (팀 일단커밋)
 
-Currently, two official plugins are available:
+## 기술 스택
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React + Vite (JavaScript)
+- react-router-dom (라우팅)
+- axios (REST API 호출)
+- CSS Modules + CSS 변수 (Tailwind 미사용)
+- ESLint, Prettier
 
-## React Compiler
+## 실행 방법
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+- 접속: http://localhost:5173
+- API를 확인하려면 **백엔드도 로컬 8080에서 실행**해야 합니다.
+- 개발 중 `/api`로 시작하는 요청은 Vite 프록시가 `http://localhost:8080`으로 전달합니다.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [frontend-structure.md](docs/frontend-structure.md) | 폴더 구조, 라우팅·Layout, axios·토큰 처리, 환경변수 |
+| [convention.md](docs/convention.md) | 페이지 추가, 스타일, API 호출, 코드 스타일 |
