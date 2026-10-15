@@ -37,7 +37,7 @@ function LoginPage() {
 
     try {
       await login(form);
-      navigate('/', { replace: true });
+      navigate(location.state?.from ?? '/', { replace: true });
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ?? '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',

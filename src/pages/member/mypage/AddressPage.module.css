@@ -1,0 +1,46 @@
+.page {
+  width: 100%; max-width: 800px; margin: 0 auto; box-sizing: border-box;
+  padding-bottom: 80px; display: flex; flex-direction: column; gap: 24px; color: #191c1e;
+}
+.backLink {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 44px;
+  padding: 0 4px; color: #414844; font-size: 14px; font-weight: 500; text-decoration: none;
+}
+.backLink :global(.material-symbols-outlined) { font-size: 20px; }
+
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.title {
+  margin: 0; font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 28px; font-weight: 700; color: #012d1d;
+}
+.addButton {
+  display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 18px 0 14px;
+  border: 0; border-radius: 8px; background: #012d1d; color: #fff;
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.addButton :global(.material-symbols-outlined) { font-size: 20px; }
+
+.status { margin: 0; padding: 3rem 0; text-align: center; color: #414844; }
+.error { margin: 0; padding: 12px 16px; border-radius: 8px; background: #ffdad6; color: #93000a; font-size: 14px; }
+
+.list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.item {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px;
+  padding: 22px 24px; background: #fff; border: 1px solid #dde2de; border-radius: 12px;
+}
+.itemDefault { border: 2px solid #012d1d; }
+.itemBody { flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px; }
+.itemHead { display: flex; align-items: center; gap: 8px; }
+.itemName { font-size: 16px; font-weight: 600; }
+.defaultBadge {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px;
+  background: #92f7c3; color: #00210f; font-size: 12px; font-weight: 600;
+}
+.itemPhone { font-size: 14px; color: #414844; }
+.itemAddress { font-size: 14px; line-height: 1.5; }
+.defaultButton {
+  height: 40px; padding: 0 14px; border: 1px solid #c1c8c2; border-radius: 8px; background: #fff;
+  color: #012d1d; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.defaultButton:disabled { color: #6e7571; cursor: not-allowed; }
+.itemAlias { font-weight: 400; color: #414844; }

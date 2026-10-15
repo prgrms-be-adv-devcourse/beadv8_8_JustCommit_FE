@@ -1,0 +1,122 @@
+.page { display: flex; flex-direction: column; gap: 24px; padding-bottom: 80px; color: #191c1e; }
+.message { padding: 4rem 0; text-align: center; color: #414844; }
+
+.backLink {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  height: 44px; padding: 0 4px; border: 0; background: none;
+  color: #414844; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.backLink :global(.material-symbols-outlined) { font-size: 20px; }
+
+.top {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  gap: 40px 56px; align-items: start;
+}
+
+.gallery { display: flex; flex-direction: column; gap: 12px; }
+.mainPhoto {
+  position: relative; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; border-radius: 12px; background: #dee8e6;
+}
+.mainPhoto img { width: 100%; height: 100%; object-fit: cover; }
+.soldOutPhoto { opacity: 0.6; }
+.placeholderIcon { font-size: 120px; color: #6f8f88; }
+.counter {
+  position: absolute; right: 16px; bottom: 16px; display: inline-flex; align-items: center;
+  height: 28px; padding: 0 12px; border-radius: 999px; background: #012d1d; color: #fff;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.thumbs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.thumb {
+  aspect-ratio: 1 / 1; padding: 0; overflow: hidden; border: 2px solid transparent;
+  border-radius: 8px; background: #e3ece5; cursor: pointer;
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumbSelected { border-color: #012d1d; }
+
+.info { display: flex; flex-direction: column; gap: 24px; }
+.heading { display: flex; flex-direction: column; gap: 12px; }
+.chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.speciesChip, .statusBadge {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
+  box-sizing: border-box; border-radius: 999px; font-size: 13px;
+}
+.speciesChip { border: 1px solid #c1c8c2; color: #414844; font-weight: 500; }
+.statusBadge { border: 1px solid transparent; font-weight: 600; }
+.active { border-color: #92f7c3; background: #92f7c3; color: #00210f; }
+.pending { border-color: #c1c8c2; background: #fff; color: #414844; }
+.soldOut { border-color: #414844; background: #414844; color: #fff; }
+
+.title {
+  margin: 0; font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 30px; line-height: 1.35; font-weight: 700; color: #012d1d; letter-spacing: -0.01em;
+}
+.price {
+  margin: 0; font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 32px; font-weight: 800; color: #012d1d;
+}
+
+.seller {
+  display: flex; align-items: center; gap: 12px; padding: 16px 0;
+  border-top: 1px solid #dde2de; border-bottom: 1px solid #dde2de;
+}
+.avatar {
+  width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: #e3ece5; color: #1b4332; font-size: 16px; font-weight: 700;
+}
+.sellerText { display: flex; flex-direction: column; gap: 2px; }
+.sellerLabel { font-size: 12px; color: #414844; }
+.sellerName { font-size: 16px; font-weight: 600; }
+
+.details {
+  margin: 0; display: grid; grid-template-columns: 88px 1fr; gap: 12px 16px;
+  font-size: 14px; line-height: 1.5;
+}
+.details dt { color: #414844; }
+.details dd { margin: 0; }
+
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.buyButton, .cartButton, .buyButtonDisabled, .cartButtonDisabled {
+  flex: 1 1 200px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px; box-sizing: border-box; border-radius: 8px;
+  font-family: inherit; font-size: 16px; font-weight: 600; text-decoration: none;
+}
+.buyButton { background: #012d1d; color: #fff; }
+.cartButton { border: 1px solid #012d1d; background: #fff; color: #012d1d; cursor: pointer; }
+.buyButtonDisabled { border: 0; background: #e2e5e2; color: #6e7571; cursor: not-allowed; }
+.cartButtonDisabled { border: 1px solid #dde2de; background: #fff; color: #6e7571; cursor: not-allowed; }
+.actions :global(.material-symbols-outlined) { font-size: 20px; }
+
+.blocked { display: flex; flex-direction: column; gap: 10px; }
+.blockedText { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; color: #414844; }
+.blockedText :global(.material-symbols-outlined) { font-size: 18px; }
+
+.notice { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; border-radius: 12px; background: #e4f6ec; }
+.notice > :global(.material-symbols-outlined) { flex: 0 0 auto; font-size: 22px; color: #006c48; }
+.noticeText { display: flex; flex-direction: column; gap: 4px; }
+.noticeText strong { font-size: 15px; font-weight: 600; color: #012d1d; }
+.noticeText span { font-size: 13px; line-height: 1.5; color: #414844; }
+
+.section {
+  max-width: 760px; display: flex; flex-direction: column; gap: 14px;
+  padding-top: 24px; border-top: 1px solid #dde2de;
+}
+.sectionTitle {
+  margin: 0; font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 20px; font-weight: 700; color: #012d1d;
+}
+.description { margin: 0; font-size: 15px; line-height: 1.8; white-space: pre-line; }
+.careList { margin: 0; padding: 0; list-style: none; display: flex; gap: 12px; flex-wrap: wrap; }
+.careItem {
+  display: flex; flex-direction: column; gap: 4px; min-width: 140px;
+  padding: 14px 16px; border-radius: 12px; background: #e3ece5;
+}
+.careLabel { font-size: 12px; color: #414844; }
+.careValue { font-size: 15px; font-weight: 600; color: #012d1d; }
+
+/* 바로 구매: 링크 → 버튼으로 바뀌어서 버튼 기본 테두리 제거 */
+.buyButton { border: 0; cursor: pointer; }
+
+/* 구분선은 전체 폭, 글 줄 길이만 제한 */
+.section { max-width: none; }
+.description { max-width: 760px; }

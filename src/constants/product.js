@@ -21,3 +21,13 @@ export const PRODUCT_STATUS = {
   PAYMENT_PENDING: { label: '결제 대기', tone: 'pending' },
   SOLD_OUT: { label: '판매완료', tone: 'soldOut' },
 };
+
+// 품종 관리 정보 (백엔드 Light · Watering · Difficulty)
+export const SPECIES_LIGHT = { LOW: '낮은 광도', MEDIUM: '중간 광도', HIGH: '높은 광도' };
+export const SPECIES_WATERING = {
+  ALWAYS_WET: '항상 축축하게',
+  KEEP_MOIST: '촉촉하게 유지',
+  WHEN_SURFACE_DRY: '겉흙이 마르면',
+  WHEN_MOSTLY_DRY: '흙이 대부분 마르면',
+};
+export const SPECIES_DIFFICULTY = { EASY: '쉬움', NORMAL: '보통', HARD: '어려움' };

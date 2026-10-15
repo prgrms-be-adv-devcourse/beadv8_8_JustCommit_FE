@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import OAuthCallbackPage from './pages/member/OAuthCallbackPage';
 import SocialSignupPage from './pages/member/SocialSignupPage';
+import ProductDetailPage from './pages/product/ProductDetailPage';
+import ProductCreatePage from './pages/product/ProductCreatePage';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -9,6 +11,8 @@ import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
 import SellerRegisterPage from './pages/member/SellerRegisterPage';
 import MyPage from './pages/member/MyPage';
+import MyInfoPage from './pages/member/mypage/MyInfoPage';
+import AddressPage from './pages/member/mypage/AddressPage';
 
 function App() {
   return (
@@ -27,11 +31,19 @@ function App() {
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
           <Route path="/search" element={<ComingSoonPage title="검색 결과" />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/info" element={<MyInfoPage />} />
+          <Route path="/mypage/addresses" element={<AddressPage />} />
+          <Route path="/mypage/products" element={<ComingSoonPage title="내 판매 목록" />} />
+          <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
+          <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
+          <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
+          <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
           <Route path="/cart" element={<ComingSoonPage title="장바구니" />} />
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
-          <Route path="/products/new" element={<ComingSoonPage title="식물 판매하기" />} />
-          <Route path="/products/:productId" element={<ComingSoonPage title="상품 상세" />} />
+          <Route path="/products/new" element={<ProductCreatePage />} />
+          <Route path="/products/:productId" element={<ProductDetailPage />} />
+          <Route path="/orders/new" element={<ComingSoonPage title="주문하기" />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
 
           {/* 정책 페이지 */}

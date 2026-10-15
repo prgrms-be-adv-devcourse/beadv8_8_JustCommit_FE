@@ -1,0 +1,116 @@
+.page {
+  width: 100%; max-width: 960px; margin: 0 auto; box-sizing: border-box;
+  padding-bottom: 80px; display: flex; flex-direction: column; gap: 24px; color: #191c1e;
+}
+.backLink {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 44px;
+  padding: 0 4px; border: 0; background: none; color: #414844;
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.backLink :global(.material-symbols-outlined) { font-size: 20px; }
+.pageTitle {
+  margin: 0; font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 28px; font-weight: 700; color: #012d1d;
+}
+
+.form {
+  margin: 0; display: flex; flex-direction: column; gap: 28px; padding: 32px;
+  background: #fff; border: 1px solid #dde2de; border-radius: 12px;
+}
+.field { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 14px; font-weight: 600; color: #012d1d; }
+.optional { font-weight: 400; color: #414844; }
+.hint { font-size: 13px; color: #414844; }
+
+.errorBanner {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 8px;
+  background: #ffdad6; color: #93000a; font-size: 14px;
+}
+
+/* 사진 */
+.photoHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.photoGrid {
+  margin: 0; padding: 0; list-style: none; display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;
+}
+.photo {
+  position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px;
+  background: #e3ece5; box-sizing: border-box; cursor: grab;
+}
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.coverPhoto { outline: 2px solid #012d1d; outline-offset: -2px; }
+.dragging { opacity: 0.4; }
+.coverBadge {
+  position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; height: 22px;
+  padding: 0 8px; border-radius: 999px; background: #012d1d; color: #fff; font-size: 11px; font-weight: 600;
+}
+.dragHandle {
+  position: absolute; left: 4px; bottom: 4px; font-size: 20px; color: #fff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.removeButton {
+  position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; display: inline-flex;
+  align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 999px;
+  background: #fff; color: #414844; cursor: pointer;
+}
+.removeButton :global(.material-symbols-outlined) { font-size: 18px; }
+.addCell { display: flex; }
+.addButton {
+  flex: 1; aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px; border: 1.5px dashed #c1c8c2; border-radius: 8px;
+  background: #f9f9ff; color: #414844; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.addButton :global(.material-symbols-outlined) { font-size: 28px; color: #006c48; }
+
+/* 품종 */
+.comboWrap { position: relative; }
+.combo {
+  display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 12px 0 14px;
+  box-sizing: border-box; border: 1px solid #c1c8c2; border-radius: 8px; background: #fff; color: #414844;
+}
+.comboOpen { border-color: #012d1d; }
+.combo input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
+  font-family: inherit; font-size: 15px; color: #191c1e;
+}
+.dropdown {
+  position: absolute; z-index: 2; top: 52px; left: 0; right: 0; margin: 0; padding: 6px;
+  list-style: none; background: #fff; border: 1px solid #c1c8c2; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(1, 45, 29, 0.08); max-height: 320px; overflow-y: auto;
+}
+.option {
+  display: flex; align-items: center; height: 44px; padding: 0 12px;
+  border-radius: 6px; font-size: 15px; cursor: pointer;
+}
+.optionActive { background: #e8fcf2; }
+.match { font-weight: 700; color: #006c48; }
+.emptyOption { padding: 12px; font-size: 14px; color: #414844; }
+
+/* 입력 */
+.input, .textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid #c1c8c2; border-radius: 8px;
+  font-family: inherit; font-size: 15px; font-weight: 400; color: #191c1e;
+}
+.input { height: 48px; padding: 0 14px; }
+.textarea { padding: 12px 14px; line-height: 1.7; resize: vertical; }
+.priceBox {
+  display: flex; align-items: center; gap: 8px; max-width: 280px; height: 48px; padding: 0 14px;
+  box-sizing: border-box; border: 1px solid #c1c8c2; border-radius: 8px;
+  font-size: 15px; font-weight: 500; color: #414844;
+}
+.priceBox input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: transparent; text-align: right;
+  font-family: inherit; font-size: 15px; color: #191c1e;
+}
+
+.notice {
+  display: flex; gap: 10px; align-items: center; padding: 14px 16px; border-radius: 8px;
+  background: #e4f6ec; font-size: 14px; font-weight: 600; color: #012d1d;
+}
+.notice :global(.material-symbols-outlined) { font-size: 22px; color: #006c48; }
+
+.submitButton {
+  height: 52px; border: 0; border-radius: 8px; background: #012d1d; color: #fff;
+  font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.submitButton:disabled { background: #e2e5e2; color: #6e7571; cursor: not-allowed; }
