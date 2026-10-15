@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Stepper from '../../components/common/Stepper';
 import usePageTitle from '../../hooks/usePageTitle';
 import AccountStep from './signup/AccountStep';
+import ProfileStep from './signup/ProfileStep';
 import styles from './SignupPage.module.css';
 
 const SIGNUP_STEPS = [
@@ -40,9 +41,12 @@ function SignupPage() {
         </div>
 
         {currentStep === 0 && <AccountStep initialData={signupData} onNext={goNext} />}
+        {currentStep === 1 && (
+          <ProfileStep initialData={signupData} onNext={goNext} onPrev={goPrev} />
+        )}
 
         {/* TODO: 2~4단계 화면으로 교체 */}
-        {currentStep > 0 && (
+        {currentStep > 1 && (
           <div style={{ textAlign: 'center' }}>
             <p>{currentStep + 1}단계 준비 중</p>
             <button type="button" onClick={goPrev}>

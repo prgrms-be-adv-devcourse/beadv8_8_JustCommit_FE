@@ -34,3 +34,7 @@ export function signup(form) {
 export function registerSeller(intro) {
   return client.post('/api/v1/sellers', { intro });
 }
+
+export function checkPhone(phone) {
+  return client.get('/api/v1/users/checkPhone', { params: { phone } });
+}

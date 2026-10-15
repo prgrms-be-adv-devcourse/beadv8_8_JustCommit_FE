@@ -5,26 +5,14 @@ import Input from '../../../components/common/Input';
 import useCountdown from '../../../hooks/useCountdown';
 import { sendEmailCode, verifyEmailCode } from '../../../api/memberApi';
 import { formatTime } from '../../../utils/format';
-import styles from './AccountStep.module.css';
+import FieldMessage from './FieldMessage';
+import styles from './SignupStep.module.css';
 
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const PASSWORD_ALLOWED_CHARS = /^[A-Za-z\d!@#$%^&*]*$/;
 
 function getErrorMessage(error, fallback) {
   return error.response?.data?.message ?? fallback;
-}
-
-function FieldMessage({ message }) {
-  if (!message) return null;
-
-  return (
-    <p className={`${styles.message} ${styles[message.type]}`}>
-      <span className="material-symbols-outlined">
-        {message.type === 'success' ? 'check_circle' : 'error'}
-      </span>
-      {message.text}
-    </p>
-  );
 }
 
 function AccountStep({ initialData, onNext }) {
