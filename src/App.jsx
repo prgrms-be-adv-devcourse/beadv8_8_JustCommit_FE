@@ -5,6 +5,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
+import SellerRegisterPage from './pages/member/SellerRegisterPage';
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
           <Route path="/products/new" element={<ComingSoonPage title="식물 판매하기" />} />
           <Route path="/products/:productId" element={<ComingSoonPage title="상품 상세" />} />
-          <Route path="/seller/register" element={<ComingSoonPage title="판매자 등록" />} />
+          <Route path="/seller/register" element={<SellerRegisterPage />} />
 
           {/* 정책 페이지 */}
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
