@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import Stepper from '../../components/common/Stepper';
+import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import AccountStep from './signup/AccountStep';
 import ProfileStep from './signup/ProfileStep';
+import BankStep from './signup/BankStep';
+import SellerStep from './signup/SellerStep';
 import styles from './SignupPage.module.css';
 
 const SIGNUP_STEPS = [
@@ -14,8 +18,14 @@ const SIGNUP_STEPS = [
 
 function SignupPage() {
   usePageTitle('회원가입');
+  const { isLoggedIn } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [signupData, setSignupData] = useState({});
+
+  // 이미 로그인한 사용자는 홈으로 (4단계에서 가입 직후 로그인되는 경우는 제외)
+  if (isLoggedIn && currentStep === 0) {
+    return <Navigate to="/" replace />;
+  }
 
   const goNext = (stepData) => {
     setSignupData((prev) => ({ ...prev, ...stepData }));
@@ -44,16 +54,10 @@ function SignupPage() {
         {currentStep === 1 && (
           <ProfileStep initialData={signupData} onNext={goNext} onPrev={goPrev} />
         )}
-
-        {/* TODO: 2~4단계 화면으로 교체 */}
-        {currentStep > 1 && (
-          <div style={{ textAlign: 'center' }}>
-            <p>{currentStep + 1}단계 준비 중</p>
-            <button type="button" onClick={goPrev}>
-              이전
-            </button>
-          </div>
+        {currentStep === 2 && (
+          <BankStep initialData={signupData} onNext={goNext} onPrev={goPrev} />
         )}
+        {currentStep === 3 && <SellerStep initialData={signupData} onPrev={goPrev} />}
       </div>
     </div>
   );

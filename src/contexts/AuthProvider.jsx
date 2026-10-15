@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { reissueAccessToken } from '../api/client';
-import { getMyInfo, login as loginApi, logout as logoutApi } from '../api/memberApi';
+import {
+  getMyInfo,
+  login as loginApi,
+  logout as logoutApi,
+  signup as signupApi,
+} from '../api/memberApi';
 import { clearAccessToken, setAccessToken } from '../api/tokenStore';
 import { AuthContext } from './AuthContext';
 
@@ -44,6 +49,19 @@ export function AuthProvider({ children }) {
     setUser({ nickname, role });
   }, []);
 
+  // 로컬 회원가입: 응답에 토큰이 없으므로 로그인 상태는 바꾸지 않음 (가입 후 login 호출 필요)
+  const signup = useCallback(async (form) => {
+    await signupApi(form);
+  }, []);
+
+  // 토큰 재발급 + 내 정보 다시 조회 (판매자 등록 후 role 갱신용)
+  const refreshUser = useCallback(async () => {
+    await reissueAccessToken();
+    const response = await getMyInfo();
+    const { nickname, role } = response.data.data;
+    setUser({ nickname, role });
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await logoutApi();
@@ -59,9 +77,11 @@ export function AuthProvider({ children }) {
       isLoggedIn: user !== null,
       isInitializing,
       login,
+      signup,
+      refreshUser,
       logout,
     }),
-    [user, isInitializing, login, logout],
+    [user, isInitializing, login, signup, refreshUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
