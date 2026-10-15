@@ -25,6 +25,7 @@ function App() {
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
           <Route path="/products/new" element={<ComingSoonPage title="식물 판매하기" />} />
+          <Route path="/products/:productId" element={<ComingSoonPage title="상품 상세" />} />
           <Route path="/seller/register" element={<ComingSoonPage title="판매자 등록" />} />
 
           {/* 정책 페이지 */}
