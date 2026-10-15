@@ -1,3 +1,4 @@
+import { startKakaoLogin } from '../../../utils/oauth';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/common/Button';
@@ -137,8 +138,7 @@ function AccountStep({ initialData, onNext }) {
   };
 
   const handleKakaoSignup = () => {
-    // TODO: #102 카카오 로그인 연동 후 소셜 가입 흐름 연결
-    alert('카카오 가입은 준비 중입니다.');
+    startKakaoLogin();
   };
 
   return (

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import { startKakaoLogin } from '../../utils/oauth';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -20,7 +21,8 @@ function LoginPage() {
   const { login } = useAuth();
 
   const [form, setForm] = useState({ email: '', password: '' });
-  const [errorMessage, setErrorMessage] = useState('');
+  const location = useLocation();
+  const [errorMessage, setErrorMessage] = useState(location.state?.errorMessage ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
@@ -46,8 +48,7 @@ function LoginPage() {
   };
 
   const handleKakaoLogin = () => {
-    // TODO: #102 카카오 콜백 프론트 리다이렉트 처리 후 연결
-    alert('카카오 로그인은 준비 중입니다.');
+    startKakaoLogin();
   };
 
   return (
