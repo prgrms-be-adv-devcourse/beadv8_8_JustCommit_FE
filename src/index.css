@@ -1,0 +1,132 @@
+/* ===== 디자인 토큰 (Stitch 디자인 기준) ===== */
+:root {
+  /* Primary */
+  --color-primary: #012d1d;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #1b4332;
+  --color-on-primary-container: #86af99;
+  --color-primary-fixed: #c1ecd4;
+  --color-primary-fixed-dim: #a5d0b9;
+  --color-on-primary-fixed: #002114;
+  --color-on-primary-fixed-variant: #274e3d;
+  --color-inverse-primary: #a5d0b9;
+
+  /* Secondary */
+  --color-secondary: #006c48;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #92f7c3;
+  --color-on-secondary-container: #00734d;
+  --color-secondary-fixed: #92f7c3;
+  --color-secondary-fixed-dim: #75daa8;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005235;
+
+  /* Tertiary */
+  --color-tertiary: #421a00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #642b00;
+  --color-on-tertiary-container: #f38b48;
+  --color-tertiary-fixed: #ffdbc9;
+  --color-tertiary-fixed-dim: #ffb68c;
+  --color-on-tertiary-fixed: #321200;
+  --color-on-tertiary-fixed-variant: #753400;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Surface / Background */
+  --color-background: #f9f9ff;
+  --color-on-background: #111c2d;
+  --color-surface: #f9f9ff;
+  --color-on-surface: #111c2d;
+  --color-surface-variant: #d8e3fb;
+  --color-on-surface-variant: #414844;
+  --color-surface-dim: #cfdaf2;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-tint: #3f6653;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f0f3ff;
+  --color-surface-container: #e7eeff;
+  --color-surface-container-high: #dee8ff;
+  --color-surface-container-highest: #d8e3fb;
+  --color-inverse-surface: #263143;
+  --color-inverse-on-surface: #ecf1ff;
+  --color-outline: #717973;
+  --color-outline-variant: #c1c8c2;
+
+  /* Font family */
+  --font-headline: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Font size / line height */
+  --text-headline-xl: 36px;
+  --leading-headline-xl: 44px;
+  --text-headline-lg: 28px;
+  --leading-headline-lg: 36px;
+  --text-headline-md: 22px;
+  --leading-headline-md: 30px;
+  --text-headline-sm: 18px;
+  --leading-headline-sm: 26px;
+  --text-body-lg: 16px;
+  --leading-body-lg: 26px;
+  --text-body-md: 14px;
+  --leading-body-md: 22px;
+  --text-body-sm: 13px;
+  --leading-body-sm: 20px;
+  --text-label-lg: 15px;
+  --leading-label-lg: 20px;
+  --text-label-md: 13px;
+  --leading-label-md: 18px;
+  --text-label-sm: 11px;
+  --leading-label-sm: 14px;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --margin: 2rem;
+  --gutter: 1.5rem;
+  --margin-mobile: 1rem;
+  --gutter-mobile: 0.75rem;
+
+  /* Radius */
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* ===== 기본 스타일 초기화 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  line-height: var(--leading-body-md);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
