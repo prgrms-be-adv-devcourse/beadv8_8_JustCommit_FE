@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getMyInfo } from '../../api/memberApi';
@@ -20,6 +20,11 @@ const SELL_MENU = [
   { key: 'settlements', to: '/settlements', icon: 'payments', label: '정산' },
 ];
 
+// 2026-10-15T16:22:48 → 2026.10.15
+function formatJoinDate(value) {
+  return value.slice(0, 10).replaceAll('-', '.');
+}
+
 function MenuLink({ item }) {
   return (
     <Link to={item.to} className={styles.menuItem}>
@@ -34,8 +39,7 @@ function MenuLink({ item }) {
 
 function MyPage() {
   usePageTitle('마이페이지');
-  const navigate = useNavigate();
-  const { isLoggedIn, isInitializing, logout } = useAuth();
+  const { isLoggedIn, isInitializing } = useAuth();
 
   const [myInfo, setMyInfo] = useState(null);
   const [balance, setBalance] = useState(null); // null = 조회 실패 또는 로딩 중
@@ -63,13 +67,6 @@ function MyPage() {
     };
   }, [isLoggedIn]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate('/login', { replace: true });
-    }
-  };
 
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
@@ -88,7 +85,7 @@ function MyPage() {
           <div className={styles.profileText}>
             <strong className={styles.nickname}>{myInfo.nickname}</strong>
             <span className={styles.email}>{myInfo.email}</span>
-            {/* TODO: 백엔드 내 정보 응답에 createdAt 추가 후 "가입일 YYYY.MM.DD" 표시 */}
+            {myInfo.createdAt && <span className={styles.joinedAt}>가입일 {formatJoinDate(myInfo.createdAt)}</span>}
           </div>
         </section>
 
@@ -122,9 +119,6 @@ function MyPage() {
         </section>
       )}
 
-      <div className={styles.logoutRow}>
-        <button type="button" className={styles.logoutButton} onClick={handleLogout}>로그아웃</button>
-      </div>
     </div>
   );
 }
