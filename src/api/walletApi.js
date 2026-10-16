@@ -13,3 +13,9 @@ export async function getWalletBalance() {
     throw error;
   }
 }
+
+// 거래 내역 → Spring Page 형식 { content, totalElements, totalPages, number, last, ... }
+// refType은 하나만 받음 (탭별 묶음은 화면에서 거름)
+export function getWalletTransactions(params = {}) {
+  return client.get('/api/v1/wallet/transactions', { params });
+}
