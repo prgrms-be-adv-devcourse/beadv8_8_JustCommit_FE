@@ -274,28 +274,30 @@ function HomePage() {
 
   return (
     <div className={styles.page}>
-      {/* ① 배너 */}
-      <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.heroText}>
-          <h1 id="hero-title" className={styles.heroTitle}>
-            반려식물을 택배로 사고팔아요
-          </h1>
-          <p className={styles.heroDesc}>모든 거래는 택배로, 결제는 예치금으로만 이뤄져요.</p>
-        </div>
-        <ul className={styles.heroPoints}>
-          {HERO_POINTS.map((point) => (
-            <li key={point.title} className={styles.heroPoint}>
-              <span className={`material-symbols-outlined ${styles.heroIcon}`} aria-hidden="true">
-                {point.icon}
-              </span>
-              <div>
-                <strong>{point.title}</strong>
-                <p>{point.description}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* ① 배너 (검색 결과 화면에서는 숨김) */}
+      {!keyword && (
+        <section className={styles.hero} aria-labelledby="hero-title">
+          <div className={styles.heroText}>
+            <h1 id="hero-title" className={styles.heroTitle}>
+              반려식물을 택배로 사고팔아요
+            </h1>
+            <p className={styles.heroDesc}>모든 거래는 택배로, 결제는 예치금으로만 이뤄져요.</p>
+          </div>
+          <ul className={styles.heroPoints}>
+            {HERO_POINTS.map((point) => (
+              <li key={point.title} className={styles.heroPoint}>
+                <span className={`material-symbols-outlined ${styles.heroIcon}`} aria-hidden="true">
+                  {point.icon}
+                </span>
+                <div>
+                  <strong>{point.title}</strong>
+                  <p>{point.description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ② 검색 필터 */}
       <section className={styles.filter} aria-label="상품 필터">
