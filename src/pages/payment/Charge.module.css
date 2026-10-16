@@ -1,0 +1,319 @@
+/* 충전·완료·실패 화면 공통: 카드 폭을 480px로 통일 */
+.page {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px clamp(20px, 5vw, 36px);
+  background: #ffffff;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #ffdad6;
+}
+
+.alert > span {
+  font-size: 22px;
+  color: #ba1a1a;
+}
+
+.alert > strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #93000a;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f4f6f4;
+  font-size: 14px;
+}
+
+.infoRow > span {
+  color: #414844;
+}
+
+.infoRow > strong {
+  font-weight: 600;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #012d1d;
+}
+
+.amountBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border: 1px solid #012d1d;
+  border-radius: 8px;
+}
+
+.amountInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  text-align: right;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  color: #191c1e;
+}
+
+.won {
+  font-size: 16px;
+  font-weight: 600;
+  color: #414844;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #c1c8c2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #012d1d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clearButton {
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: #414844;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.chip:disabled,
+.clearButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 13px;
+  color: #ba1a1a;
+}
+
+.afterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px;
+  border-radius: 8px;
+  background: #e4f6ec;
+}
+
+.afterRow > span {
+  font-size: 14px;
+  color: #012d1d;
+}
+
+.afterRow > strong {
+  font-size: 22px;
+  font-weight: 800;
+  color: #012d1d;
+}
+
+.notice {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #414844;
+}
+
+.notice > span {
+  font-size: 18px;
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: #012d1d;
+  color: #ffffff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryButton:disabled {
+  background: #e2e5e2;
+  color: #6e7571;
+  cursor: not-allowed;
+}
+
+.outlineButton {
+  width: 100%;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid #012d1d;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #012d1d;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* 완료·실패 결과 화면 */
+.resultCard {
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+}
+
+.resultIcon {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #92f7c3;
+  color: #012d1d;
+  font-size: 44px;
+}
+
+.resultIconFail {
+  background: #ffdad6;
+  color: #ba1a1a;
+}
+
+.resultText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.resultDesc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #414844;
+}
+
+.resultDetail {
+  margin: 0;
+  font-size: 13px;
+  color: #6e7571;
+}
+
+.summary {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #f4f6f4;
+  font-size: 15px;
+  text-align: left;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.summaryRow dt {
+  color: #414844;
+}
+
+.summaryRow dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.summaryRow .summaryStrong {
+  font-size: 22px;
+  font-weight: 800;
+  color: #012d1d;
+}
+
+.resultActions {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.resultActions > a {
+  flex: 1 1 180px;
+}

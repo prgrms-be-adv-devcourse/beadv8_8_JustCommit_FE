@@ -1,0 +1,246 @@
+/* 폭은 시안(960px), 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+/* 보유 예치금 카드 */
+.balanceCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 36px;
+  border-radius: 12px;
+  background: #1b4332;
+  color: #ffffff;
+}
+
+.balanceText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balanceLabel {
+  font-size: 15px;
+  color: #cfe3d7;
+}
+
+.balanceAmount {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.balanceActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.historyLink {
+  height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #cfe3d7;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.chargeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 8px;
+  background: #92f7c3;
+  color: #00210f;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chargeButton > span {
+  font-size: 20px;
+}
+
+/* 거래 내역 */
+.txSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.txTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #c1c8c2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #414844;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabSelected {
+  border-color: #a6f2c7;
+  background: #a6f2c7;
+  color: #00210f;
+  font-weight: 700;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-top: 1px solid #eceFEC;
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.date {
+  flex: 0 0 92px;
+  font-size: 13px;
+  color: #414844;
+  font-variant-numeric: tabular-nums;
+}
+
+.icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f4f6f4;
+  color: #1b4332;
+  font-size: 20px;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.type {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.desc {
+  overflow: hidden;
+  font-size: 13px;
+  color: #414844;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.amountIn {
+  color: #1b7a46;
+}
+
+.amountOut {
+  color: #191c1e;
+}
+
+/* 빈 화면 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 24px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.emptyIcon {
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e3ece5;
+  color: #1b4332;
+  font-size: 36px;
+}
+
+.emptyTitle {
+  margin: 8px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 15px;
+  color: #414844;
+}
+
+.message {
+  padding: 64px 24px;
+  text-align: center;
+  color: #414844;
+}
