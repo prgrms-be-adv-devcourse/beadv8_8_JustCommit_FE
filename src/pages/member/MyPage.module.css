@@ -86,3 +86,33 @@
 .infoList dt { color: #414844; }
 .infoList dd { margin: 0; color: #191c1e; overflow-wrap: anywhere; }
 .joinedAt { font-size: 13px; color: #414844; }
+
+/* 예치금 카드: 위(예치금·충전) / 아래(환급·정산 계좌) */
+.wallet {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 16px;
+}
+
+.walletTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.account {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid #e2e5e3;
+  font-size: 13px;
+  color: #414844;
+}
+
+.accountLabel {
+  color: #5f6863;
+}

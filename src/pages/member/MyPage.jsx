@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getMyInfo } from '../../api/memberApi';
 import { getWalletBalance } from '../../api/walletApi';
+import { BANKS } from '../../constants/banks';
 import { formatPrice } from '../../utils/format';
 import styles from './MyPage.module.css';
 
@@ -36,6 +37,21 @@ function MenuLink({ item }) {
 }
 
 
+
+// 은행 코드 → 짧은 이름 (목록에 없는 코드면 빈 문자열 → 은행 이름 없이 계좌번호만 표시)
+function getBankName(code) {
+  return BANKS.find((bank) => bank.code === code)?.shortName ?? '';
+}
+
+// 예금주 가리기: 김민 → 김*, 김채린 → 김*린, 남궁민수 → 남**수
+// TODO: 파이널 - 계좌번호처럼 백엔드(MyInfoService)에서 가려서 응답
+function maskName(name) {
+  if (!name) return '';
+  const chars = Array.from(name);
+  if (chars.length <= 1) return name;
+  if (chars.length === 2) return `${chars[0]}*`;
+  return `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`;
+}
 
 function MyPage() {
   usePageTitle('마이페이지');
@@ -90,11 +106,23 @@ function MyPage() {
         </section>
 
         <section aria-label="예치금" className={`${styles.card} ${styles.wallet}`}>
-          <Link to="/wallet" className={styles.walletLink}>
-            <span className={styles.walletLabel}>보유 예치금</span>
-            <strong className={styles.walletAmount}>{balance === null ? '-' : formatPrice(balance)}</strong>
-          </Link>
-          <Link to="/deposit/charge" className={styles.chargeButton}>충전하기</Link>
+          <div className={styles.walletTop}>
+            <Link to="/wallet" className={styles.walletLink}>
+              <span className={styles.walletLabel}>보유 예치금</span>
+              <strong className={styles.walletAmount}>{balance === null ? '-' : formatPrice(balance)}</strong>
+            </Link>
+            <Link to="/deposit/charge" className={styles.chargeButton}>충전하기</Link>
+          </div>
+          {/* 환불·예치금 환급과 판매 정산금 지급에 같이 쓰는 계좌 (번호는 백엔드가 마스킹) */}
+          {myInfo.account && (
+            <p className={styles.account}>
+              <span className={styles.accountLabel}>등록 계좌</span>
+              <span>
+                {[getBankName(myInfo.account.bankCode), myInfo.account.maskedAccountNo].filter(Boolean).join(' ')} (
+                {maskName(myInfo.account.accountHolder)})
+              </span>
+            </p>
+          )}
         </section>
       </div>
 
