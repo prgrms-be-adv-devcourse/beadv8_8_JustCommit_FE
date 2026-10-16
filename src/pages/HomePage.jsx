@@ -1,18 +1,38 @@
 import { useEffect, useState } from 'react';
 import ProductCard from '../components/product/ProductCard';
+import SpeciesFilter from '../components/product/SpeciesFilter';
 import usePageTitle from '../hooks/usePageTitle';
 import { getProducts } from '../api/productApi';
-import { PRODUCT_SORTS, SPECIES_CATEGORIES } from '../constants/product';
+import {
+  PRODUCT_SORTS,
+  SPECIES_CATEGORIES,
+  SPECIES_DIFFICULTY,
+  SPECIES_LIGHT,
+  SPECIES_WATERING,
+} from '../constants/product';
 import styles from './HomePage.module.css';
 
 const PAGE_SIZE = 20;
 
+// 빈 문자열('')은 productApi의 compactParams가 요청에서 빼므로 "필터 없음"
 const INITIAL_FILTERS = {
   category: '',
+  speciesId: '',
+  light: '',
+  watering: '',
+  difficulty: '',
+  onSale: '',
   sort: '',
   minPrice: '',
   maxPrice: '',
 };
+
+// 관리 조건 필터: 각각 하나만 선택 (백엔드 Light · Watering · Difficulty)
+const CARE_FILTERS = [
+  { key: 'light', label: '광량', options: SPECIES_LIGHT },
+  { key: 'watering', label: '물주기', options: SPECIES_WATERING },
+  { key: 'difficulty', label: '난이도', options: SPECIES_DIFFICULTY },
+];
 
 const HERO_POINTS = [
   {
@@ -36,10 +56,26 @@ function getErrorMessage(error) {
   return error.response?.data?.message ?? '상품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
 
+// 선택 칩 하나 (카테고리·관리 조건 공통)
+function FilterChip({ label, isSelected, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={isSelected}
+      className={`${styles.chip} ${isSelected ? styles.chipSelected : ''}`}
+      onClick={onClick}
+    >
+      {isSelected && <span className="material-symbols-outlined">check</span>}
+      {label}
+    </button>
+  );
+}
+
 function HomePage() {
   usePageTitle();
 
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [selectedSpecies, setSelectedSpecies] = useState(null); // { speciesId, name } — 화면 표시용
   const [priceInput, setPriceInput] = useState({ min: '', max: '' });
   const [priceError, setPriceError] = useState('');
 
@@ -51,9 +87,12 @@ function HomePage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isFiltered = filters.category !== '' || filters.minPrice !== '' || filters.maxPrice !== '';
+  // 정렬을 뺀 조건이 하나라도 있으면 "필터 적용 중"
+  const isFiltered = Object.entries(filters).some(([key, value]) => key !== 'sort' && value !== '');
   const hasMore = page + 1 < totalPages;
   const categoryLabel = SPECIES_CATEGORIES.find((item) => item.value === filters.category)?.label;
+
+  const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
   // 필터가 바뀔 때마다 첫 페이지부터 다시 조회
   useEffect(() => {
@@ -103,6 +142,22 @@ function HomePage() {
     }
   };
 
+  // 카테고리를 바꾸면 선택한 품종은 해제 (품종은 카테고리에 속하므로 결과가 0개가 되는 것을 방지)
+  const handleCategoryChange = (category) => {
+    setFilters((prev) => ({ ...prev, category, speciesId: '' }));
+    setSelectedSpecies(null);
+  };
+
+  const handleSpeciesSelect = (species) => {
+    setSelectedSpecies({ speciesId: species.speciesId, name: species.name });
+    updateFilter('speciesId', species.speciesId);
+  };
+
+  const handleSpeciesClear = () => {
+    setSelectedSpecies(null);
+    updateFilter('speciesId', '');
+  };
+
   const handlePriceChange = (key) => (event) => {
     setPriceInput((prev) => ({ ...prev, [key]: event.target.value.replace(/\D/g, '') }));
   };
@@ -122,6 +177,7 @@ function HomePage() {
 
   const handleReset = () => {
     setFilters(INITIAL_FILTERS);
+    setSelectedSpecies(null);
     setPriceInput({ min: '', max: '' });
     setPriceError('');
   };
@@ -222,24 +278,62 @@ function HomePage() {
       <section className={styles.filter} aria-label="상품 필터">
         <div className={styles.filterRow}>
           <span id="category-label" className={styles.filterLabel}>
-            분류
+            카테고리
           </span>
           <div className={styles.chips} role="group" aria-labelledby="category-label">
-            {SPECIES_CATEGORIES.map((item) => {
-              const isSelected = filters.category === item.value;
-              return (
-                <button
-                  key={item.value || 'all'}
-                  type="button"
-                  aria-pressed={isSelected}
-                  className={`${styles.chip} ${isSelected ? styles.chipSelected : ''}`}
-                  onClick={() => setFilters((prev) => ({ ...prev, category: item.value }))}
-                >
-                  {isSelected && <span className="material-symbols-outlined">check</span>}
-                  {item.label}
-                </button>
-              );
-            })}
+            {SPECIES_CATEGORIES.map((item) => (
+              <FilterChip
+                key={item.value || 'all'}
+                label={item.label}
+                isSelected={filters.category === item.value}
+                onClick={() => handleCategoryChange(item.value)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.filterRow}>
+          <span className={styles.filterLabel}>품종</span>
+          <SpeciesFilter
+            category={filters.category}
+            selected={selectedSpecies}
+            onSelect={handleSpeciesSelect}
+            onClear={handleSpeciesClear}
+          />
+        </div>
+
+        <div className={styles.divider} />
+
+        <div className={`${styles.filterRow} ${styles.filterRowTop}`}>
+          <span className={styles.filterLabel}>관리 조건</span>
+          <div className={styles.careGroups}>
+            {CARE_FILTERS.map((care) => (
+              <div
+                key={care.key}
+                className={styles.careGroup}
+                role="group"
+                aria-labelledby={`care-${care.key}`}
+              >
+                <span id={`care-${care.key}`} className={styles.careLabel}>
+                  {care.label}
+                </span>
+                <div className={styles.chips}>
+                  <FilterChip
+                    label="전체"
+                    isSelected={filters[care.key] === ''}
+                    onClick={() => updateFilter(care.key, '')}
+                  />
+                  {Object.entries(care.options).map(([value, label]) => (
+                    <FilterChip
+                      key={value}
+                      label={label}
+                      isSelected={filters[care.key] === value}
+                      onClick={() => updateFilter(care.key, value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -286,13 +380,22 @@ function HomePage() {
                   type="button"
                   aria-pressed={isSelected}
                   className={`${styles.sort} ${isSelected ? styles.sortSelected : ''}`}
-                  onClick={() => setFilters((prev) => ({ ...prev, sort: item.value }))}
+                  onClick={() => updateFilter('sort', item.value)}
                 >
                   {item.label}
                 </button>
               );
             })}
           </div>
+
+          <label className={styles.onSaleToggle}>
+            <input
+              type="checkbox"
+              checked={filters.onSale === 'true'}
+              onChange={(event) => updateFilter('onSale', event.target.checked ? 'true' : '')}
+            />
+            판매 중만
+          </label>
         </div>
       </section>
 
@@ -300,7 +403,7 @@ function HomePage() {
       <section className={styles.list} aria-labelledby="list-title">
         <div className={styles.listHeader}>
           <h2 id="list-title" className={styles.listTitle}>
-            {filters.category ? categoryLabel : '새로 올라온 식물'}
+            {selectedSpecies?.name ?? (filters.category ? categoryLabel : '새로 올라온 식물')}
           </h2>
           {!isLoading && <span className={styles.listMeta}>{totalElements}개</span>}
         </div>

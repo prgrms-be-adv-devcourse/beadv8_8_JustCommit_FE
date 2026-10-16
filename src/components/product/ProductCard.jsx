@@ -1,14 +1,23 @@
 import { Link } from 'react-router-dom';
-import { PRODUCT_STATUS } from '../../constants/product';
+import {
+  PRODUCT_STATUS,
+  SPECIES_DIFFICULTY,
+  SPECIES_LIGHT,
+  SPECIES_WATERING,
+} from '../../constants/product';
 import { formatPrice, formatRelativeTime } from '../../utils/format';
+import ProductThumbnail from './ProductThumbnail';
 import styles from './ProductCard.module.css';
-
-const PLACEHOLDER_ICONS = ['potted_plant', 'eco', 'spa', 'psychiatry'];
 
 function ProductCard({ product }) {
   const status = PRODUCT_STATUS[product.status] ?? { label: product.status, tone: 'pending' };
   const isSoldOut = product.status === 'SOLD_OUT';
-  const placeholderIcon = PLACEHOLDER_ICONS[product.productId % PLACEHOLDER_ICONS.length];
+  // 관리 태그: 품종에 값이 없는 항목은 빼고 표시
+  const careTags = [
+    { icon: 'light_mode', label: SPECIES_LIGHT[product.light] },
+    { icon: 'water_drop', label: SPECIES_WATERING[product.watering] },
+    { icon: 'signal_cellular_alt', label: SPECIES_DIFFICULTY[product.difficulty] },
+  ].filter((tag) => tag.label);
 
   return (
     <Link
@@ -16,13 +25,11 @@ function ProductCard({ product }) {
       className={`${styles.card} ${isSoldOut ? styles.soldOutCard : ''}`}
     >
       <div className={styles.thumb}>
-        {product.thumbnailUrl ? (
-          <img src={product.thumbnailUrl} alt={`${product.title} 사진`} loading="lazy" />
-        ) : (
-          <span className="material-symbols-outlined" aria-hidden="true">
-            {placeholderIcon}
-          </span>
-        )}
+        <ProductThumbnail
+          src={product.thumbnailUrl}
+          alt={`${product.title} 사진`}
+          loading="lazy"
+        />
         <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
       </div>
 
@@ -32,6 +39,18 @@ function ProductCard({ product }) {
         <span className={styles.meta}>
           {product.speciesName} · {formatRelativeTime(product.createdAt)}
         </span>
+        {careTags.length > 0 && (
+          <span className={styles.careTags}>
+            {careTags.map((tag) => (
+              <span key={tag.icon} className={styles.careTag}>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {tag.icon}
+                </span>
+                {tag.label}
+              </span>
+            ))}
+          </span>
+        )}
       </div>
     </Link>
   );
