@@ -6,6 +6,7 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
+import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import { formatPrice } from '../../utils/format';
 import styles from './CartPage.module.css';
 
@@ -23,10 +24,6 @@ function CartItemBody({ item, children }) {
   }
   return <div className={`${styles.itemLink} ${styles.unavailable}`}>{children}</div>;
 }
-
-// 판매자 1명당 배송비 (백엔드 OrderService와 같은 값, 세미 기본 배송비)
-// TODO: 배송비 정책이 확정되면 백엔드 응답 값으로 교체
-const SHIPPING_FEE_PER_SELLER = 3000;
 
 // 구매할 수 없는 이유별 배지·안내 (구매자 화면이라 삭제를 숨김보다 먼저 표시)
 // TODO: CartItemResponse에 status·hidden이 추가되기 전까지는 모두 "구매 불가"로 표시됨
@@ -152,7 +149,7 @@ function CartPage() {
 
   const goToOrder = () => {
     const ids = selectedItems.map((item) => item.cartItemId).join(',');
-    navigate(`/orders/new?cartItemIds=${ids}`);
+    navigate(`/checkout?items=${ids}`);
   };
 
   if (items.length === 0) {
