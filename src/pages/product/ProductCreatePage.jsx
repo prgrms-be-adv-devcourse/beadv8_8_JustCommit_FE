@@ -56,7 +56,10 @@ function ProductCreatePage() {
 
   // 페이지를 떠날 때 미리보기 URL 해제 (메모리 정리)
   const photosRef = useRef(photos);
-  photosRef.current = photos;
+  // 렌더링 중에 ref를 바꾸지 않고, 화면에 반영된 뒤 최신 목록으로 갱신
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
   useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), []);
 
   // 품종 검색 (입력이 멈추고 0.3초 뒤에 요청)

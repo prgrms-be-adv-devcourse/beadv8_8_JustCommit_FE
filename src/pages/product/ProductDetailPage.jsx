@@ -25,9 +25,8 @@ function formatDate(value) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
-function ProductDetailPage() {
+function ProductDetail({ productId }) {
   usePageTitle('상품 상세');
-  const { productId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn } = useAuth();
@@ -38,8 +37,6 @@ function ProductDetailPage() {
 
   useEffect(() => {
     let ignore = false;
-    setLoadState('loading');
-    setSelected(0);
 
     getProduct(productId)
       .then((response) => {
@@ -296,6 +293,13 @@ function ProductDetailPage() {
       )}
     </div>
   );
+}
+
+function ProductDetailPage() {
+  const { productId } = useParams();
+  // 상품이 바뀌면 key가 달라져 컴포넌트를 새로 만듦
+  // → 로딩 상태('loading')와 선택한 사진(0)이 처음 값으로 자동 초기화
+  return <ProductDetail key={productId} productId={productId} />;
 }
 
 export default ProductDetailPage;
