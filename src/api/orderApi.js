@@ -7,3 +7,8 @@ import client from './client';
 export function createCartOrder(form) {
   return client.post('/api/v1/orders/cart', form);
 }
+
+// 주문 상세 → { orderId, orderNo, totalAmount, itemCount, status, recipient…, sellerOrders[] }
+export function getOrder(orderId) {
+  return client.get(`/api/v1/orders/${orderId}`);
+}

@@ -13,8 +13,6 @@ import { formatPhone, formatPrice } from '../../utils/format';
 import AddressModal from '../member/mypage/AddressModal';
 import styles from './CheckoutPage.module.css';
 
-// TODO: 주문 실패(409) 화면(/checkout/fail, 시안 5-B)과 주문 완료 화면(시안 5)은 다음 작업에서 연결
-
 // ?items=12,13 → [12, 13]
 function parseItemIds(value) {
   return (value ?? '')
@@ -251,6 +249,35 @@ function CheckoutPage() {
 
   const canPay = isBalanceLoaded && !isShort && selectedAddress && !hasUnavailable && !isSubmitting;
 
+  // 409 PRODUCT_UNAVAILABLE · PRICE_CHANGED: 서버가 모두 되돌려서 장바구니는 그대로 남음
+  // 에러 응답에는 상품 정보가 없어서, 장바구니와 상품 상태를 다시 조회해 문제 상품을 모음
+  const findFailedItems = async () => {
+    try {
+      const cart = await refreshCart();
+      const orderedIds = orderItems.map((item) => item.cartItemId);
+      const problems = cart.items.filter(
+        (item) => orderedIds.includes(item.cartItemId) && (!item.isPurchasable || item.isChangedPrice),
+      );
+      // 결제 대기 / 판매완료 구분은 상품 상태로 (장바구니 응답에는 isPurchasable만 있음)
+      const results = await Promise.allSettled(problems.map((item) => getProduct(item.productId)));
+      return problems.map((item, index) => {
+        const detail = results[index].status === 'fulfilled' ? results[index].value.data.data : details[item.productId];
+        return {
+          cartItemId: item.cartItemId,
+          title: item.title,
+          price: Number(item.nowPrice),
+          cartPrice: Number(item.price),
+          thumbnailUrl: detail?.imageUrls?.[0],
+          status: detail?.status,
+          isPurchasable: item.isPurchasable,
+          isChangedPrice: item.isChangedPrice,
+        };
+      });
+    } catch {
+      return [];
+    }
+  };
+
   const handlePay = async () => {
     if (!canPay) return;
     setIsSubmitting(true);
@@ -271,13 +298,17 @@ function CheckoutPage() {
       refreshWallet().catch(() => {});
 
       if (order.status === 'PAID') {
-        navigate(`/orders/${order.orderId}/complete`, { replace: true });
+        navigate(`/orders/${order.orderId}/complete`, { replace: true, state: { order } });
         return;
       }
       // 버튼을 누르는 사이 잔액이 줄어든 경우: 주문은 결제 대기로 남고 상품은 잠시 예약됨
       setSubmitError('잔액이 부족해 결제하지 못했어요. 예치금을 충전한 뒤 다시 결제해 주세요.');
     } catch (error) {
-      // 409 PRODUCT_UNAVAILABLE · PRICE_CHANGED: 서버가 모두 되돌려서 장바구니는 그대로
+      const failedItems = error.response?.status === 409 ? await findFailedItems() : [];
+      if (failedItems.length > 0) {
+        navigate('/checkout/fail', { replace: true, state: { items: failedItems } });
+        return;
+      }
       setSubmitError(error.response?.data?.message ?? '결제하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);

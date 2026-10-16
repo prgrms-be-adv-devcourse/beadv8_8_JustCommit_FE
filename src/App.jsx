@@ -15,6 +15,9 @@ import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
 import CheckoutPage from './pages/market/CheckoutPage';
+import OrderCompletePage from './pages/market/OrderCompletePage';
+import OrderExpiredPage from './pages/market/OrderExpiredPage';
+import OrderFailPage from './pages/market/OrderFailPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 
 function App() {
@@ -49,7 +52,10 @@ function App() {
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/orders/:orderId/complete" element={<ComingSoonPage title="주문 완료" />} />
+          <Route path="/checkout/fail" element={<OrderFailPage />} />
+          <Route path="/orders/:orderId" element={<ComingSoonPage title="주문 상세" />} />
+          <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
+          <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
 
           {/* 정책 페이지 */}
