@@ -1,0 +1,566 @@
+/* 시안 3-A 주문서 · 3-B 예치금 부족 — 폭·여백은 공통 Layout(.main)이 담당 */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heading {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.main {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aside {
+  flex: 1 1 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 공통 카드 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.outlineButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c1c8c2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #012d1d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 배송지 */
+.addressBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recipientRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.recipientName {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.addressName {
+  font-size: 13px;
+  color: #414844;
+}
+
+.defaultBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #92f7c3;
+  color: #00210f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.phone {
+  font-size: 14px;
+  color: #414844;
+}
+
+.addressText {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.noAddress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: #414844;
+}
+
+.noAddress p {
+  margin: 0;
+}
+
+/* 주문 상품 */
+.itemCount {
+  font-family: Inter, Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #414844;
+}
+
+.group {
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: #f4f6f4;
+}
+
+.storeIcon {
+  font-size: 20px;
+  color: #006c48;
+}
+
+.sellerName {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sellerLabel {
+  font-size: 13px;
+  color: #414844;
+}
+
+.itemList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid #eceFEC;
+}
+
+.thumb {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.species {
+  font-size: 12px;
+  color: #414844;
+}
+
+.itemTitle {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.itemWarning {
+  font-size: 13px;
+  color: #ba1a1a;
+}
+
+.itemPrice {
+  font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.shipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #eceFEC;
+  font-size: 14px;
+  color: #414844;
+}
+
+.shipFee {
+  font-weight: 600;
+  color: #111c2d;
+}
+
+.note {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #414844;
+}
+
+.note :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+/* 결제 금액 · 결제 수단 */
+.summaryList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summaryRow dt {
+  color: #414844;
+}
+
+.summaryRow dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background: #dde2de;
+}
+
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.totalLabel {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.totalPrice {
+  font-family: 'Plus Jakarta Sans', Pretendard, 'Noto Sans KR', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #012d1d;
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid #012d1d;
+  border-radius: 8px;
+}
+
+.methodIcon {
+  font-size: 22px;
+  color: #012d1d;
+  font-variation-settings: 'FILL' 1;
+}
+
+.methodText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: #414844;
+}
+
+.methodText strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #012d1d;
+}
+
+.afterRow {
+  font-size: 15px;
+}
+
+.afterRow dt {
+  font-weight: 600;
+  color: inherit;
+}
+
+.summaryRow .afterEnough {
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.summaryRow .afterShort {
+  font-weight: 700;
+  color: #ba1a1a;
+}
+
+/* 예치금 부족 안내 (시안 3-B) */
+.shortAlert {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #ffdad6;
+}
+
+.shortMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.shortIcon {
+  font-size: 22px;
+  color: #ba1a1a;
+}
+
+.shortText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #410002;
+}
+
+.shortText strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #93000a;
+}
+
+.chargeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  border-radius: 8px;
+  background: #ba1a1a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chargeButton :global(.material-symbols-outlined) {
+  font-size: 20px;
+}
+
+/* 결제하기 */
+.payButton {
+  height: 56px;
+  border: 0;
+  border-radius: 8px;
+  background: #012d1d;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payButton:disabled {
+  background: #e2e5e2;
+  color: #6e7571;
+  cursor: not-allowed;
+}
+
+.payNote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #414844;
+}
+
+.submitError {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ba1a1a;
+}
+
+.submitError a {
+  color: inherit;
+  font-weight: 600;
+}
+
+.message {
+  padding: 80px 24px;
+  text-align: center;
+  color: #414844;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 80px 24px;
+  text-align: center;
+  color: #414844;
+}
+
+.empty p {
+  margin: 0;
+}
+
+/* 배송지 선택 팝업 (공통 ConfirmModal과 같은 배경·그림자) */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(1, 45, 29, 0.4);
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(1, 45, 29, 0.16);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.addressOptions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.addressOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #dde2de;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.addressOptionChecked {
+  border: 2px solid #012d1d;
+  padding: 13px 15px; /* 테두리가 두꺼워진 만큼 줄여서 크기 유지 */
+}
+
+.radio {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #012d1d;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+}
+
+.modalCancel,
+.modalConfirm {
+  flex: 1;
+  height: 48px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modalCancel {
+  border: 1px solid #c1c8c2;
+  background: #ffffff;
+  color: #414844;
+}
+
+.modalConfirm {
+  border: 0;
+  background: #012d1d;
+  color: #ffffff;
+}
