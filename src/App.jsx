@@ -14,6 +14,10 @@ import MyPage from './pages/member/MyPage';
 import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
+import WalletPage from './pages/payment/WalletPage';
+import ChargePage from './pages/payment/ChargePage';
+import ChargeSuccessPage from './pages/payment/ChargeSuccessPage';
+import ChargeFailPage from './pages/payment/ChargeFailPage';
 import CheckoutPage from './pages/market/CheckoutPage';
 import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
@@ -43,11 +47,13 @@ function App() {
           <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
           <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
-          <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
+          <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
-          <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
+          <Route path="/deposit/charge" element={<ChargePage />} />
+          <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
+          <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
