@@ -44,10 +44,8 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async ({ email, password }) => {
     const response = await loginApi({ email, password });
-    setAccessToken(response.data.data.accessToken);
-    // 로그인 응답에는 회원 ID가 없어서 내 정보를 한 번 더 조회 (내 상품 판단 등에 사용)
-    const me = await getMyInfo();
-    const { memberId, nickname, role } = me.data.data;
+    const { memberId, accessToken, nickname, role } = response.data.data;
+    setAccessToken(accessToken);
     setUser({ memberId, nickname, role });
   }, []);
 
