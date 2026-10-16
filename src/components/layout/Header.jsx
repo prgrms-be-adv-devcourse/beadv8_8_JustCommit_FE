@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
+import useWallet from '../../hooks/useWallet';
 import { formatPrice } from '../../utils/format';
 import styles from './Header.module.css';
 
@@ -19,8 +20,7 @@ function Header() {
   const showMemberMenu = !isInitializing && isLoggedIn;
   const cartBadgeText = purchasableCount > 99 ? '99+' : String(purchasableCount);
 
-  // TODO: 결제 모듈 예치금 조회 API 연결 후 실제 값으로 교체
-  const depositBalance = 0;
+  const { balance: depositBalance } = useWallet(); // null = 조회 실패 또는 로딩 중
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -50,7 +50,7 @@ function Header() {
               <span className={`material-symbols-outlined ${styles.walletIcon}`}>
                 account_balance_wallet
               </span>
-              <span className={styles.walletAmount}>{formatPrice(depositBalance)}</span>
+              <span className={styles.walletAmount}>{depositBalance === null ? '-' : formatPrice(depositBalance)}</span>
               <Link to="/deposit/charge" className={styles.chargeLink}>
                 충전
               </Link>
