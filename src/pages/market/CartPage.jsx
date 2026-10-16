@@ -24,12 +24,30 @@ function CartItemBody({ item, children }) {
   return <div className={`${styles.itemLink} ${styles.unavailable}`}>{children}</div>;
 }
 
-// 구매할 수 없는 이유별 표시 문구 (숨김 배지는 상태와 관계없이 우선 표시)
+// 판매자 1명당 배송비 (백엔드 OrderService와 같은 값, 세미 기본 배송비)
+// TODO: 배송비 정책이 확정되면 백엔드 응답 값으로 교체
+const SHIPPING_FEE_PER_SELLER = 3000;
+
+// 구매할 수 없는 이유별 배지·안내 (구매자 화면이라 삭제를 숨김보다 먼저 표시)
 // TODO: CartItemResponse에 status·hidden이 추가되기 전까지는 모두 "구매 불가"로 표시됨
-function getUnavailableLabel(item) {
-  if (item.hidden) return '숨긴 상품';
-  if (item.status === 'SOLD_OUT') return '구매완료';
-  return '구매 불가'; // DELETED, PAYMENT_PENDING
+function getUnavailableInfo(item) {
+  if (item.status === 'DELETED') {
+    return { label: '구매 불가', tone: 'unavailable', reason: '판매자가 삭제한 상품이에요' };
+  }
+  if (item.hidden) {
+    return { label: '숨긴 상품', tone: 'hidden', reason: '판매자가 상품을 숨겼어요' };
+  }
+  if (item.status === 'SOLD_OUT') {
+    return { label: '판매완료', tone: 'soldOut', reason: '이미 판매된 상품이에요' };
+  }
+  if (item.status === 'PAYMENT_PENDING') {
+    return {
+      label: '결제 대기',
+      tone: 'pending',
+      reason: '다른 분이 결제 중이에요. 결제가 취소되면 다시 살 수 있어요',
+    };
+  }
+  return { label: '구매 불가', tone: 'unavailable', reason: '지금은 구매할 수 없는 상품이에요' };
 }
 
 function CartPage() {
@@ -67,11 +85,22 @@ function CartPage() {
     );
   }
 
-  const items = cart.items;
+  // 최근에 담은 상품이 위로 (원본은 공유 상태라 복사본을 정렬)
+  const items = [...cart.items].sort(
+    (a, b) => b.createdAt.localeCompare(a.createdAt) || b.cartItemId - a.cartItemId,
+  );
   const purchasableItems = items.filter((item) => item.isPurchasable);
   const selectedItems = purchasableItems.filter((item) => !unselectedIds.has(item.cartItemId));
   const allChecked = purchasableItems.length > 0 && selectedItems.length === purchasableItems.length;
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.nowPrice), 0);
+  // 판매자별 배송비: 응답에 sellerId가 있을 때만 계산 (없으면 "주문 시 계산")
+  const canCalcShipping =
+    selectedItems.length > 0 && selectedItems.every((item) => item.sellerId != null);
+  const sellerCount = canCalcShipping
+    ? new Set(selectedItems.map((item) => item.sellerId)).size
+    : 0;
+  const shippingFee = sellerCount * SHIPPING_FEE_PER_SELLER;
+  const total = subtotal + shippingFee;
 
   const toggleItem = (cartItemId) => {
     setUnselectedIds((prev) => {
@@ -195,9 +224,24 @@ function CartPage() {
                   </span>
                   <span className={styles.info}>
                     {!item.isPurchasable && (
-                      <span className={styles.badge}>{getUnavailableLabel(item)}</span>
+                      <span
+                        className={`${styles.badge} ${styles[getUnavailableInfo(item).tone]}`}
+                      >
+                        {getUnavailableInfo(item).label}
+                      </span>
                     )}
                     <span className={styles.title}>{item.title}</span>
+                    {item.sellerName && (
+                      <span className={styles.seller}>
+                        <span className="material-symbols-outlined" aria-hidden="true">
+                          storefront
+                        </span>
+                        {item.sellerName}
+                      </span>
+                    )}
+                    {!item.isPurchasable && (
+                      <span className={styles.reason}>{getUnavailableInfo(item).reason}</span>
+                    )}
                     {item.isChangedPrice && (
                       <span className={styles.priceChanged}>
                         담을 때 {formatPrice(Number(item.price))}에서 가격이 바뀌었어요
@@ -232,14 +276,14 @@ function CartPage() {
               <dd>{formatPrice(subtotal)}</dd>
             </div>
             <div className={styles.summaryRow}>
-              <dt>배송비</dt>
-              <dd>주문 시 계산</dd>
+              <dt>{canCalcShipping ? `배송비 (판매자 ${sellerCount}명)` : '배송비'}</dt>
+              <dd>{canCalcShipping ? formatPrice(shippingFee) : '주문 시 계산'}</dd>
             </div>
           </dl>
           <div className={styles.divider} />
           <div className={styles.totalRow}>
-            <span className={styles.totalLabel}>상품 합계</span>
-            <strong className={styles.totalPrice}>{formatPrice(subtotal)}</strong>
+            <span className={styles.totalLabel}>{canCalcShipping ? '합계' : '상품 합계'}</span>
+            <strong className={styles.totalPrice}>{formatPrice(total)}</strong>
           </div>
           <button
             type="button"
