@@ -391,7 +391,7 @@
   color: #5f6863;
 }
 
-/* 가격 · 적용 · 정렬 · 판매 중만(오른쪽 끝) 한 줄 */
+/* 가격 · 적용 · 정렬 · (판매 중만 · 필터 초기화)(오른쪽 끝) 한 줄 */
 .filterBottom {
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -399,8 +399,14 @@
   gap: 12px;
 }
 
-.onSaleToggle {
+.filterActions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.onSaleToggle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
