@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import useCart from '../../hooks/useCart';
 import { formatPrice } from '../../utils/format';
 import styles from './Header.module.css';
 
@@ -9,12 +10,14 @@ const AUTH_REQUIRED_PATHS = ['/mypage', '/seller/register'];
 
 function Header() {
   const { user, isLoggedIn, isInitializing, logout } = useAuth();
+  const { purchasableCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const [keyword, setKeyword] = useState('');
 
   const isSeller = user?.role === 'SELLER';
   const showMemberMenu = !isInitializing && isLoggedIn;
+  const cartBadgeText = purchasableCount > 99 ? '99+' : String(purchasableCount);
 
   // TODO: 결제 모듈 예치금 조회 API 연결 후 실제 값으로 교체
   const depositBalance = 0;
@@ -75,8 +78,19 @@ function Header() {
           <nav className={styles.nav}>
             {isLoggedIn ? (
               <>
-                <Link to="/cart" className={styles.iconButton} aria-label="장바구니">
-                  <span className="material-symbols-outlined">shopping_bag</span>
+                <Link
+                  to="/cart"
+                  className={styles.iconButton}
+                  aria-label={
+                    purchasableCount > 0 ? `장바구니, 담은 상품 ${purchasableCount}개` : '장바구니'
+                  }
+                >
+                  <span className="material-symbols-outlined">shopping_cart</span>
+                  {purchasableCount > 0 && (
+                    <span className={styles.badge} aria-hidden="true">
+                      {cartBadgeText}
+                    </span>
+                  )}
                 </Link>
 
                 <Link to="/notifications" className={styles.iconButton} aria-label="알림">

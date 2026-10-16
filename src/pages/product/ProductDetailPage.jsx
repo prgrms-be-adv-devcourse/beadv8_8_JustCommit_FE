@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getProduct } from '../../api/productApi';
 import {
@@ -74,13 +75,30 @@ function ProductDetailPage() {
     navigate(`/orders/new?productId=${product.productId}`);
   };
 
-  const handleAddToCart = () => {
+  const { addToCart } = useCart();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartAddedOpen, setCartAddedOpen] = useState(false); // 담기 성공 팝업
+  // ConfirmModal의 useEffect가 onClose에 의존하므로 매 렌더링마다 새 함수가 되지 않게 고정
+  const closeCartAdded = useCallback(() => setCartAddedOpen(false), []);
+  const goToCart = () => navigate('/cart');
+
+  const handleAddToCart = async () => {
     if (!isLoggedIn) {
       goToLogin('로그인 후 장바구니에 담을 수 있어요.');
       return;
     }
-    // TODO: 장바구니 요청 형식 확인 후 POST /api/v1/cart/items 연결
-    alert('장바구니 담기는 준비 중입니다.');
+    if (isAddingToCart) return; // 연속 클릭으로 같은 요청이 두 번 가는 것 방지
+
+    setIsAddingToCart(true);
+    try {
+      await addToCart(product.productId);
+      setCartAddedOpen(true);
+    } catch (error) {
+      // 백엔드 메시지 예: "이미 추가된 상품입니다.", "구매가 불가능한 상품입니다."
+      alert(error.response?.data?.message ?? '장바구니에 담지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   if (loadState === 'loading') {
@@ -190,14 +208,31 @@ function ProductDetailPage() {
             <dd>{formatDate(product.createdAt)}</dd>
           </dl>
 
+          {cartAddedOpen && (
+            <ConfirmModal
+              icon="shopping_bag"
+              title="장바구니에 담았어요"
+              message="장바구니로 이동할까요?"
+              confirmText="장바구니 보기"
+              cancelText="계속 둘러보기"
+              onConfirm={goToCart}
+              onClose={closeCartAdded}
+            />
+          )}
+
           {isAvailable ? (
             <div className={styles.actions}>
               <button type="button" className={styles.buyButton} onClick={handleBuy}>
                 바로 구매
               </button>
-              <button type="button" className={styles.cartButton} onClick={handleAddToCart}>
+              <button
+                type="button"
+                className={styles.cartButton}
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+              >
                 <span className="material-symbols-outlined" aria-hidden="true">add_shopping_cart</span>
-                장바구니 담기
+                {isAddingToCart ? '담는 중...' : '장바구니 담기'}
               </button>
             </div>
           ) : (

@@ -7,6 +7,7 @@ function ConfirmModal({
   message,
   confirmText = '확인',
   cancelText = '취소',
+  icon = 'lock',
   onConfirm,
   onClose,
 }) {
@@ -45,7 +46,7 @@ function ConfirmModal({
         aria-describedby="confirm-modal-message"
       >
         <span className={`material-symbols-outlined ${styles.icon}`} aria-hidden="true">
-          lock
+          {icon}
         </span>
         <h2 id="confirm-modal-title" className={styles.title}>{title}</h2>
         <p id="confirm-modal-message" className={styles.message}>{message}</p>
