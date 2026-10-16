@@ -11,6 +11,26 @@ import styles from './CartPage.module.css';
 // TODO: CartItemResponse에 thumbnailUrl·sellerName·status·sellerId가 추가되면
 //       사진, 판매자 이름, 판매완료 구분, 판매자별 배송비(판매자당 3,000원) 연결
 
+// 구매할 수 없는 상품(판매완료·숨김 등)은 상세로 이동하지 않고 삭제만 가능
+function CartItemBody({ item, children }) {
+  if (item.isPurchasable) {
+    return (
+      <Link to={`/products/${item.productId}`} className={styles.itemLink}>
+        {children}
+      </Link>
+    );
+  }
+  return <div className={`${styles.itemLink} ${styles.unavailable}`}>{children}</div>;
+}
+
+// 구매할 수 없는 이유별 표시 문구 (숨김 배지는 상태와 관계없이 우선 표시)
+// TODO: CartItemResponse에 status·hidden이 추가되기 전까지는 모두 "구매 불가"로 표시됨
+function getUnavailableLabel(item) {
+  if (item.hidden) return '숨긴 상품';
+  if (item.status === 'SOLD_OUT') return '구매완료';
+  return '구매 불가'; // DELETED, PAYMENT_PENDING
+}
+
 function CartPage() {
   usePageTitle('장바구니');
   const navigate = useNavigate();
@@ -168,17 +188,16 @@ function CartPage() {
                   disabled={!item.isPurchasable}
                   onChange={() => toggleItem(item.cartItemId)}
                 />
-                <Link
-                  to={`/products/${item.productId}`}
-                  className={`${styles.itemLink} ${item.isPurchasable ? '' : styles.unavailable}`}
-                >
+                <CartItemBody item={item}>
                   <span className={styles.thumb} aria-hidden="true">
                     <span className={`material-symbols-outlined ${styles.thumbIcon}`}>
                       potted_plant
                     </span>
                   </span>
                   <span className={styles.info}>
-                    {!item.isPurchasable && <span className={styles.badge}>구매 불가</span>}
+                    {!item.isPurchasable && (
+                      <span className={styles.badge}>{getUnavailableLabel(item)}</span>
+                    )}
                     <span className={styles.title}>{item.title}</span>
                     {item.isChangedPrice && (
                       <span className={styles.priceChanged}>
@@ -187,7 +206,7 @@ function CartPage() {
                     )}
                   </span>
                   <strong className={styles.price}>{formatPrice(Number(item.nowPrice))}</strong>
-                </Link>
+                </CartItemBody>
                 <button
                   type="button"
                   className={styles.removeButton}
