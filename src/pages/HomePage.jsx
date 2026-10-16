@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import SpeciesFilter from '../components/product/SpeciesFilter';
 import usePageTitle from '../hooks/usePageTitle';
-import { getProducts } from '../api/productApi';
+import { getProducts, getSpecies } from '../api/productApi';
 import {
   PRODUCT_SORTS,
   SPECIES_CATEGORIES,
@@ -15,7 +15,8 @@ import styles from './HomePage.module.css';
 
 const PAGE_SIZE = 20;
 
-// 빈 문자열('')은 productApi의 compactParams가 요청에서 빼므로 "필터 없음"
+// 필터는 URL 쿼리(?category=…&sort=…)에 저장 → 새로고침·뒤로 가기·링크 공유 시에도 유지
+// 빈 문자열('')은 URL에서 빠지고, productApi의 compactParams도 요청에서 빼므로 "필터 없음"
 const INITIAL_FILTERS = {
   category: '',
   speciesId: '',
@@ -53,6 +54,10 @@ const HERO_POINTS = [
   },
 ];
 
+function readFilters(searchParams) {
+  return Object.fromEntries(Object.keys(INITIAL_FILTERS).map((key) => [key, searchParams.get(key) ?? '']));
+}
+
 function getErrorMessage(error) {
   return error.response?.data?.message ?? '상품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
@@ -72,17 +77,73 @@ function FilterChip({ label, isSelected, onClick }) {
   );
 }
 
+// 가격 범위: 입력값은 적용된 가격(min·max)으로 시작 (HomePage가 적용 가격을 key로 넘겨서, 초기화되면 새로 만들어짐)
+function PriceFilter({ min, max, onApply }) {
+  const [priceInput, setPriceInput] = useState({ min, max });
+  const [priceError, setPriceError] = useState('');
+
+  const handlePriceChange = (key) => (event) => {
+    setPriceInput((prev) => ({ ...prev, [key]: event.target.value.replace(/\D/g, '') }));
+  };
+
+  const handleApplyPrice = (event) => {
+    event.preventDefault();
+
+    if (priceInput.min !== '' && priceInput.max !== '' && Number(priceInput.min) > Number(priceInput.max)) {
+      setPriceError('최소 가격이 최대 가격보다 클 수 없습니다.');
+      return;
+    }
+
+    setPriceError('');
+    onApply(priceInput);
+  };
+
+  return (
+    <form className={styles.priceGroup} onSubmit={handleApplyPrice} aria-label="가격 범위">
+      <span className={styles.filterLabel}>가격</span>
+      <label className={styles.priceField}>
+        <input
+          inputMode="numeric"
+          placeholder="최소"
+          aria-label="최소 가격"
+          value={priceInput.min}
+          onChange={handlePriceChange('min')}
+        />
+        <span>원</span>
+      </label>
+      <span className={styles.tilde} aria-hidden="true">
+        ~
+      </span>
+      <label className={styles.priceField}>
+        <input
+          inputMode="numeric"
+          placeholder="최대"
+          aria-label="최대 가격"
+          value={priceInput.max}
+          onChange={handlePriceChange('max')}
+        />
+        <span>원</span>
+      </label>
+      <button type="submit" className={styles.outlineButton}>
+        적용
+      </button>
+      {priceError && <p className={styles.priceError}>{priceError}</p>}
+    </form>
+  );
+}
+
 function HomePage() {
   // 헤더 검색창에서 넘어온 검색어 (/search?keyword=…), 없으면 ''
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword')?.trim() ?? '';
+  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
 
   usePageTitle(keyword ? `'${keyword}' 검색 결과` : undefined);
 
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
-  const [selectedSpecies, setSelectedSpecies] = useState(null); // { speciesId, name } — 화면 표시용
-  const [priceInput, setPriceInput] = useState({ min: '', max: '' });
-  const [priceError, setPriceError] = useState('');
+  // URL에는 speciesId만 있으므로 품종 이름은 따로 보관 (새로고침 시에는 품종 상세 API로 다시 가져옴)
+  const [speciesInfo, setSpeciesInfo] = useState(null); // { speciesId, name }
+  const selectedSpecies =
+    filters.speciesId && String(speciesInfo?.speciesId) === filters.speciesId ? speciesInfo : null;
 
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(0);
@@ -94,10 +155,52 @@ function HomePage() {
 
   // 정렬을 뺀 조건이 하나라도 있으면 "필터 적용 중"
   const isFiltered = Object.entries(filters).some(([key, value]) => key !== 'sort' && value !== '');
+  // 정렬까지 포함해 바꾼 게 있으면 "필터 초기화" 버튼 활성화
+  const hasAnyFilter = isFiltered || filters.sort !== '';
   const hasMore = page + 1 < totalPages;
   const categoryLabel = SPECIES_CATEGORIES.find((item) => item.value === filters.category)?.label;
 
-  const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+  // 바뀐 필터만 URL에 반영 (빈 값은 URL에서 삭제, 검색어는 그대로 유지)
+  // replace: 필터를 누를 때마다 방문 기록이 쌓이지 않도록 (뒤로 가기 한 번에 이전 페이지로)
+  const updateFilters = (changes) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        Object.entries(changes).forEach(([key, value]) => {
+          if (value === '') {
+            next.delete(key);
+          } else {
+            next.set(key, value);
+          }
+        });
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const updateFilter = (key, value) => updateFilters({ [key]: value });
+
+  // 새로고침·링크로 들어와 speciesId만 있을 때 품종 이름 조회
+  useEffect(() => {
+    if (!filters.speciesId || String(speciesInfo?.speciesId) === filters.speciesId) return undefined;
+
+    let ignore = false;
+    const speciesId = filters.speciesId;
+
+    getSpecies(speciesId)
+      .then((response) => {
+        if (!ignore) setSpeciesInfo({ speciesId, name: response.data.data.name });
+      })
+      .catch(() => {
+        // 이름을 못 가져와도 필터는 걸려 있으므로 해제할 수 있게 표시
+        if (!ignore) setSpeciesInfo({ speciesId, name: '선택한 품종' });
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [filters.speciesId, speciesInfo]);
 
   // 검색어나 필터가 바뀔 때마다 첫 페이지부터 다시 조회
   useEffect(() => {
@@ -149,42 +252,25 @@ function HomePage() {
 
   // 카테고리를 바꾸면 선택한 품종은 해제 (품종은 카테고리에 속하므로 결과가 0개가 되는 것을 방지)
   const handleCategoryChange = (category) => {
-    setFilters((prev) => ({ ...prev, category, speciesId: '' }));
-    setSelectedSpecies(null);
+    updateFilters({ category, speciesId: '' });
   };
 
   const handleSpeciesSelect = (species) => {
-    setSelectedSpecies({ speciesId: species.speciesId, name: species.name });
-    updateFilter('speciesId', species.speciesId);
+    const speciesId = String(species.speciesId);
+    setSpeciesInfo({ speciesId, name: species.name });
+    updateFilter('speciesId', speciesId);
   };
 
   const handleSpeciesClear = () => {
-    setSelectedSpecies(null);
     updateFilter('speciesId', '');
   };
 
-  const handlePriceChange = (key) => (event) => {
-    setPriceInput((prev) => ({ ...prev, [key]: event.target.value.replace(/\D/g, '') }));
-  };
-
-  const handleApplyPrice = (event) => {
-    event.preventDefault();
-    const { min, max } = priceInput;
-
-    if (min !== '' && max !== '' && Number(min) > Number(max)) {
-      setPriceError('최소 가격이 최대 가격보다 클 수 없습니다.');
-      return;
-    }
-
-    setPriceError('');
-    setFilters((prev) => ({ ...prev, minPrice: min, maxPrice: max }));
+  const handleApplyPrice = ({ min, max }) => {
+    updateFilters({ minPrice: min, maxPrice: max });
   };
 
   const handleReset = () => {
-    setFilters(INITIAL_FILTERS);
-    setSelectedSpecies(null);
-    setPriceInput({ min: '', max: '' });
-    setPriceError('');
+    updateFilters(INITIAL_FILTERS);
   };
 
   const renderList = () => {
@@ -365,36 +451,12 @@ function HomePage() {
         <div className={styles.divider} />
 
         <div className={styles.filterBottom}>
-          <form className={styles.priceGroup} onSubmit={handleApplyPrice} aria-label="가격 범위">
-            <span className={styles.filterLabel}>가격</span>
-            <label className={styles.priceField}>
-              <input
-                inputMode="numeric"
-                placeholder="최소"
-                aria-label="최소 가격"
-                value={priceInput.min}
-                onChange={handlePriceChange('min')}
-              />
-              <span>원</span>
-            </label>
-            <span className={styles.tilde} aria-hidden="true">
-              ~
-            </span>
-            <label className={styles.priceField}>
-              <input
-                inputMode="numeric"
-                placeholder="최대"
-                aria-label="최대 가격"
-                value={priceInput.max}
-                onChange={handlePriceChange('max')}
-              />
-              <span>원</span>
-            </label>
-            <button type="submit" className={styles.outlineButton}>
-              적용
-            </button>
-            {priceError && <p className={styles.priceError}>{priceError}</p>}
-          </form>
+          <PriceFilter
+            key={`${filters.minPrice}~${filters.maxPrice}`}
+            min={filters.minPrice}
+            max={filters.maxPrice}
+            onApply={handleApplyPrice}
+          />
 
           <div className={styles.sorts} role="group" aria-label="정렬">
             {PRODUCT_SORTS.map((item) => {
@@ -413,14 +475,22 @@ function HomePage() {
             })}
           </div>
 
-          <label className={styles.onSaleToggle}>
-            <input
-              type="checkbox"
-              checked={filters.onSale === 'true'}
-              onChange={(event) => updateFilter('onSale', event.target.checked ? 'true' : '')}
-            />
-            판매 중만
-          </label>
+          <div className={styles.filterActions}>
+            <label className={styles.onSaleToggle}>
+              <input
+                type="checkbox"
+                checked={filters.onSale === 'true'}
+                onChange={(event) => updateFilter('onSale', event.target.checked ? 'true' : '')}
+              />
+              판매 중만
+            </label>
+
+            {/* 필터·정렬을 한 번에 초기화 (검색어는 유지) */}
+            <button type="button" className={styles.outlineButton} onClick={handleReset} disabled={!hasAnyFilter}>
+              <span className="material-symbols-outlined">restart_alt</span>
+              필터 초기화
+            </button>
+          </div>
         </div>
       </section>
 

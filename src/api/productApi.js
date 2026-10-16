@@ -15,6 +15,10 @@ export function searchSpecies(params) {
   return client.get('/api/v1/species', { params });
 }
 
+export function getSpecies(speciesId) {
+  return client.get(`/api/v1/species/${speciesId}`);
+}
+
 // 업로드 링크 발급: files = [{ contentType, size }] → [{ uploadUrl, imageUrl }]
 export function issueImageUploadUrls(files) {
   return client.post('/api/v1/products/images/upload-urls', { files });
