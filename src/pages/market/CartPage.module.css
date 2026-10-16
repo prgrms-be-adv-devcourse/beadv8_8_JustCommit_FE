@@ -343,3 +343,14 @@
   text-align: center;
   color: #414844;
 }
+
+/* 썸네일 칸: 사진이 칸을 채우고 둥근 모서리 밖은 잘림 */
+.thumb {
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

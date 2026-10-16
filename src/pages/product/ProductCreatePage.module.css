@@ -114,3 +114,13 @@
   font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
 }
 .submitButton:disabled { background: #e2e5e2; color: #6e7571; cursor: not-allowed; }
+
+/* 필수 항목 누락 안내 (빨간색) */
+.notice.noticeError {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.notice.noticeError span {
+  color: #b3261e;
+}

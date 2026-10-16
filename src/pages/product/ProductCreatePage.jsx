@@ -162,7 +162,9 @@ function ProductCreatePage() {
 
   // ── 등록 ──
   const priceNumber = Number(price);
+  const hasPhoto = photos.length > 0; // 사진 최소 1장 필수
   const canSubmit =
+    hasPhoto &&
     species !== null &&
     title.trim() !== '' &&
     priceNumber > 0 &&
@@ -379,6 +381,13 @@ function ProductCreatePage() {
           <span className="material-symbols-outlined" aria-hidden="true">info</span>
           식물 1개체당 판매글 1개만 등록돼요
         </div>
+
+        {!hasPhoto && (
+          <div className={`${styles.notice} ${styles.noticeError}`} role="status">
+            <span className="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+            사진을 1장 이상 등록해 주세요
+          </div>
+        )}
 
         <button type="submit" className={styles.submitButton} disabled={!canSubmit}>
           {isSubmitting ? '등록 중...' : '상품 등록하기'}

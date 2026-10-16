@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { removeCartItem } from '../../api/cartApi';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import ProductThumbnail from '../../components/product/ProductThumbnail';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -189,10 +190,8 @@ function CartPage() {
                   onChange={() => toggleItem(item.cartItemId)}
                 />
                 <CartItemBody item={item}>
-                  <span className={styles.thumb} aria-hidden="true">
-                    <span className={`material-symbols-outlined ${styles.thumbIcon}`}>
-                      potted_plant
-                    </span>
+                  <span className={styles.thumb}>
+                    <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
                   </span>
                   <span className={styles.info}>
                     {!item.isPurchasable && (

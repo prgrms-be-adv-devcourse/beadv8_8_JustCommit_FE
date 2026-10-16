@@ -12,6 +12,7 @@ import {
 } from '../../constants/product';
 import { formatPrice } from '../../utils/format';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import ProductThumbnail from '../../components/product/ProductThumbnail';
 import styles from './ProductDetailPage.module.css';
 
 const BLOCKED_TEXT = {
@@ -136,13 +137,10 @@ function ProductDetail({ productId }) {
       <div className={styles.top}>
         <section aria-label="상품 사진" className={styles.gallery}>
           <div className={`${styles.mainPhoto} ${isSoldOut ? styles.soldOutPhoto : ''}`}>
-            {currentImage ? (
-              <img src={currentImage} alt={`${product.title} 사진 ${selected + 1}`} />
-            ) : (
-              <span className={`material-symbols-outlined ${styles.placeholderIcon}`} aria-hidden="true">
-                potted_plant
-              </span>
-            )}
+            <ProductThumbnail
+              src={currentImage}
+              alt={`${product.title} 사진 ${selected + 1}`}
+            />
             {images.length > 0 && (
               <span className={styles.counter}>
                 {selected + 1} / {images.length}
@@ -161,7 +159,7 @@ function ProductDetail({ productId }) {
                   className={`${styles.thumb} ${index === selected ? styles.thumbSelected : ''}`}
                   onClick={() => setSelected(index)}
                 >
-                  <img src={url} alt="" />
+                  <ProductThumbnail src={url} alt="" size="small" />
                 </button>
               ))}
             </div>
