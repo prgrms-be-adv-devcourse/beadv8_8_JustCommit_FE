@@ -14,6 +14,7 @@ import MyPage from './pages/member/MyPage';
 import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
+import CheckoutPage from './pages/market/CheckoutPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 
 function App() {
@@ -47,7 +48,8 @@ function App() {
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
-          <Route path="/orders/new" element={<ComingSoonPage title="주문하기" />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/orders/:orderId/complete" element={<ComingSoonPage title="주문 완료" />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
 
           {/* 정책 페이지 */}

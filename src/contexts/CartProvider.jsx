@@ -25,16 +25,20 @@ export function CartProvider({ children }) {
     };
   }, [isLoggedIn]);
 
+  // 최신 장바구니를 불러와 공유 상태에 넣고, 바로 쓸 수 있게 반환
   const refreshCart = useCallback(async () => {
     const response = await getCart();
     setCart(response.data);
+    return response.data;
   }, []);
 
+  // 담은 항목의 cartItemId를 반환 (바로 구매에서 주문서로 넘길 때 사용)
   const addToCart = useCallback(
     async (productId) => {
-      await addCartItem(productId);
+      const response = await addCartItem(productId);
       // 담기는 이미 성공했으므로 개수 갱신 실패는 에러로 보이지 않게 무시
       await refreshCart().catch(() => {});
+      return response.data;
     },
     [refreshCart],
   );
