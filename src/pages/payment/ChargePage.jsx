@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ANONYMOUS, loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { createCharge } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
@@ -20,10 +20,11 @@ function ChargePage() {
   const { balance, refreshWallet } = useWallet();
   const [searchParams] = useSearchParams();
 
-  // 주문서에서 잔액 부족으로 왔을 때 (?shortage=23000&returnTo=/orders/new...)
-  // TODO: 주문서 화면을 만들면 이 값을 넘겨서 연결
-  const shortage = Number(searchParams.get('shortage')) || 0;
-  const returnTo = safeReturnTo(searchParams.get('returnTo'));
+  const location = useLocation();
+  // 주문서에서 잔액 부족으로 왔을 때: 주문서는 이동 상태(state)로 { from, shortage }를 넘김
+  // 주소 뒤 값(?shortage=&returnTo=)으로 와도 받음
+  const shortage = Number(searchParams.get('shortage') ?? location.state?.shortage) || 0;
+  const returnTo = safeReturnTo(searchParams.get('returnTo') ?? location.state?.from);
 
   const [amount, setAmount] = useState(() => (shortage > 0 ? Math.max(shortage, MIN_AMOUNT) : 0));
   const [errorMessage, setErrorMessage] = useState('');
