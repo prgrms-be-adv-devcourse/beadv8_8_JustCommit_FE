@@ -1,0 +1,164 @@
+/* 시안 11-F 판매 주문 목록: 폭 1040px, 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.message {
+  margin: 0;
+  padding: 48px 0;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+/* 배송 상태 탭 */
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabSelected {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  border-radius: var(--radius-full);
+  background: #ecefec;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tabSelected .tabCount {
+  background: var(--color-secondary-container);
+  color: #00210f;
+}
+
+/* 주문 표: 좁은 화면에서는 표만 가로 스크롤 */
+.tableWrap {
+  overflow-x: auto;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  padding: 14px 20px;
+  background: #f4f6f4;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.table td {
+  padding: 14px 20px;
+  border-top: 1px solid #ecefec;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.table th.alignRight {
+  text-align: right;
+}
+
+.date,
+.orderNo {
+  color: var(--color-on-surface-variant);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.table td.itemCell {
+  padding: 10px 20px;
+}
+
+.itemLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.thumb {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemName {
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-decoration-color: var(--color-outline-variant);
+}
+
+.itemLink:hover .itemName {
+  text-decoration-color: currentColor;
+}
+
+.amount {
+  font-family: var(--font-headline);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
