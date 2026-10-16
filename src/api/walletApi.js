@@ -19,3 +19,13 @@ export async function getWalletBalance() {
 export function getWalletTransactions(params = {}) {
   return client.get('/api/v1/wallet/transactions', { params });
 }
+
+// 충전 요청 생성 → { chargeId, pgOrderNo(토스 orderId), amount, status } (최소 10,000원)
+export function createCharge(amount) {
+  return client.post('/api/v1/wallet/charges', { amount });
+}
+
+// 토스 결제 성공 후 승인 → { chargeId, amount, balanceAfter, ... }
+export function confirmCharge(chargeId, { paymentKey, orderId, amount }) {
+  return client.post(`/api/v1/wallet/charges/${chargeId}/confirm`, { paymentKey, orderId, amount });
+}
