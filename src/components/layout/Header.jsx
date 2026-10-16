@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import useWallet from '../../hooks/useWallet';
@@ -9,25 +9,71 @@ import styles from './Header.module.css';
 // 로그인해야 볼 수 있는 페이지 (여기서 로그아웃하면 로그인 화면으로 이동)
 const AUTH_REQUIRED_PATHS = ['/mypage', '/seller/register'];
 
+// 검색창: 입력값은 initialKeyword로 시작 (Header가 URL 검색어를 key로 넘겨서, 검색어가 바뀌면 새로 만들어짐)
+function HeaderSearch({ initialKeyword }) {
+  const navigate = useNavigate();
+  const inputRef = useRef(null);
+  const [keyword, setKeyword] = useState(initialKeyword);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      // 검색 결과 화면에서 빈 값으로 검색하면 검색 해제
+      if (initialKeyword) navigate('/');
+      return;
+    }
+    navigate(`/search?keyword=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleClear = () => {
+    setKeyword('');
+    if (initialKeyword) {
+      navigate('/');
+    } else {
+      inputRef.current?.focus();
+    }
+  };
+
+  return (
+    <form className={styles.search} onSubmit={handleSearch} role="search">
+      <button type="submit" className={styles.searchButton} aria-label="검색">
+        <span className="material-symbols-outlined">search</span>
+      </button>
+      <input
+        ref={inputRef}
+        type="text"
+        enterKeyHint="search"
+        className={styles.searchInput}
+        placeholder="식물 품종 또는 식물명 검색 (예: 몬스테라 알보, 필로덴드론)"
+        value={keyword}
+        onChange={(event) => setKeyword(event.target.value)}
+        aria-label="식물 검색"
+      />
+      {keyword && (
+        <button type="button" className={styles.clearButton} onClick={handleClear} aria-label="검색어 지우기">
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      )}
+    </form>
+  );
+}
+
 function Header() {
   const { user, isLoggedIn, isInitializing, logout } = useAuth();
   const { purchasableCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const [keyword, setKeyword] = useState('');
+  const [searchParams] = useSearchParams();
+
+  // 검색 결과 화면일 때만 검색창에 검색어를 채움
+  const searchedKeyword = location.pathname === '/search' ? (searchParams.get('keyword') ?? '').trim() : '';
 
   const isSeller = user?.role === 'SELLER';
   const showMemberMenu = !isInitializing && isLoggedIn;
   const cartBadgeText = purchasableCount > 99 ? '99+' : String(purchasableCount);
 
   const { balance: depositBalance } = useWallet(); // null = 조회 실패 또는 로딩 중
-
-  const handleSearch = (event) => {
-    event.preventDefault();
-    const trimmed = keyword.trim();
-    if (!trimmed) return;
-    navigate(`/search?keyword=${encodeURIComponent(trimmed)}`);
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -59,19 +105,7 @@ function Header() {
         </div>
 
         {/* 가운데: 검색창 */}
-        <form className={styles.search} onSubmit={handleSearch} role="search">
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="식물 품종 또는 식물명 검색 (예: 몬스테라 알보, 필로덴드론)"
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            aria-label="식물 검색"
-          />
-          <button type="submit" className={styles.searchButton} aria-label="검색">
-            <span className="material-symbols-outlined">search</span>
-          </button>
-        </form>
+        <HeaderSearch key={searchedKeyword} initialKeyword={searchedKeyword} />
 
         {/* 오른쪽 */}
         {!isInitializing && (

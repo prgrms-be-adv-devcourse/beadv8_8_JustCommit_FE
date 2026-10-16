@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import SpeciesFilter from '../components/product/SpeciesFilter';
 import usePageTitle from '../hooks/usePageTitle';
@@ -72,7 +73,11 @@ function FilterChip({ label, isSelected, onClick }) {
 }
 
 function HomePage() {
-  usePageTitle();
+  // 헤더 검색창에서 넘어온 검색어 (/search?keyword=…), 없으면 ''
+  const [searchParams] = useSearchParams();
+  const keyword = searchParams.get('keyword')?.trim() ?? '';
+
+  usePageTitle(keyword ? `'${keyword}' 검색 결과` : undefined);
 
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [selectedSpecies, setSelectedSpecies] = useState(null); // { speciesId, name } — 화면 표시용
@@ -94,7 +99,7 @@ function HomePage() {
 
   const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
-  // 필터가 바뀔 때마다 첫 페이지부터 다시 조회
+  // 검색어나 필터가 바뀔 때마다 첫 페이지부터 다시 조회
   useEffect(() => {
     let ignore = false;
 
@@ -103,7 +108,7 @@ function HomePage() {
       setErrorMessage('');
 
       try {
-        const response = await getProducts({ ...filters, page: 0, size: PAGE_SIZE });
+        const response = await getProducts({ ...filters, keyword, page: 0, size: PAGE_SIZE });
         if (ignore) return;
 
         const data = response.data.data;
@@ -123,13 +128,13 @@ function HomePage() {
     return () => {
       ignore = true;
     };
-  }, [filters]);
+  }, [filters, keyword]);
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
 
     try {
-      const response = await getProducts({ ...filters, page: page + 1, size: PAGE_SIZE });
+      const response = await getProducts({ ...filters, keyword, page: page + 1, size: PAGE_SIZE });
       const data = response.data.data;
       setProducts((prev) => [...prev, ...data.content]);
       setPage(data.page);
@@ -192,6 +197,24 @@ function HomePage() {
         <div className={styles.empty} role="alert">
           <span className={`material-symbols-outlined ${styles.emptyIcon}`}>error</span>
           <p className={styles.emptyDesc}>{errorMessage}</p>
+        </div>
+      );
+    }
+
+    if (products.length === 0 && keyword) {
+      return (
+        <div className={styles.empty}>
+          <span className={`material-symbols-outlined ${styles.emptyIcon}`}>potted_plant</span>
+          <h3 className={styles.emptyTitle}>‘{keyword}’에 맞는 식물이 없어요</h3>
+          <p className={styles.emptyDesc}>
+            {isFiltered ? '검색어를 바꾸거나 필터를 초기화해 보세요.' : '다른 검색어로 검색해 보세요.'}
+          </p>
+          {isFiltered && (
+            <button type="button" className={styles.outlineButton} onClick={handleReset}>
+              <span className="material-symbols-outlined">restart_alt</span>
+              필터 초기화
+            </button>
+          )}
         </div>
       );
     }
@@ -403,7 +426,9 @@ function HomePage() {
       <section className={styles.list} aria-labelledby="list-title">
         <div className={styles.listHeader}>
           <h2 id="list-title" className={styles.listTitle}>
-            {selectedSpecies?.name ?? (filters.category ? categoryLabel : '새로 올라온 식물')}
+            {keyword
+              ? `‘${keyword}’ 검색 결과`
+              : (selectedSpecies?.name ?? (filters.category ? categoryLabel : '새로 올라온 식물'))}
           </h2>
           {!isLoading && <span className={styles.listMeta}>{totalElements}개</span>}
         </div>

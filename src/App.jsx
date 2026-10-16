@@ -27,11 +27,12 @@ function App() {
         {/* Layout 안: 헤더·푸터 있는 페이지 */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
+          {/* 검색 결과: 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
+          <Route path="/search" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/social" element={<SocialSignupPage />} />
 
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
-          <Route path="/search" element={<ComingSoonPage title="검색 결과" />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/info" element={<MyInfoPage />} />
           <Route path="/mypage/addresses" element={<AddressPage />} />

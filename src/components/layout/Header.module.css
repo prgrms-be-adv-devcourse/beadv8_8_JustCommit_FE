@@ -69,11 +69,14 @@
 
 .searchButton {
   display: flex;
-  padding: 0 0 0 var(--space-sm);
+  flex-shrink: 0;
+  margin-right: var(--space-sm);
+  padding: 0;
   border: none;
   background: none;
   color: var(--color-on-surface-variant);
   cursor: pointer;
+  transition: color 0.2s;
 }
 
 .searchButton:hover {
@@ -82,6 +85,31 @@
 
 .searchButton :global(.material-symbols-outlined) {
   font-size: 20px;
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-left: var(--space-sm);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-outline-variant);
+  color: var(--color-on-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clearButton:hover {
+  background: var(--color-outline);
+}
+
+.clearButton :global(.material-symbols-outlined) {
+  font-size: 16px;
 }
 
 .nav {
