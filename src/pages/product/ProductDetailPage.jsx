@@ -78,6 +78,8 @@ function ProductDetail({ productId }) {
   // ConfirmModal의 useEffect가 onClose에 의존하므로 매 렌더링마다 새 함수가 되지 않게 고정
   const closeCartAdded = useCallback(() => setCartAddedOpen(false), []);
   const goToCart = () => navigate('/cart');
+  const [cartError, setCartError] = useState(null); // 담기 실패 팝업 문구 (null이면 닫힘)
+  const closeCartError = useCallback(() => setCartError(null), []);
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
@@ -92,7 +94,7 @@ function ProductDetail({ productId }) {
       setCartAddedOpen(true);
     } catch (error) {
       // 백엔드 메시지 예: "이미 추가된 상품입니다.", "구매가 불가능한 상품입니다."
-      alert(error.response?.data?.message ?? '장바구니에 담지 못했어요. 잠시 후 다시 시도해 주세요.');
+      setCartError(error.response?.data?.message ?? '잠시 후 다시 시도해 주세요.');
     } finally {
       setIsAddingToCart(false);
     }
@@ -207,13 +209,25 @@ function ProductDetail({ productId }) {
 
           {cartAddedOpen && (
             <ConfirmModal
-              icon="shopping_bag"
+              icon="shopping_cart"
               title="장바구니에 담았어요"
               message="장바구니로 이동할까요?"
               confirmText="장바구니 보기"
               cancelText="계속 둘러보기"
               onConfirm={goToCart}
               onClose={closeCartAdded}
+            />
+          )}
+
+          {cartError && (
+            <ConfirmModal
+              icon="info"
+              title="장바구니에 담지 못했어요"
+              message={cartError}
+              confirmText="확인"
+              cancelText={null}
+              onConfirm={closeCartError}
+              onClose={closeCartError}
             />
           )}
 

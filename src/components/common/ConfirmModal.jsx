@@ -51,9 +51,11 @@ function ConfirmModal({
         <h2 id="confirm-modal-title" className={styles.title}>{title}</h2>
         <p id="confirm-modal-message" className={styles.message}>{message}</p>
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button type="button" className={styles.cancelButton} onClick={onClose}>
+              {cancelText}
+            </button>
+          )}
           <button type="button" ref={confirmRef} className={styles.confirmButton} onClick={onConfirm}>
             {confirmText}
           </button>
