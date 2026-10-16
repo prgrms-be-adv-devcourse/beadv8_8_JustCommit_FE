@@ -112,8 +112,7 @@
   text-align: right;
 }
 
-.date,
-.orderNo {
+.date {
   color: var(--color-on-surface-variant);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -154,6 +153,11 @@
 
 .itemLink:hover .itemName {
   text-decoration-color: currentColor;
+}
+
+.buyer {
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .amount {

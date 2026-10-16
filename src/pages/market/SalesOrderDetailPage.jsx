@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { getSellerOrder } from '../../api/orderApi';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { SETTLEMENT_FEE_RATE, getSalesStatus } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDate, formatPhone, formatPrice } from '../../utils/format';
+import { fetchSalesOrder } from './salesOrderLoader';
 import styles from './SalesOrderDetailPage.module.css';
 
 const STEPS = [
@@ -58,10 +58,10 @@ function SalesOrderDetailPage() {
     if (!canSell) return undefined;
 
     let ignore = false;
-    getSellerOrder(sellerOrderId)
-      .then((response) => {
+    fetchSalesOrder(sellerOrderId)
+      .then((data) => {
         if (ignore) return;
-        setOrder(response.data.data ?? response.data);
+        setOrder(data);
         setLoadState('done');
       })
       .catch(() => {
@@ -161,6 +161,7 @@ function SalesOrderDetailPage() {
                   {ITEM_STATUS_LABEL[item.status] && (
                     <span className={styles.itemStatus}>{ITEM_STATUS_LABEL[item.status]}</span>
                   )}
+                  {item.speciesName && <span className={styles.species}>{item.speciesName}</span>}
                   <span className={styles.itemName}>{item.productName}</span>
                   <span className={styles.subText}>{formatPrice(Number(item.price))}</span>
                 </span>

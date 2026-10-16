@@ -149,6 +149,11 @@
   color: var(--color-on-surface-variant);
 }
 
+.species {
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
+
 .itemName {
   font-size: 15px;
   font-weight: 500;

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { getSellerOrders } from '../../api/orderApi';
 import SalesStatusBadge from '../../components/market/SalesStatusBadge';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { getSalesStatus } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDate, formatPrice } from '../../utils/format';
+import { fetchSalesOrders } from './salesOrderLoader';
 import styles from './SalesOrdersPage.module.css';
 
 const TABS = [
@@ -16,22 +16,6 @@ const TABS = [
   { value: 'DELIVERED', label: '배송 완료' },
   { value: 'CONFIRMED', label: '구매 확정' },
 ];
-
-const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
-const MAX_PAGES = 10; // 안전장치: 최대 500건까지
-
-// TODO: 백엔드에 배송 상태 조회 조건·탭별 개수가 생기면 페이지 단위 조회로 교체
-// 지금은 판매 주문을 전부 받아서 탭 필터와 개수를 프론트에서 계산
-async function fetchAllSellerOrders() {
-  const all = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const response = await getSellerOrders({ page, size: PAGE_SIZE });
-    const data = response.data.data ?? response.data;
-    all.push(...data.content);
-    if (page + 1 >= data.totalPages) break;
-  }
-  return all;
-}
 
 // "몬스테라 델리시오사 외 2건"
 function getItemName(order) {
@@ -52,7 +36,8 @@ function SalesOrdersPage() {
     if (!canSell) return undefined;
 
     let ignore = false;
-    fetchAllSellerOrders()
+    // TODO: 백엔드에 배송 상태 조회 조건·탭별 개수가 생기면 페이지 단위 조회로 교체
+    fetchSalesOrders()
       .then((list) => {
         if (ignore) return;
         setOrders(list.map((order) => ({ ...order, salesStatus: getSalesStatus(order) })));
@@ -104,7 +89,7 @@ function SalesOrdersPage() {
           <thead>
             <tr>
               <th scope="col">주문일</th>
-              <th scope="col">주문 번호</th>
+              <th scope="col">구매자</th>
               <th scope="col">상품</th>
               <th scope="col" className={styles.alignRight}>
                 금액
@@ -118,7 +103,7 @@ function SalesOrdersPage() {
               return (
                 <tr key={order.sellerOrderId}>
                   <td className={styles.date}>{formatDate(order.createdAt)}</td>
-                  <td className={styles.orderNo}>{order.orderNo}</td>
+                  <td className={styles.buyer}>{order.buyerName ?? '-'}</td>
                   <td className={styles.itemCell}>
                     <Link to={`/orders/seller/${order.sellerOrderId}`} className={styles.itemLink}>
                       <span className={styles.thumb}>
