@@ -43,16 +43,6 @@ function getBankName(code) {
   return BANKS.find((bank) => bank.code === code)?.shortName ?? '';
 }
 
-// 예금주 가리기: 김민 → 김*, 김채린 → 김*린, 남궁민수 → 남**수
-// TODO: 파이널 - 계좌번호처럼 백엔드(MyInfoService)에서 가려서 응답
-function maskName(name) {
-  if (!name) return '';
-  const chars = Array.from(name);
-  if (chars.length <= 1) return name;
-  if (chars.length === 2) return `${chars[0]}*`;
-  return `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`;
-}
-
 function MyPage() {
   usePageTitle('마이페이지');
   const { isLoggedIn, isInitializing } = useAuth();
@@ -119,7 +109,7 @@ function MyPage() {
               <span className={styles.accountLabel}>등록 계좌</span>
               <span>
                 {[getBankName(myInfo.account.bankCode), myInfo.account.maskedAccountNo].filter(Boolean).join(' ')} (
-                {maskName(myInfo.account.accountHolder)})
+                {myInfo.account.accountHolder})
               </span>
             </p>
           )}
