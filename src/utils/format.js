@@ -44,3 +44,14 @@ export function formatPhone(phone) {
   if (!phone || phone.length !== 11) return phone ?? '';
   return `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7)}`;
 }
+
+/**
+ * 날짜를 "2026.10.12" 형태로 변환 (withTime이면 "2026.10.12 09:41")
+ */
+export function formatDate(value, withTime = false) {
+  if (!value) return '';
+  const date = new Date(value);
+  const pad = (number) => String(number).padStart(2, '0');
+  const day = `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+  return withTime ? `${day} ${pad(date.getHours())}:${pad(date.getMinutes())}` : day;
+}

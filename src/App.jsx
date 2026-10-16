@@ -23,6 +23,8 @@ import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
 import OrderFailPage from './pages/market/OrderFailPage';
 import MyProductsPage from './pages/product/MyProductsPage';
+import SalesOrdersPage from './pages/market/SalesOrdersPage';
+import SalesOrderDetailPage from './pages/market/SalesOrderDetailPage';
 
 function App() {
   return (
@@ -46,7 +48,8 @@ function App() {
           <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
-          <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
+          <Route path="/orders/seller" element={<SalesOrdersPage />} />
+          <Route path="/orders/seller/:sellerOrderId" element={<SalesOrderDetailPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
