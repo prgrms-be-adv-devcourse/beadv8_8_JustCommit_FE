@@ -120,3 +120,12 @@
 /* 구분선은 전체 폭, 글 줄 길이만 제한 */
 .section { max-width: none; }
 .description { max-width: 760px; }
+
+/* 내 상품: 상품 수정 버튼 (링크를 버튼 모양으로) */
+.editLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}

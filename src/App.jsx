@@ -14,6 +14,7 @@ import MyPage from './pages/member/MyPage';
 import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
+import MyProductsPage from './pages/product/MyProductsPage';
 
 function App() {
   return (
@@ -34,7 +35,7 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/info" element={<MyInfoPage />} />
           <Route path="/mypage/addresses" element={<AddressPage />} />
-          <Route path="/mypage/products" element={<ComingSoonPage title="내 판매 목록" />} />
+          <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
           <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
           <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
@@ -44,6 +45,7 @@ function App() {
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
+          <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/orders/new" element={<ComingSoonPage title="주문하기" />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
 

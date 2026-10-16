@@ -1,0 +1,241 @@
+/* 폭은 시안(860px), 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+.createLink {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #1d3b2c;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* 탭 + 숨긴 상품만 보기 */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e2e5e3;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #5f6863;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabSelected {
+  border-bottom-color: #1d3b2c;
+  color: #1d3b2c;
+  font-weight: 700;
+}
+
+.tabCount {
+  font-size: 12px;
+  color: #5f6863;
+}
+
+.hiddenToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hiddenToggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #1d3b2c;
+}
+
+/* 상품 행 */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e5e3;
+  border-radius: 12px;
+}
+
+.thumb {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #e4e9e5;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+.active {
+  background: #c9f2d9;
+  color: #17432c;
+}
+
+.pending {
+  background: #ffffff;
+  color: #191c1e;
+  box-shadow: inset 0 0 0 1px #d5dad7;
+}
+
+.soldOut {
+  background: #e2e5e3;
+  color: #414844;
+}
+
+.hiddenBadge {
+  background: #fff1d6;
+  color: #6b4a0c;
+}
+
+.title {
+  overflow: hidden;
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title:hover {
+  text-decoration: underline;
+}
+
+.price {
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: #7a5410;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d5dad7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #191c1e;
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.danger {
+  color: #b4322b;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  background: #ffffff;
+  border: 1px solid #e2e5e3;
+  border-radius: 12px;
+  color: #5f6863;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.message {
+  padding: 64px 24px;
+  text-align: center;
+  color: #5f6863;
+}

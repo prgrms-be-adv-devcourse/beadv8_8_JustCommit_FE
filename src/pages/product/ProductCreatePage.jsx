@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
   createProduct,
+  getProduct,
   issueImageUploadUrls,
   searchSpecies,
+  updateProduct,
   uploadToPresignedUrl,
 } from '../../api/productApi';
 import styles from './ProductCreatePage.module.css';
@@ -16,8 +18,15 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_PHOTOS = 10;
 const TITLE_MAX_LENGTH = 100;
 const SEARCH_DELAY_MS = 300;
+const MY_PRODUCTS_PATH = '/mypage/products';
 
 let photoSeq = 0;
+
+// 새 파일: { id, file, previewUrl } / 이미 올라간 사진: { id, file: null, url, previewUrl: url }
+function toUploadedPhoto(url) {
+  photoSeq += 1;
+  return { id: photoSeq, file: null, url, previewUrl: url };
+}
 
 // 검색어와 일치하는 부분만 굵게
 function HighlightedName({ name, keyword }) {
@@ -32,13 +41,20 @@ function HighlightedName({ name, keyword }) {
   );
 }
 
-function ProductCreatePage() {
-  usePageTitle('상품 등록');
+// 등록·수정 겸용 양식 (productId가 있으면 수정 모드)
+function ProductForm({ productId }) {
+  const isEdit = Boolean(productId);
+  usePageTitle(isEdit ? '상품 수정' : '상품 등록');
   const navigate = useNavigate();
   const { user, isLoggedIn, isInitializing } = useAuth();
+  const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
   const fileInputRef = useRef(null);
 
-  const [photos, setPhotos] = useState([]); // { id, file, previewUrl }
+  // 수정 모드: 불러온 상품 (판매자·상태 확인, 화면에 없는 값 보존용)
+  const [loadedProduct, setLoadedProduct] = useState(null);
+  const [loadState, setLoadState] = useState(isEdit ? 'loading' : 'done');
+
+  const [photos, setPhotos] = useState([]);
   const [dragIndex, setDragIndex] = useState(null);
 
   const [species, setSpecies] = useState(null); // { speciesId, name }
@@ -54,13 +70,45 @@ function ProductCreatePage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 페이지를 떠날 때 미리보기 URL 해제 (메모리 정리)
+  // 페이지를 떠날 때 새 파일 미리보기 URL만 해제 (이미 올라간 사진 주소는 대상 아님)
   const photosRef = useRef(photos);
-  // 렌더링 중에 ref를 바꾸지 않고, 화면에 반영된 뒤 최신 목록으로 갱신
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
-  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), []);
+  useEffect(
+    () => () =>
+      photosRef.current.forEach((p) => {
+        if (p.file) URL.revokeObjectURL(p.previewUrl);
+      }),
+    [],
+  );
+
+  // 수정 모드: 기존 상품 정보로 양식 채우기
+  useEffect(() => {
+    if (!isEdit) return undefined;
+    let ignore = false;
+    getProduct(productId)
+      .then((response) => {
+        if (ignore) return;
+        const product = response.data.data;
+        setLoadedProduct(product);
+        setTitle(product.title ?? '');
+        setPrice(String(product.price ?? ''));
+        setDescription(product.description ?? '');
+        if (product.species) {
+          setSpecies({ speciesId: product.species.speciesId, name: product.species.name });
+          setSpeciesQuery(product.species.name);
+        }
+        setPhotos((product.imageUrls ?? []).map((url) => toUploadedPhoto(url)));
+        setLoadState('done');
+      })
+      .catch(() => {
+        if (!ignore) setLoadState('error');
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [isEdit, productId]);
 
   // 품종 검색 (입력이 멈추고 0.3초 뒤에 요청)
   useEffect(() => {
@@ -86,7 +134,32 @@ function ProductCreatePage() {
 
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
-  if (user?.role !== 'SELLER') return <Navigate to="/seller/register" replace />;
+  if (!canSell) return <Navigate to="/seller/register" replace />;
+
+  if (loadState === 'loading') {
+    return <p className={styles.stateMessage}>상품 정보를 불러오는 중...</p>;
+  }
+
+  // 수정할 수 없는 경우 (실제 권한 검사는 백엔드가 함)
+  let blockedMessage = null;
+  if (loadState === 'error') {
+    blockedMessage = '상품 정보를 불러오지 못했어요.';
+  } else if (isEdit && loadedProduct.sellerId !== user.memberId) {
+    blockedMessage = '내가 등록한 상품만 수정할 수 있어요.';
+  } else if (isEdit && loadedProduct.status !== 'ACTIVE') {
+    blockedMessage = '판매중인 상품만 수정할 수 있어요.';
+  }
+  if (blockedMessage) {
+    return (
+      <div className={styles.page}>
+        <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
+          <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+          내 판매 목록
+        </Link>
+        <p className={styles.stateMessage}>{blockedMessage}</p>
+      </div>
+    );
+  }
 
   // ── 사진 ──
   const handleFiles = (event) => {
@@ -105,18 +178,17 @@ function ProductCreatePage() {
       setErrorMessage(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요.`);
     }
 
-    const added = valid.slice(0, room).map((file) => ({
-      id: ++photoSeq,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    const added = valid.slice(0, room).map((file) => {
+      photoSeq += 1;
+      return { id: photoSeq, file, previewUrl: URL.createObjectURL(file) };
+    });
     setPhotos((prev) => [...prev, ...added]);
   };
 
   const removePhoto = (id) => {
     setPhotos((prev) => {
       const target = prev.find((p) => p.id === id);
-      if (target) URL.revokeObjectURL(target.previewUrl);
+      if (target?.file) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((p) => p.id !== id);
     });
   };
@@ -160,7 +232,7 @@ function ProductCreatePage() {
     }
   };
 
-  // ── 등록 ──
+  // ── 저장 ──
   const priceNumber = Number(price);
   const hasPhoto = photos.length > 0; // 사진 최소 1장 필수
   const canSubmit =
@@ -171,13 +243,18 @@ function ProductCreatePage() {
     description.trim() !== '' &&
     !isSubmitting;
 
-  const uploadPhotos = async () => {
-    if (photos.length === 0) return [];
-    const files = photos.map((p) => ({ contentType: p.file.type, size: p.file.size }));
-    const response = await issueImageUploadUrls(files);
-    const links = response.data.data; // 요청한 순서대로 응답
-    await Promise.all(links.map((link, i) => uploadToPresignedUrl(link.uploadUrl, photos[i].file)));
-    return links.map((link) => link.imageUrl);
+  // 새 파일만 업로드하고, 화면 순서대로 주소 목록을 만듦 (이미 올라간 사진은 주소 그대로)
+  const buildPictureUrls = async () => {
+    const newPhotos = photos.filter((p) => p.file);
+    let uploadedById = {};
+    if (newPhotos.length > 0) {
+      const files = newPhotos.map((p) => ({ contentType: p.file.type, size: p.file.size }));
+      const response = await issueImageUploadUrls(files);
+      const links = response.data.data; // 요청한 순서대로 응답
+      await Promise.all(links.map((link, i) => uploadToPresignedUrl(link.uploadUrl, newPhotos[i].file)));
+      uploadedById = Object.fromEntries(newPhotos.map((p, i) => [p.id, links[i].imageUrl]));
+    }
+    return photos.map((p) => (p.file ? uploadedById[p.id] : p.url));
   };
 
   const handleSubmit = async (event) => {
@@ -189,35 +266,52 @@ function ProductCreatePage() {
 
     let pictureUrls;
     try {
-      pictureUrls = await uploadPhotos();
+      pictureUrls = await buildPictureUrls();
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? '사진 업로드에 실패했습니다. 다시 시도해 주세요.');
       setIsSubmitting(false);
       return;
     }
 
+    const body = {
+      speciesId: species.speciesId,
+      title: title.trim(),
+      description: description.trim(),
+      price: priceNumber,
+      pictureUrls,
+      // 화면에 없는 값: 수정 시 기존 값을 그대로 보냄 (빠지면 지워질 수 있음)
+      heightCm: loadedProduct?.heightCm ?? null,
+      potSize: loadedProduct?.potSize ?? null,
+      growNote: loadedProduct?.growNote ?? null,
+    };
+
     try {
-      const response = await createProduct({
-        speciesId: species.speciesId,
-        title: title.trim(),
-        description: description.trim(),
-        price: priceNumber,
-        pictureUrls,
-      });
-      navigate(`/products/${response.data.data.productId}`, { replace: true });
+      let savedId = productId;
+      if (isEdit) {
+        await updateProduct(productId, body);
+      } else {
+        const response = await createProduct(body);
+        savedId = response.data.data.productId;
+      }
+      // 등록·수정 모두 상품 상세로 (양식 페이지는 기록에서 대체 → 뒤로 가면 이전 목록)
+      navigate(`/products/${savedId}`, { replace: true });
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? '상품 등록에 실패했습니다. 다시 시도해 주세요.');
+      const fallback = isEdit ? '상품 수정에 실패했습니다.' : '상품 등록에 실패했습니다.';
+      setErrorMessage(error.response?.data?.message ?? `${fallback} 다시 시도해 주세요.`);
       setIsSubmitting(false);
     }
   };
 
+  let submitLabel = isEdit ? '수정하기' : '등록하기';
+  if (isSubmitting) submitLabel = isEdit ? '수정 중...' : '등록 중...';
+
   return (
     <div className={styles.page}>
-      <button type="button" className={styles.backLink} onClick={() => navigate(-1)}>
+      <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
         <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-        돌아가기
-      </button>
-      <h1 className={styles.pageTitle}>상품 등록</h1>
+        내 판매 목록
+      </Link>
+      <h1 className={styles.pageTitle}>{isEdit ? '상품 수정' : '상품 등록'}</h1>
 
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         {errorMessage && (
@@ -249,7 +343,7 @@ function ProductCreatePage() {
                 onDragEnd={() => setDragIndex(null)}
                 className={`${styles.photo} ${index === 0 ? styles.coverPhoto : ''} ${dragIndex === index ? styles.dragging : ''}`}
               >
-                <img src={photo.previewUrl} alt={`선택한 사진 ${index + 1}`} />
+                <img src={photo.previewUrl} alt={`상품 사진 ${index + 1}`} />
                 {index === 0 && <span className={styles.coverBadge}>대표</span>}
                 <span className={`material-symbols-outlined ${styles.dragHandle}`} aria-hidden="true">
                   drag_indicator
@@ -389,12 +483,28 @@ function ProductCreatePage() {
           </div>
         )}
 
-        <button type="submit" className={styles.submitButton} disabled={!canSubmit}>
-          {isSubmitting ? '등록 중...' : '상품 등록하기'}
-        </button>
+        <div className={styles.formActions}>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={() => navigate(MY_PRODUCTS_PATH)}
+            disabled={isSubmitting}
+          >
+            취소
+          </button>
+          <button type="submit" className={styles.submitButton} disabled={!canSubmit}>
+            {submitLabel}
+          </button>
+        </div>
       </form>
     </div>
   );
+}
+
+// 상품 ID가 바뀌면 key로 양식을 새로 만들어 이전 입력이 남지 않게 함
+function ProductCreatePage() {
+  const { productId } = useParams();
+  return <ProductForm key={productId ?? 'new'} productId={productId} />;
 }
 
 export default ProductCreatePage;

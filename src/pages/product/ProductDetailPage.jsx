@@ -30,7 +30,7 @@ function ProductDetail({ productId }) {
   usePageTitle('상품 상세');
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
@@ -115,6 +115,8 @@ function ProductDetail({ productId }) {
   }
 
   const images = product.imageUrls ?? [];
+  // 화면 표시용 판단 (실제 수정 권한은 백엔드가 본인 상품인지 검사)
+  const isOwner = isLoggedIn && user?.memberId === product.sellerId;
   const currentImage = images[selected];
   const status = PRODUCT_STATUS[product.status] ?? { label: product.status, tone: 'pending' };
   const isAvailable = product.status === 'ACTIVE';
@@ -229,7 +231,17 @@ function ProductDetail({ productId }) {
             />
           )}
 
-          {isAvailable ? (
+          {isOwner ? (
+            <div className={styles.actions}>
+              <Link
+                to={`/products/${product.productId}/edit`}
+                className={`${styles.buyButton} ${styles.editLink}`}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">edit</span>
+                상품 수정
+              </Link>
+            </div>
+          ) : isAvailable ? (
             <div className={styles.actions}>
               <button type="button" className={styles.buyButton} onClick={handleBuy}>
                 바로 구매

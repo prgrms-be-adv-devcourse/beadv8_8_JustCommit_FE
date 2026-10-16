@@ -39,3 +39,23 @@ export async function uploadToPresignedUrl(uploadUrl, file) {
 export function getProduct(productId) {
   return client.get(`/api/v1/products/${productId}`);
 }
+
+// 내 판매 목록 (숨긴 상품 포함, 삭제된 상품 제외)
+export function getMyProducts(params = {}) {
+  return client.get('/api/v1/products/me', { params: compactParams(params) });
+}
+
+// 숨기기·숨김 해제 (판매중·판매완료만 가능)
+export function changeProductHidden(productId, hidden) {
+  return client.patch(`/api/v1/products/${productId}/hidden`, { hidden });
+}
+
+// 삭제 (판매중만 가능, 백엔드는 상태만 DELETED로 바꿈)
+export function deleteProduct(productId) {
+  return client.delete(`/api/v1/products/${productId}`);
+}
+
+// 상품 수정 (판매중인 내 상품만, 요청 형식은 등록과 같음)
+export function updateProduct(productId, form) {
+  return client.put(`/api/v1/products/${productId}`, form);
+}

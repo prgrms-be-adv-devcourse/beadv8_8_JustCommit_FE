@@ -124,3 +124,46 @@
 .notice.noticeError span {
   color: #b3261e;
 }
+
+/* 시안 폭 */
+.page {
+  max-width: 700px;
+}
+
+/* 뒤로가기가 링크가 되면서 밑줄 제거 */
+.backLink {
+  text-decoration: none;
+}
+
+.stateMessage {
+  padding: 48px 0 16px;
+  text-align: center;
+  color: #5f6863;
+}
+
+/* 취소 + 등록·수정 버튼 */
+.formActions {
+  display: flex;
+  gap: 10px;
+}
+
+.formActions .submitButton {
+  flex: 1;
+}
+
+.cancelButton {
+  flex: 0 0 120px;
+  min-height: 50px;
+  border: 1px solid #d5dad7;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #191c1e;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
