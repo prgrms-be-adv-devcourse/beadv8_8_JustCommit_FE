@@ -15,6 +15,7 @@ import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
 import MyProductsPage from './pages/product/MyProductsPage';
+import SettlementPage from './pages/settlement/SettlementPage';
 
 function App() {
   return (
@@ -40,7 +41,7 @@ function App() {
           <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
           <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
           <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
-          <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
+          <Route path="/settlements" element={<SettlementPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
           <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />

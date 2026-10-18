@@ -1,0 +1,148 @@
+/* 폭은 시안(11-H 정산) 기준, 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: var(--text-headline-lg);
+  line-height: var(--leading-headline-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* 요약 카드 3개 */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-surface-container-lowest);
+  border: 1px solid #dde2de;
+  border-radius: var(--radius-xl);
+}
+
+.cardLabel {
+  margin: 0;
+  font-size: var(--text-body-md);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.cardAmount {
+  font-family: var(--font-headline);
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.highlight {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+}
+
+.highlight .cardLabel {
+  color: #cfe3d7;
+}
+
+.highlight .cardAmount {
+  color: var(--color-on-primary);
+}
+
+/* 정산 내역 */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.subheading {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid #dde2de;
+  border-radius: var(--radius-xl);
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: var(--text-body-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  padding: 14px 20px;
+  background: #f4f6f4;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-align: left;
+}
+
+.table td {
+  padding: var(--space-md) 20px;
+  border-top: 1px solid #ecefec;
+  white-space: nowrap;
+}
+
+.table .right {
+  text-align: right;
+}
+
+.date {
+  color: var(--color-on-surface-variant);
+}
+
+.table .name {
+  font-weight: 500;
+  white-space: normal;
+}
+
+.fee {
+  color: var(--color-error);
+}
+
+.net {
+  font-family: var(--font-headline);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 상태 화면 */
+.message {
+  padding: 64px 24px;
+  text-align: center;
+  color: #5f6863;
+}
+
+.empty {
+  padding: 64px 24px;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid #dde2de;
+  border-radius: var(--radius-xl);
+  color: #5f6863;
+  text-align: center;
+}
