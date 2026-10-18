@@ -65,21 +65,13 @@ function ProductDetail({ productId }) {
   const goToLogin = (message) => setLoginPrompt(message);
   const confirmLogin = () => navigate('/login', { state: { from: location.pathname } });
 
-  const handleBuy = () => {
-    if (!isLoggedIn) {
-      goToLogin('로그인 후 구매할 수 있어요.');
-      return;
-    }
-    navigate(`/orders/new?productId=${product.productId}`);
-  };
-
-  const { addToCart } = useCart();
+  const { addToCart, refreshCart } = useCart();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartAddedOpen, setCartAddedOpen] = useState(false); // 담기 성공 팝업
   // ConfirmModal의 useEffect가 onClose에 의존하므로 매 렌더링마다 새 함수가 되지 않게 고정
   const closeCartAdded = useCallback(() => setCartAddedOpen(false), []);
   const goToCart = () => navigate('/cart');
-  const [cartError, setCartError] = useState(null); // 담기 실패 팝업 문구 (null이면 닫힘)
+  const [cartError, setCartError] = useState(null); // 실패 팝업 { title, message } (null이면 닫힘)
   const closeCartError = useCallback(() => setCartError(null), []);
 
   const handleAddToCart = async () => {
@@ -95,7 +87,41 @@ function ProductDetail({ productId }) {
       setCartAddedOpen(true);
     } catch (error) {
       // 백엔드 메시지 예: "이미 추가된 상품입니다.", "구매가 불가능한 상품입니다."
-      setCartError(error.response?.data?.message ?? '잠시 후 다시 시도해 주세요.');
+      setCartError({
+        title: '장바구니에 담지 못했어요',
+        message: error.response?.data?.message ?? '잠시 후 다시 시도해 주세요.',
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  // 바로 구매: 주문 API가 장바구니 항목 기준이라, 장바구니에 담은 뒤 그 항목 하나로 주문서 이동
+  // TODO: 바로 구매 API가 생기면 교체
+  const handleBuy = async () => {
+    if (!isLoggedIn) {
+      goToLogin('로그인 후 구매할 수 있어요.');
+      return;
+    }
+    if (isAddingToCart) return;
+
+    setIsAddingToCart(true);
+    try {
+      let cartItemId;
+      try {
+        cartItemId = await addToCart(product.productId);
+      } catch (error) {
+        // 이미 담은 상품이면 기존 장바구니 항목으로 주문
+        const latestCart = await refreshCart().catch(() => null);
+        cartItemId = latestCart?.items.find((item) => item.productId === product.productId)?.cartItemId;
+        if (!cartItemId) throw error;
+      }
+      navigate(`/checkout?items=${cartItemId}`);
+    } catch (error) {
+      setCartError({
+        title: '주문서로 이동하지 못했어요',
+        message: error.response?.data?.message ?? '잠시 후 다시 시도해 주세요.',
+      });
     } finally {
       setIsAddingToCart(false);
     }
@@ -222,8 +248,8 @@ function ProductDetail({ productId }) {
           {cartError && (
             <ConfirmModal
               icon="info"
-              title="장바구니에 담지 못했어요"
-              message={cartError}
+              title={cartError.title}
+              message={cartError.message}
               confirmText="확인"
               cancelText={null}
               onConfirm={closeCartError}
@@ -243,7 +269,12 @@ function ProductDetail({ productId }) {
             </div>
           ) : isAvailable ? (
             <div className={styles.actions}>
-              <button type="button" className={styles.buyButton} onClick={handleBuy}>
+              <button
+                type="button"
+                className={styles.buyButton}
+                onClick={handleBuy}
+                disabled={isAddingToCart}
+              >
                 바로 구매
               </button>
               <button

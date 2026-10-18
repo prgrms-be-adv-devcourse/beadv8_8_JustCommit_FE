@@ -4,7 +4,7 @@ import Footer from './Footer';
 import styles from './Layout.module.css';
 
 // 이 경로로 시작하는 페이지는 푸터를 숨김
-const HIDE_FOOTER_PREFIXES = ['/mypage'];
+const HIDE_FOOTER_PREFIXES = ['/mypage', '/wallet', '/deposit'];
 
 function Layout() {
   const { pathname } = useLocation();
