@@ -60,5 +60,5 @@ export function getMySettlements() {
   if (USE_DUMMY) {
     return Promise.resolve({ data: { data: DUMMY_SETTLEMENTS } });
   }
-  return client.get('/api/v1/settlements/me');
+  return client.get('/api/v1/settlements');
 }

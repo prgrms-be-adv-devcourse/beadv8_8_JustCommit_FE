@@ -24,8 +24,7 @@ function formatDate(value) {
 function SettlementPage() {
   usePageTitle('정산');
   const { user, isLoggedIn, isInitializing } = useAuth();
-  const canSell = true;
-//  const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
+  const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
   const [settlements, setSettlements] = useState([]);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
@@ -52,9 +51,9 @@ function SettlementPage() {
   if (isInitializing) {
     return <p className={styles.message}>불러오는 중...</p>;
   }
-  //if (!isLoggedIn) {
-  //  return <Navigate to="/login" replace state={{ from: '/settlements' }} />;
-  //}
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: '/settlements' }} />;
+  }
   if (!canSell) {
     return <Navigate to="/seller/register" replace />;
   }
