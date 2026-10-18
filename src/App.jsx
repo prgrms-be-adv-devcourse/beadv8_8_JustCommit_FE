@@ -69,6 +69,10 @@ function App() {
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
 
+        </Route>
+
+        {/* 404: 헤더는 보이고 푸터는 숨김 */}
+        <Route element={<Layout hideFooter />}>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
