@@ -1,0 +1,418 @@
+/* 시안 주문 상세: 폭 960px, 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-bottom: 80px;
+}
+
+.backLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 var(--space-xs);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-body-md);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.backLink :global(.material-symbols-outlined) {
+  font-size: 20px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: var(--text-headline-lg);
+  line-height: var(--leading-headline-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: var(--text-headline-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* 주문 정보 */
+.infoCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+}
+
+.infoGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px var(--space-lg);
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.infoItem dt {
+  font-size: var(--text-body-sm);
+  color: var(--color-on-surface-variant);
+}
+
+.infoItem dd {
+  margin: 0;
+  font-size: var(--text-label-lg);
+  font-weight: 600;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  /* 주문 번호(ORD-xxxx)가 하이픈 뒤에서 통째로 넘어가지 않고 칸을 채운 뒤 줄바꿈되게 */
+  word-break: break-all;
+}
+
+.amountBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.totalAmount {
+  font-family: var(--font-headline);
+  font-size: var(--text-headline-sm);
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.amountDetail {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-on-surface-variant);
+}
+
+.infoItem .address {
+  font-size: var(--text-body-md);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* 자동 구매 확정 안내 */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--space-md) 20px;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-size: var(--text-label-lg);
+  font-weight: 600;
+}
+
+.notice :global(.material-symbols-outlined) {
+  color: var(--color-secondary);
+}
+
+/* 주문 상품 */
+.goods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.goodsCount {
+  font-family: var(--font-body);
+  font-size: var(--text-label-lg);
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+}
+
+.sellerGroup {
+  overflow: hidden;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+}
+
+.sellerHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 14px var(--space-lg);
+  background: var(--color-surface-container-low);
+  font-size: var(--text-label-lg);
+}
+
+.sellerHeader :global(.material-symbols-outlined) {
+  font-size: 20px;
+  color: var(--color-secondary);
+}
+
+.shippingFee {
+  margin-left: auto;
+  font-size: var(--text-body-sm);
+  color: var(--color-on-surface-variant);
+}
+
+.itemList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: 20px var(--space-lg);
+  border-top: 1px solid var(--color-outline-variant);
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.muted {
+  opacity: 0.5;
+}
+
+.thumb {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.itemName {
+  color: inherit;
+  font-size: var(--text-label-lg);
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.itemName:hover {
+  text-decoration: underline;
+}
+
+.itemPrice {
+  font-family: var(--font-headline);
+  font-size: var(--text-body-lg);
+  font-weight: 700;
+}
+
+.badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-label-md);
+  font-weight: 600;
+}
+
+.paid {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-fixed-variant);
+}
+
+.completed {
+  background: var(--color-primary-fixed);
+  color: var(--color-on-primary-fixed);
+}
+
+.pending {
+  background: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed-variant);
+}
+
+.closed {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+/* 배송 단계 */
+.steps {
+  margin: 0;
+  padding: var(--space-md) var(--space-sm) 14px;
+  list-style: none;
+  display: flex;
+  border-radius: var(--radius-lg);
+  background: var(--color-background);
+}
+
+.step {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.stepLine {
+  position: absolute;
+  top: 15px;
+  left: calc(-50% + 20px);
+  width: calc(100% - 40px);
+  height: 2px;
+  background: var(--color-outline-variant);
+}
+
+.stepCircle {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-outline);
+}
+
+.stepCircle :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+.stepLabel {
+  font-size: var(--text-body-sm);
+  color: var(--color-on-surface-variant);
+}
+
+.stepTime {
+  margin-top: -4px;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepDone .stepLine {
+  background: var(--color-secondary);
+}
+
+.stepDone .stepCircle {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+  color: var(--color-on-secondary);
+}
+
+.stepCurrent .stepCircle {
+  box-shadow: 0 0 0 4px var(--color-secondary-container);
+}
+
+.stepCurrent .stepLabel {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.cancelledNote {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: var(--text-body-md);
+  color: var(--color-on-surface-variant);
+}
+
+.cancelledNote :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+/* 안내 + 버튼 */
+.itemFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.deliveryNote {
+  margin-right: auto;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.cancelButton,
+.confirmButton {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-error);
+}
+
+.confirmButton {
+  border: 0;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.cancelButton:disabled,
+.confirmButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 640px) {
+  .item {
+    padding: var(--space-md);
+  }
+
+  .thumb {
+    width: 56px;
+    height: 56px;
+  }
+
+  .stepLabel {
+    font-size: 11px;
+  }
+}

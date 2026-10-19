@@ -7,6 +7,26 @@ export function formatPrice(amount) {
 }
 
 /**
+ * 날짜를 "2026.10.15" 형태로 변환
+ */
+export function formatDate(value) {
+  const date = new Date(value);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}.${month}.${day}`;
+}
+
+/**
+ * 날짜·시각을 "2026.10.15 14:32" 형태로 변환
+ */
+export function formatDateTime(value) {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${formatDate(value)} ${hours}:${minutes}`;
+}
+
+/**
  * 초를 "04:59" 형태로 변환
  */
 export function formatTime(totalSeconds) {
@@ -46,12 +66,9 @@ export function formatPhone(phone) {
 }
 
 /**
- * 날짜를 "2026.10.12" 형태로 변환 (withTime이면 "2026.10.12 09:41")
+ * 휴대폰 번호 가운데를 가려 "010-****-5678" 형태로 변환 (11자리가 아니면 그대로)
  */
-export function formatDate(value, withTime = false) {
-  if (!value) return '';
-  const date = new Date(value);
-  const pad = (number) => String(number).padStart(2, '0');
-  const day = `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
-  return withTime ? `${day} ${pad(date.getHours())}:${pad(date.getMinutes())}` : day;
+export function maskPhone(phone) {
+  if (!phone || phone.length !== 11) return phone ?? '';
+  return `${phone.slice(0, 3)}-****-${phone.slice(7)}`;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import BackLink from '../../components/common/BackLink';
 import { getWalletTransactions } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -34,6 +35,14 @@ const TABS = [
   { key: 'REFUND', label: '환불', types: ['ORDER_REFUND', 'ORDER_ITEM_CANCEL_REFUND', 'SHIPPING_FEE_REFUND'] },
   { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE', 'CASH_OUT', 'CASH_OUT_CANCEL'] },
 ];
+
+const EMPTY_TEXT = {
+  ALL: '거래가 발생하면 여기에 내역이 표시돼요.',
+  CHARGE: '예치금을 충전하면 여기에 내역이 표시돼요.',
+  PAYMENT: '상품을 결제하면 여기에 내역이 표시돼요.',
+  REFUND: '환불이 완료되면 여기에 내역이 표시돼요.',
+  SETTLEMENT: '판매 정산이 완료되면 여기에 내역이 표시돼요.',
+};
 
 // 2026-10-16T15:12:31 → 2026.10.16
 function formatDate(value) {
@@ -103,7 +112,7 @@ function WalletPage() {
             receipt_long
           </span>
           <h3 className={styles.emptyTitle}>{emptyTitle}</h3>
-          <p className={styles.emptyText}>예치금을 충전하면 여기에 내역이 쌓여요.</p>
+          <p className={styles.emptyText}>{EMPTY_TEXT[tab]}</p>
         </div>
       );
     }
@@ -136,6 +145,7 @@ function WalletPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <h1 className={styles.heading}>예치금</h1>
 
       <section aria-label="보유 예치금" className={styles.balanceCard}>

@@ -25,7 +25,8 @@ function OrderCompletePage() {
 
     getOrder(orderId)
       .then((response) => {
-        if (!ignore) setFetchedOrder(response.data.data);
+        // 주문 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
+        if (!ignore) setFetchedOrder(response.data.data ?? response.data);
       })
       .catch(() => {
         if (!ignore) setLoadError(true);

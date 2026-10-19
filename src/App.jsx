@@ -22,9 +22,13 @@ import CheckoutPage from './pages/market/CheckoutPage';
 import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
 import OrderFailPage from './pages/market/OrderFailPage';
+import OrderListPage from './pages/market/OrderListPage';
+import OrderDetailPage from './pages/market/OrderDetailPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 import SalesOrdersPage from './pages/market/SalesOrdersPage';
 import SalesOrderDetailPage from './pages/market/SalesOrderDetailPage';
+import SettlementPage from './pages/settlement/SettlementPage';
+import NotificationPage from './pages/notification/NotificationPage';
 
 function App() {
   return (
@@ -47,13 +51,13 @@ function App() {
           <Route path="/mypage/info" element={<MyInfoPage />} />
           <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
-          <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
+          <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<SalesOrdersPage />} />
           <Route path="/orders/seller/:sellerOrderId" element={<SalesOrderDetailPage />} />
           <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
+          <Route path="/settlements" element={<SettlementPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
+          <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/deposit/charge" element={<ChargePage />} />
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
           <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
@@ -62,7 +66,7 @@ function App() {
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/fail" element={<OrderFailPage />} />
-          <Route path="/orders/:orderId" element={<ComingSoonPage title="주문 상세" />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
           <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
@@ -71,7 +75,10 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
 
+        {/* 404: 헤더는 보이고 푸터는 숨김 */}
+        <Route element={<Layout hideFooter />}>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

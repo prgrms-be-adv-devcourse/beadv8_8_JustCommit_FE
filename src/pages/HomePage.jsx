@@ -45,11 +45,11 @@ const HERO_POINTS = [
   {
     icon: 'payments',
     title: '구매 확정 후 정산',
-    description: '구매자가 구매를 확정하면 판매자에게 정산돼요.',
+    description: '구매자가 구매를 확정하면\n판매자에게 정산돼요.',
   },
   {
     icon: 'local_shipping',
-    title: '배송 완료 3일 뒤 자동 구매 확정',
+    title: '배송 완료 3일 뒤 자동\n구매 확정',
     description: '배송이 끝나고 3일이 지나면 자동으로 구매 확정돼요.',
   },
 ];
@@ -130,6 +130,17 @@ function PriceFilter({ min, max, onApply }) {
       {priceError && <p className={styles.priceError}>{priceError}</p>}
     </form>
   );
+}
+
+// 문구의 \n 위치: 설명 3칸이 가로로 나란히일 때만 줄바꿈 (좁아지면 CSS로 숨기고 띄어쓰기로 이어짐)
+function renderLines(text) {
+  return text.split('\n').map((line, index) => (
+    <span key={line}>
+      {index > 0 && ' '}
+      {index > 0 && <br className={styles.pointBreak} />}
+      {line}
+    </span>
+  ));
 }
 
 function HomePage() {
@@ -365,7 +376,9 @@ function HomePage() {
         <section className={styles.hero} aria-labelledby="hero-title">
           <div className={styles.heroText}>
             <h1 id="hero-title" className={styles.heroTitle}>
-              반려식물을 택배로 사고팔아요
+              반려식물을 택배로
+              <br />
+              사고팔아요
             </h1>
             <p className={styles.heroDesc}>모든 거래는 택배로, 결제는 예치금으로만 이뤄져요.</p>
           </div>
@@ -376,8 +389,8 @@ function HomePage() {
                   {point.icon}
                 </span>
                 <div>
-                  <strong>{point.title}</strong>
-                  <p>{point.description}</p>
+                  <strong>{renderLines(point.title)}</strong>
+                  <p>{renderLines(point.description)}</p>
                 </div>
               </li>
             ))}

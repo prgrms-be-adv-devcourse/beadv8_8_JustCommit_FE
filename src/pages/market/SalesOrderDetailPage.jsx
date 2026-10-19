@@ -4,7 +4,7 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { SETTLEMENT_FEE_RATE, getSalesStatus } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { formatDate, formatPhone, formatPrice } from '../../utils/format';
+import { formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import { fetchSalesOrder } from './salesOrderLoader';
 import styles from './SalesOrderDetailPage.module.css';
 
@@ -38,12 +38,6 @@ const ITEM_STATUS_LABEL = {
   REFUNDED: '환불 완료',
   CONFIRMED: '구매 확정',
 };
-
-// "010-1234-5678" → "010-****-5678"
-function maskPhone(phone) {
-  const formatted = formatPhone(phone);
-  return formatted.replace(/^(\d{3})-\d{3,4}-(\d{4})$/, '$1-****-$2');
-}
 
 function SalesOrderDetailPage() {
   usePageTitle('판매 주문 상세');
@@ -125,7 +119,7 @@ function SalesOrderDetailPage() {
       <div className={styles.titleBlock}>
         <h1 className={styles.heading}>판매 주문 상세</h1>
         <p className={styles.meta}>
-          주문 번호 {order.orderNo} · {formatDate(order.createdAt, true)} · 구매자{' '}
+          주문 번호 {order.orderNo} · {formatDateTime(order.createdAt)} · 구매자{' '}
           {order.recipientName}
         </p>
       </div>
