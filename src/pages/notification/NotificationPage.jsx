@@ -18,12 +18,13 @@ import styles from './NotificationPage.module.css';
 
 const PAGE_SIZE = 20;
 
-// 같은 문구의 알림을 구분하는 주문 표시. 구매자는 주문 id, 판매자는 판매자 주문 id
-// TODO: 알림 응답에 주문 번호(orderNo)·상품명이 생기면 그 값으로 교체 (화면의 주문 번호는 ORD-… 형식)
-function getOrderRef(item, type) {
-  if (type.role === 'buyer' && item.orderId) return `주문 #${item.orderId}`;
-  if (type.role === 'seller' && item.sellerOrderId) return `판매 주문 #${item.sellerOrderId}`;
-  return null;
+// 주문 번호(ORD-…)는 길고 무작위라 앞부분만 보여 주고, 전체는 마우스를 올리면 보임
+const ORDER_NO_PREVIEW_LENGTH = 10;
+
+function shortOrderNo(orderNo) {
+  return orderNo.length > ORDER_NO_PREVIEW_LENGTH
+    ? `${orderNo.slice(0, ORDER_NO_PREVIEW_LENGTH)}…`
+    : orderNo;
 }
 
 // 알림 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
@@ -160,7 +161,8 @@ function NotificationPage() {
         <ul className={styles.list}>
           {items.map((item) => {
             const type = NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE;
-            const orderRef = getOrderRef(item, type);
+            // 상품명이 있으면 제목으로 크게, 알림 문구는 그 아래 (같은 문구의 알림을 상품으로 구분)
+            const hasTitle = Boolean(item.itemSummary);
             return (
               <li key={item.notificationId}>
                 <button
@@ -173,16 +175,22 @@ function NotificationPage() {
                     {type.icon}
                   </span>
                   <span className={styles.body}>
-                    <span className={styles.meta}>
-                      <span className={styles.kind}>
-                        {type.kind}
-                        {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
-                      </span>
-                      {orderRef && <span className={styles.orderRef}>{orderRef}</span>}
+                    <span className={styles.kind}>
+                      {type.kind}
+                      {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
                     </span>
-                    <span className={styles.text}>{item.message}</span>
+                    {hasTitle && <span className={styles.title}>{item.itemSummary}</span>}
+                    <span className={hasTitle ? styles.subText : styles.text}>{item.message}</span>
                   </span>
-                  <span className={styles.time}>{formatRelativeTime(item.createdAt)}</span>
+                  <span className={styles.side}>
+                    <span className={styles.time}>{formatRelativeTime(item.createdAt)}</span>
+                    {item.orderNo && (
+                      <span className={styles.orderNo} title={`주문번호 ${item.orderNo}`}>
+                        <span className={styles.srOnly}>주문번호 </span>
+                        {shortOrderNo(item.orderNo)}
+                      </span>
+                    )}
+                  </span>
                 </button>
               </li>
             );
