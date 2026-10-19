@@ -152,8 +152,6 @@ function NotificationPage() {
         <ul className={styles.list}>
           {items.map((item) => {
             const type = NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE;
-            // 상품명이 있으면 제목으로 크게, 알림 문구는 그 아래 (같은 문구의 알림을 상품으로 구분)
-            const hasTitle = Boolean(item.itemSummary);
             return (
               <li key={item.notificationId}>
                 <button
@@ -166,12 +164,19 @@ function NotificationPage() {
                     {type.icon}
                   </span>
                   <span className={styles.body}>
-                    <span className={styles.kind}>
-                      {type.kind}
-                      {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                    {/* 분류 옆 상품명 스티커: 같은 문구의 알림을 상품으로 구분 */}
+                    <span className={styles.meta}>
+                      <span className={styles.kind}>
+                        {type.kind}
+                        {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                      </span>
+                      {item.itemSummary && (
+                        <span className={styles.itemChip} title={item.itemSummary}>
+                          {item.itemSummary}
+                        </span>
+                      )}
                     </span>
-                    {hasTitle && <span className={styles.title}>{item.itemSummary}</span>}
-                    <span className={hasTitle ? styles.subText : styles.text}>{item.message}</span>
+                    <span className={styles.text}>{item.message}</span>
                   </span>
                   <span className={styles.time}>{formatRelativeTime(item.createdAt)}</span>
                 </button>
