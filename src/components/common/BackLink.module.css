@@ -1,0 +1,17 @@
+/* 배송지 관리(AddressPage)의 "← 마이페이지"와 같은 모양 */
+.backLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 4px;
+  color: #414844;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.backLink :global(.material-symbols-outlined) {
+  font-size: 20px;
+}

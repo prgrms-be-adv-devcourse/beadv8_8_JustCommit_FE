@@ -8,7 +8,26 @@ export function createCartOrder(form) {
   return client.post('/api/v1/orders/cart', form);
 }
 
-// 주문 상세 → { orderId, orderNo, totalAmount, itemCount, status, recipient…, sellerOrders[] }
+// 구매자 주문 목록 (최신순) params = { page, size }
+// → { content: [{ orderId, orderNo, totalAmount, itemCount, status, representativeItemName, createdAt }], page, size, totalElements, totalPages }
+// 주문 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
+export function getOrders(params) {
+  return client.get('/api/v1/orders', { params });
+}
+
+// 주문 상세 → { orderId, orderNo, totalAmount, itemCount, status, createdAt, recipient…, sellerOrders[] }
+// sellerOrders[] = { id, sellerId, items[], totalAmount, shippingFee, shipmentId, shipmentStatus, deliveredAt, confirmedAt }
+// items[] = { id, productId, productName, price, status, purchaseConfirmable }
 export function getOrder(orderId) {
   return client.get(`/api/v1/orders/${orderId}`);
+}
+
+// 주문 상품 하나 취소 (택배 수거 전까지만 가능, 예치금 환불)
+export function cancelOrderItem(orderItemId) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/cancel`);
+}
+
+// 주문 상품 구매 확정 (배송 완료 후, 판매자 정산이 시작됨)
+export function confirmOrderItem(orderItemId) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/confirm`);
 }

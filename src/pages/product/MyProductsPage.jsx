@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import BackLink from '../../components/common/BackLink';
 import { Link, Navigate } from 'react-router-dom';
 import { changeProductHidden, deleteProduct, getMyProducts } from '../../api/productApi';
 import ConfirmModal from '../../components/common/ConfirmModal';
@@ -220,6 +221,7 @@ function MyProductsPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <div className={styles.header}>
         <h1 className={styles.heading}>내 판매 목록</h1>
         <Link to="/products/new" className={styles.createLink}>
