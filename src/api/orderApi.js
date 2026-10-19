@@ -16,7 +16,8 @@ export function getOrders(params) {
 }
 
 // 주문 상세 → { orderId, orderNo, totalAmount, itemCount, status, createdAt, recipient…, sellerOrders[] }
-// sellerOrders[] = { id, sellerId, items[], totalAmount, shippingFee, shipmentId, shipmentStatus, deliveredAt, confirmedAt }
+// sellerOrders[] = { id, sellerId, items[], totalAmount, shippingFee, shipmentId, shipmentStatus,
+//                    bookedAt?, pickedUpAt?, inTransitAt?, deliveredAt, confirmedAt } (? = 백엔드 추가 예정)
 // items[] = { id, productId, productName, price, status, purchaseConfirmable }
 export function getOrder(orderId) {
   return client.get(`/api/v1/orders/${orderId}`);
