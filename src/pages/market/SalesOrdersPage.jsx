@@ -66,6 +66,7 @@ function SalesOrdersPage() {
   const countOf = (status) =>
     status ? orders.filter((order) => order.salesStatus === status).length : orders.length;
   const visibleOrders = tab ? orders.filter((order) => order.salesStatus === tab) : orders;
+  const currentTab = TABS.find((item) => item.value === tab) ?? TABS[0];
 
   const renderBody = () => {
     if (loadState === 'loading') {
@@ -78,9 +79,17 @@ function SalesOrdersPage() {
     }
     if (visibleOrders.length === 0) {
       return (
-        <p className={styles.message}>
-          {tab ? '이 상태의 주문이 없어요' : '아직 들어온 주문이 없어요'}
-        </p>
+        <div className={styles.empty}>
+          <span className={`material-symbols-outlined ${styles.emptyIcon}`} aria-hidden="true">
+            local_shipping
+          </span>
+          <h3 className={styles.emptyTitle}>
+            {tab ? `${currentTab.label} 주문이 없어요` : '아직 들어온 주문이 없어요'}
+          </h3>
+          <p className={styles.emptyText}>
+            {tab ? '다른 상태의 주문을 확인해 보세요.' : '상품이 판매되면 여기에 주문이 표시돼요.'}
+          </p>
+        </div>
       );
     }
 

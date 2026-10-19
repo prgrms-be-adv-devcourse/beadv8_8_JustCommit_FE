@@ -23,11 +23,50 @@
   color: var(--color-on-surface-variant);
 }
 
+/* 주문이 없을 때 (예치금 거래 내역의 빈 상태와 같은 모양) */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 80px 24px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.emptyIcon {
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e3ece5;
+  color: #1b4332;
+  font-size: 36px;
+}
+
+.emptyTitle {
+  margin: 8px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 15px;
+  color: #414844;
+}
+
 /* 배송 상태 탭 */
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  overflow-x: auto;
   border-bottom: 1px solid var(--color-outline-variant);
 }
 
