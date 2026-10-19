@@ -10,8 +10,8 @@ import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import { formatPrice } from '../../utils/format';
 import styles from './CartPage.module.css';
 
-// TODO: CartItemResponse에 thumbnailUrl·sellerName·status·sellerId가 추가되면
-//       사진, 판매자 이름, 판매완료 구분, 판매자별 배송비(판매자당 3,000원) 연결
+// 탈퇴 등으로 판매자 회원이 없으면 sellerName이 null로 옴
+const UNKNOWN_SELLER = '알 수 없는 판매자';
 
 // 구매할 수 없는 상품(판매완료·숨김 등)은 상세로 이동하지 않고 삭제만 가능
 function CartItemBody({ item, children }) {
@@ -26,8 +26,8 @@ function CartItemBody({ item, children }) {
 }
 
 // 구매할 수 없는 이유별 배지·안내 (구매자 화면이라 삭제를 숨김보다 먼저 표시)
-// TODO: CartItemResponse에 status·hidden이 추가되기 전까지는 모두 "구매 불가"로 표시됨
-function getUnavailableInfo(item) {
+// 본인 상품은 status·hidden이 정상이라 sellerId로 구분 (백엔드가 isPurchasable=false로 내려줌)
+function getUnavailableInfo(item, memberId) {
   if (item.status === 'DELETED') {
     return { label: '구매 불가', tone: 'unavailable', reason: '판매자가 삭제한 상품이에요' };
   }
@@ -44,13 +44,20 @@ function getUnavailableInfo(item) {
       reason: '다른 분이 결제 중이에요. 결제가 취소되면 다시 살 수 있어요',
     };
   }
+  if (memberId != null && item.sellerId === memberId) {
+    return {
+      label: '내 상품',
+      tone: 'unavailable',
+      reason: '내가 판매하는 상품은 구매할 수 없어요',
+    };
+  }
   return { label: '구매 불가', tone: 'unavailable', reason: '지금은 구매할 수 없는 상품이에요' };
 }
 
 function CartPage() {
   usePageTitle('장바구니');
   const navigate = useNavigate();
-  const { isLoggedIn, isInitializing } = useAuth();
+  const { isLoggedIn, isInitializing, user } = useAuth();
   const { cart, refreshCart, removeFromCart } = useCart();
 
   const [loadError, setLoadError] = useState(false);
@@ -88,7 +95,8 @@ function CartPage() {
   );
   const purchasableItems = items.filter((item) => item.isPurchasable);
   const selectedItems = purchasableItems.filter((item) => !unselectedIds.has(item.cartItemId));
-  const allChecked = purchasableItems.length > 0 && selectedItems.length === purchasableItems.length;
+  const allChecked =
+    purchasableItems.length > 0 && selectedItems.length === purchasableItems.length;
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.nowPrice), 0);
   // 판매자별 배송비: 응답에 sellerId가 있을 때만 계산 (없으면 "주문 시 계산")
   const canCalcShipping =
@@ -205,61 +213,62 @@ function CartPage() {
           </div>
 
           <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={item.cartItemId} className={styles.item}>
-                <input
-                  type="checkbox"
-                  className={styles.checkbox}
-                  aria-label={`${item.title} 선택`}
-                  checked={item.isPurchasable && !unselectedIds.has(item.cartItemId)}
-                  disabled={!item.isPurchasable}
-                  onChange={() => toggleItem(item.cartItemId)}
-                />
-                <CartItemBody item={item}>
-                  <span className={styles.thumb}>
-                    <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
-                  </span>
-                  <span className={styles.info}>
-                    {!item.isPurchasable && (
-                      <span
-                        className={`${styles.badge} ${styles[getUnavailableInfo(item).tone]}`}
-                      >
-                        {getUnavailableInfo(item).label}
-                      </span>
-                    )}
-                    <span className={styles.title}>{item.title}</span>
-                    {item.sellerName && (
-                      <span className={styles.seller}>
-                        <span className="material-symbols-outlined" aria-hidden="true">
-                          storefront
+            {items.map((item) => {
+              const unavailable = item.isPurchasable
+                ? null
+                : getUnavailableInfo(item, user?.memberId);
+              return (
+                <li key={item.cartItemId} className={styles.item}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    aria-label={`${item.title} 선택`}
+                    checked={item.isPurchasable && !unselectedIds.has(item.cartItemId)}
+                    disabled={!item.isPurchasable}
+                    onChange={() => toggleItem(item.cartItemId)}
+                  />
+                  <CartItemBody item={item}>
+                    <span className={styles.thumb}>
+                      <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
+                    </span>
+                    <span className={styles.info}>
+                      {unavailable && (
+                        <span className={`${styles.badge} ${styles[unavailable.tone]}`}>
+                          {unavailable.label}
                         </span>
-                        {item.sellerName}
-                      </span>
-                    )}
-                    {!item.isPurchasable && (
-                      <span className={styles.reason}>{getUnavailableInfo(item).reason}</span>
-                    )}
-                    {item.isChangedPrice && (
-                      <span className={styles.priceChanged}>
-                        담을 때 {formatPrice(Number(item.price))}에서 가격이 바뀌었어요
-                      </span>
-                    )}
-                  </span>
-                  <strong className={styles.price}>{formatPrice(Number(item.nowPrice))}</strong>
-                </CartItemBody>
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  aria-label={`${item.title} 삭제`}
-                  disabled={removingIds.has(item.cartItemId)}
-                  onClick={() => removeOne(item)}
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    close
-                  </span>
-                </button>
-              </li>
-            ))}
+                      )}
+                      <span className={styles.title}>{item.title}</span>
+                      {item.sellerId != null && (
+                        <span className={styles.seller}>
+                          <span className="material-symbols-outlined" aria-hidden="true">
+                            storefront
+                          </span>
+                          {item.sellerName ?? UNKNOWN_SELLER}
+                        </span>
+                      )}
+                      {unavailable && <span className={styles.reason}>{unavailable.reason}</span>}
+                      {item.isChangedPrice && (
+                        <span className={styles.priceChanged}>
+                          담을 때 {formatPrice(Number(item.price))}에서 가격이 바뀌었어요
+                        </span>
+                      )}
+                    </span>
+                    <strong className={styles.price}>{formatPrice(Number(item.nowPrice))}</strong>
+                  </CartItemBody>
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    aria-label={`${item.title} 삭제`}
+                    disabled={removingIds.has(item.cartItemId)}
+                    onClick={() => removeOne(item)}
+                  >
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      close
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
@@ -290,7 +299,9 @@ function CartPage() {
           >
             선택 상품 주문하기{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
           </button>
-          {selectedItems.length === 0 && <p className={styles.hint}>주문할 상품을 선택해 주세요.</p>}
+          {selectedItems.length === 0 && (
+            <p className={styles.hint}>주문할 상품을 선택해 주세요.</p>
+          )}
           <p className={styles.hint}>
             배송비는 판매자별로 3,000원씩 주문 단계에서 더해져요. 구매할 수 없는 상품은 선택할 수
             없어요.
