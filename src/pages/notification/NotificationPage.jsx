@@ -18,15 +18,6 @@ import styles from './NotificationPage.module.css';
 
 const PAGE_SIZE = 20;
 
-// 주문 번호(ORD-…)는 길고 무작위라 앞부분만 보여 주고, 전체는 마우스를 올리면 보임
-const ORDER_NO_PREVIEW_LENGTH = 10;
-
-function shortOrderNo(orderNo) {
-  return orderNo.length > ORDER_NO_PREVIEW_LENGTH
-    ? `${orderNo.slice(0, ORDER_NO_PREVIEW_LENGTH)}…`
-    : orderNo;
-}
-
 // 알림 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
 async function fetchPage(page) {
   const response = await getNotifications({ page, size: PAGE_SIZE });
@@ -182,15 +173,7 @@ function NotificationPage() {
                     {hasTitle && <span className={styles.title}>{item.itemSummary}</span>}
                     <span className={hasTitle ? styles.subText : styles.text}>{item.message}</span>
                   </span>
-                  <span className={styles.side}>
-                    <span className={styles.time}>{formatRelativeTime(item.createdAt)}</span>
-                    {item.orderNo && (
-                      <span className={styles.orderNo} title={`주문번호 ${item.orderNo}`}>
-                        <span className={styles.srOnly}>주문번호 </span>
-                        {shortOrderNo(item.orderNo)}
-                      </span>
-                    )}
-                  </span>
+                  <span className={styles.time}>{formatRelativeTime(item.createdAt)}</span>
                 </button>
               </li>
             );
