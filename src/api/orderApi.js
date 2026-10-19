@@ -9,7 +9,7 @@ export function createCartOrder(form) {
 }
 
 // 구매자 주문 목록 (최신순) params = { page, size }
-// → { content: [{ orderId, orderNo, totalAmount, itemCount, status, representativeItemName, createdAt }], page, size, totalElements, totalPages }
+// → { content: [{ orderId, orderNo, totalAmount, itemCount, status, representativeItemName, thumbnailUrl, createdAt }], page, size, totalElements, totalPages }
 // 주문 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
 export function getOrders(params) {
   return client.get('/api/v1/orders', { params });
@@ -18,13 +18,13 @@ export function getOrders(params) {
 // 주문 상세 → { orderId, orderNo, totalAmount, itemCount, status, createdAt, recipient…, sellerOrders[] }
 // sellerOrders[] = { id, sellerId, items[], totalAmount, shippingFee, shipmentId, shipmentStatus,
 //                    bookedAt?, pickedUpAt?, inTransitAt?, deliveredAt, confirmedAt } (? = 백엔드 추가 예정)
-// items[] = { id, productId, productName, price, status, purchaseConfirmable }
+// items[] = { id, productId, productName, price, status, purchaseConfirmable, thumbnailUrl }
 export function getOrder(orderId) {
   return client.get(`/api/v1/orders/${orderId}`);
 }
 
 // 판매 주문 목록 (최근 주문 순) params = { page, size }
-// → { content: [{ sellerOrderId, orderId, orderNo, totalAmount, itemCount, status, representativeItemName, createdAt }], totalPages, … }
+// → { content: [{ sellerOrderId, orderId, orderNo, totalAmount, itemCount, status, representativeItemName, thumbnailUrl, createdAt }], totalPages, … }
 // totalAmount는 상품 금액 + 배송비
 export function getSellerOrders(params) {
   return client.get('/api/v1/orders/seller', { params });

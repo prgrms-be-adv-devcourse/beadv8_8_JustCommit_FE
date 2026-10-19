@@ -303,8 +303,8 @@ function OrderDetailPage() {
                         tabIndex={-1}
                         aria-hidden="true"
                       >
-                        {/* 주문 상세 응답에 사진 주소가 없어서 대체 썸네일 사용 */}
-                        <ProductThumbnail src={null} alt="" size="small" />
+                        {/* 상품 사진. 없으면(사진 없는 상품·삭제된 상품) 대체 썸네일 */}
+                        <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
                       </Link>
                       <span className={styles.itemInfo}>
                         <Link

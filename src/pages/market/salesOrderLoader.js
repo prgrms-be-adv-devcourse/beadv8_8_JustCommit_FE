@@ -76,7 +76,8 @@ export async function fetchSalesOrders() {
       ...order,
       buyerName: detail?.recipientName,
       items: detail?.items,
-      thumbnailUrl: products.get(firstProductId)?.thumbnailUrl,
+      // 서버가 주는 대표 사진 우선, 없으면 상품 조회 값
+      thumbnailUrl: order.thumbnailUrl ?? products.get(firstProductId)?.thumbnailUrl,
     };
   });
 }
@@ -89,6 +90,10 @@ export async function fetchSalesOrder(sellerOrderId) {
   const products = await fetchProductSummaries((order.items ?? []).map((item) => item.productId));
   return {
     ...order,
-    items: (order.items ?? []).map((item) => ({ ...item, ...products.get(item.productId) })),
+    items: (order.items ?? []).map((item) => {
+      const summary = products.get(item.productId);
+      // 서버가 주는 사진 우선, 없으면 상품 조회 값
+      return { ...item, ...summary, thumbnailUrl: item.thumbnailUrl ?? summary?.thumbnailUrl };
+    }),
   };
 }
