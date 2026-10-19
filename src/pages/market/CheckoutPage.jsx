@@ -245,7 +245,11 @@ function CheckoutPage() {
   const isBalanceLoaded = balance != null;
   const afterBalance = (balance ?? 0) - total;
   const isShort = isBalanceLoaded && afterBalance < 0;
-  const chargeState = { from: `${location.pathname}${location.search}` }; // 충전 후 주문서로 돌아오기
+  // 충전 후 주문서로 돌아오기 + 부족 금액 (충전 화면에서 안내·자동 입력)
+  const chargeState = {
+    from: `${location.pathname}${location.search}`,
+    shortage: isShort ? -afterBalance : 0,
+  };
 
   const canPay = isBalanceLoaded && !isShort && selectedAddress && !hasUnavailable && !isSubmitting;
 

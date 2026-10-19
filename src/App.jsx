@@ -14,6 +14,10 @@ import MyPage from './pages/member/MyPage';
 import MyInfoPage from './pages/member/mypage/MyInfoPage';
 import AddressPage from './pages/member/mypage/AddressPage';
 import CartPage from './pages/market/CartPage';
+import WalletPage from './pages/payment/WalletPage';
+import ChargePage from './pages/payment/ChargePage';
+import ChargeSuccessPage from './pages/payment/ChargeSuccessPage';
+import ChargeFailPage from './pages/payment/ChargeFailPage';
 import CheckoutPage from './pages/market/CheckoutPage';
 import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
@@ -45,11 +49,13 @@ function App() {
           <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
-          <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
+          <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
-          <Route path="/deposit/charge" element={<ComingSoonPage title="예치금 충전" />} />
+          <Route path="/deposit/charge" element={<ChargePage />} />
+          <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
+          <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
@@ -65,6 +71,10 @@ function App() {
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
 
+        </Route>
+
+        {/* 404: 헤더는 보이고 푸터는 숨김 */}
+        <Route element={<Layout hideFooter />}>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
