@@ -309,6 +309,13 @@
   color: var(--color-on-surface-variant);
 }
 
+.stepTime {
+  margin-top: -4px;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
 .stepDone .stepLine {
   background: var(--color-secondary);
 }

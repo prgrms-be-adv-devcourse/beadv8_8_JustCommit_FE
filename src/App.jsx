@@ -26,6 +26,8 @@ import OrderListPage from './pages/market/OrderListPage';
 import OrderDetailPage from './pages/market/OrderDetailPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 import SettlementPage from './pages/settlement/SettlementPage';
+import NotificationPage from './pages/notification/NotificationPage';
+
 
 function App() {
   return (
@@ -53,7 +55,7 @@ function App() {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<SettlementPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/notifications" element={<ComingSoonPage title="알림" backTo="/mypage" />} />
+          <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/deposit/charge" element={<ChargePage />} />
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
           <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
@@ -71,7 +73,6 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
-
         </Route>
 
         {/* 404: 헤더는 보이고 푸터는 숨김 */}

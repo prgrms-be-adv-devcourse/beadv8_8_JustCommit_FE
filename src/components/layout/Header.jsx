@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
+import useNotification from '../../hooks/useNotification';
 import useWallet from '../../hooks/useWallet';
 import { formatPrice } from '../../utils/format';
 import styles from './Header.module.css';
@@ -72,6 +73,8 @@ function Header() {
   const isSeller = user?.role === 'SELLER';
   const showMemberMenu = !isInitializing && isLoggedIn;
   const cartBadgeText = purchasableCount > 99 ? '99+' : String(purchasableCount);
+  const { unreadCount } = useNotification();
+  const notificationBadgeText = unreadCount > 99 ? '99+' : String(unreadCount);
 
   const { balance: depositBalance } = useWallet(); // null = 조회 실패 또는 로딩 중
 
@@ -127,8 +130,17 @@ function Header() {
                   )}
                 </Link>
 
-                <Link to="/notifications" className={styles.iconButton} aria-label="알림">
+                <Link
+                  to="/notifications"
+                  className={styles.iconButton}
+                  aria-label={unreadCount > 0 ? `알림, 안 읽은 알림 ${unreadCount}개` : '알림'}
+                >
                   <span className="material-symbols-outlined">notifications</span>
+                  {unreadCount > 0 && (
+                    <span className={styles.badge} aria-hidden="true">
+                      {notificationBadgeText}
+                    </span>
+                  )}
                 </Link>
 
                 {isSeller ? (

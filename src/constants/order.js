@@ -31,11 +31,13 @@ export const SHIPMENT_STATUS = {
   CANCELLED: { label: '접수 취소', tone: 'closed', step: 0 },
 };
 
+// timeField: 주문 상세 sellerOrders[]에서 그 단계가 일어난 시각을 담는 필드 (없거나 null이면 시각을 안 보여 줌)
+// TODO: 백엔드에 bookedAt·pickedUpAt·inTransitAt이 추가되면 필드명을 확인 (지금은 deliveredAt만 응답에 있음)
 export const SHIPMENT_STEPS = [
-  { label: '택배 예약', icon: 'inventory_2' },
-  { label: '접수 완료', icon: 'package_2' },
-  { label: '배송 중', icon: 'local_shipping' },
-  { label: '배송 완료', icon: 'home' },
+  { label: '택배 예약', icon: 'inventory_2', timeField: 'bookedAt' },
+  { label: '접수 완료', icon: 'package_2', timeField: 'pickedUpAt' },
+  { label: '배송 중', icon: 'local_shipping', timeField: 'inTransitAt' },
+  { label: '배송 완료', icon: 'home', timeField: 'deliveredAt' },
 ];
 
 // 택배 수거 전 상태: 이때만 상품 취소 가능 (백엔드 SHIPMENT_NOT_CANCELABLE 규칙)
