@@ -117,10 +117,32 @@
   gap: var(--space-xs);
 }
 
+/* 분류 + 주문 표시 한 줄 */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .kind {
   font-size: 12px;
   font-weight: 600;
   color: var(--color-secondary);
+}
+
+.orderRef {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .text {

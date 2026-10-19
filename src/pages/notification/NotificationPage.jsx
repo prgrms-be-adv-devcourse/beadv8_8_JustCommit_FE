@@ -18,6 +18,14 @@ import styles from './NotificationPage.module.css';
 
 const PAGE_SIZE = 20;
 
+// 같은 문구의 알림을 구분하는 주문 표시. 구매자는 주문 id, 판매자는 판매자 주문 id
+// TODO: 알림 응답에 주문 번호(orderNo)·상품명이 생기면 그 값으로 교체 (화면의 주문 번호는 ORD-… 형식)
+function getOrderRef(item, type) {
+  if (type.role === 'buyer' && item.orderId) return `주문 #${item.orderId}`;
+  if (type.role === 'seller' && item.sellerOrderId) return `판매 주문 #${item.sellerOrderId}`;
+  return null;
+}
+
 // 알림 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
 async function fetchPage(page) {
   const response = await getNotifications({ page, size: PAGE_SIZE });
@@ -152,6 +160,7 @@ function NotificationPage() {
         <ul className={styles.list}>
           {items.map((item) => {
             const type = NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE;
+            const orderRef = getOrderRef(item, type);
             return (
               <li key={item.notificationId}>
                 <button
@@ -164,9 +173,12 @@ function NotificationPage() {
                     {type.icon}
                   </span>
                   <span className={styles.body}>
-                    <span className={styles.kind}>
-                      {type.kind}
-                      {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                    <span className={styles.meta}>
+                      <span className={styles.kind}>
+                        {type.kind}
+                        {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                      </span>
+                      {orderRef && <span className={styles.orderRef}>{orderRef}</span>}
                     </span>
                     <span className={styles.text}>{item.message}</span>
                   </span>
