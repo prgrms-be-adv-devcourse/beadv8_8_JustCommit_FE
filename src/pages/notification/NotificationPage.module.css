@@ -117,10 +117,37 @@
   gap: var(--space-xs);
 }
 
+/* 분류 + 상품명 스티커 한 줄 */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .kind {
+  flex: none;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-secondary);
+}
+
+/* 상품명 스티커: 길면 말줄임, 전체 이름은 마우스를 올리면 보임 */
+.itemChip {
+  min-width: 0;
+  max-width: 260px;
+  height: 22px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-primary-fixed-variant);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
 }
 
 .text {
@@ -136,6 +163,7 @@
 
 .time {
   flex: none;
+  align-self: flex-start;
   font-size: var(--text-body-sm);
   color: var(--color-on-surface-variant);
 }
@@ -216,9 +244,5 @@
   .item {
     gap: 10px;
     padding: var(--space-md) var(--space-md) var(--space-md) 10px;
-  }
-
-  .time {
-    align-self: flex-start;
   }
 }

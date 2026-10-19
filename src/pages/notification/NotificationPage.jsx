@@ -6,7 +6,11 @@ import {
   readAllNotifications,
   readNotification,
 } from '../../api/notificationApi';
-import { DEFAULT_NOTIFICATION_TYPE, NOTIFICATION_TYPE } from '../../constants/notification';
+import {
+  DEFAULT_NOTIFICATION_TYPE,
+  NOTIFICATION_TYPE,
+  getNotificationTarget,
+} from '../../constants/notification';
 import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -97,7 +101,7 @@ function NotificationPage() {
         // 다음에 목록을 다시 열면 안 읽음으로 남아 있음
       }
     }
-    const target = (NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE).to;
+    const target = getNotificationTarget(item);
     if (target) navigate(target);
   };
 
@@ -161,9 +165,17 @@ function NotificationPage() {
                     {type.icon}
                   </span>
                   <span className={styles.body}>
-                    <span className={styles.kind}>
-                      {type.kind}
-                      {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                    {/* 분류 옆 상품명 스티커: 같은 문구의 알림을 상품으로 구분 */}
+                    <span className={styles.meta}>
+                      <span className={styles.kind}>
+                        {type.kind}
+                        {!item.isRead && <span className={styles.srOnly}> 안 읽음</span>}
+                      </span>
+                      {item.itemSummary && (
+                        <span className={styles.itemChip} title={item.itemSummary}>
+                          {item.itemSummary}
+                        </span>
+                      )}
                     </span>
                     <span className={styles.text}>{item.message}</span>
                   </span>
