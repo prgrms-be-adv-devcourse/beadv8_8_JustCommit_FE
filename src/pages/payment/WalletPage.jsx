@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import BackLink from '../../components/common/BackLink';
 import { getWalletTransactions } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -136,6 +137,7 @@ function WalletPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <h1 className={styles.heading}>예치금</h1>
 
       <section aria-label="보유 예치금" className={styles.balanceCard}>

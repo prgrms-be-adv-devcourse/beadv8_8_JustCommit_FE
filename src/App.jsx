@@ -48,11 +48,11 @@ function App() {
           <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<OrderListPage />} />
-          <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
+          <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" backTo="/mypage" />} />
           <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
+          <Route path="/settlements" element={<ComingSoonPage title="정산" backTo="/mypage" />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/notifications" element={<ComingSoonPage title="알림" />} />
+          <Route path="/notifications" element={<ComingSoonPage title="알림" backTo="/mypage" />} />
           <Route path="/deposit/charge" element={<ChargePage />} />
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
           <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />

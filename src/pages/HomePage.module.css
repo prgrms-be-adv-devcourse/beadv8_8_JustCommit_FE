@@ -422,3 +422,36 @@
   margin: 0;
   accent-color: #012d1d;
 }
+
+/* 배너: 한글 단어 중간에서 줄이 바뀌지 않게, 문구의 \n은 넓은 화면에서만 줄바꿈 */
+.heroTitle,
+.heroDesc {
+  word-break: keep-all;
+}
+
+.heroPoint strong,
+.heroPoint p {
+  word-break: keep-all;
+}
+
+/* 설명 영역 폭 기준: 3칸 가로 배치(190px×3 + 간격 24px×2 = 618px)보다 좁으면 줄바꿈 숨김 */
+.heroPoints {
+  container-type: inline-size;
+}
+
+@container (max-width: 617px) {
+  .pointBreak {
+    display: none;
+  }
+}
+
+/* 설명 3칸 가로 배치일 때: 제목을 두 줄 높이로 맞춰 설명 시작 위치를 통일 */
+.heroPoint strong {
+  line-height: 1.4;
+}
+
+@container (min-width: 618px) {
+  .heroPoint strong {
+    min-height: 2.8em;
+  }
+}
