@@ -297,6 +297,12 @@
   background: var(--color-surface-container-lowest);
 }
 
+.settleDone {
+  border-color: var(--color-secondary-container);
+  background: var(--color-secondary-container);
+  color: #00210f;
+}
+
 .settleNotice {
   margin: 0;
   display: flex;

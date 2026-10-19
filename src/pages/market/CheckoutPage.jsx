@@ -35,19 +35,37 @@ function pickDefaultAddress(addresses) {
   return addresses.find(isDefaultAddress) ?? addresses[0] ?? null;
 }
 
-// 상품 상세(판매자·품종·사진)를 붙여 판매자별로 묶기 — 장바구니 응답에는 판매자 정보가 없음
-// TODO: CartItemResponse에 sellerId·sellerName·thumbnailUrl이 추가되면 상품 상세 조회 제거
-function groupBySeller(items, details) {
+// 탈퇴 등으로 판매자 회원이 없으면 sellerName이 null로 옴
+const UNKNOWN_SELLER = '알 수 없는 판매자';
+
+// 장바구니 응답의 판매자 정보로 판매자별 묶기 (품종 이름도 함께 채움)
+function groupBySeller(items, speciesNames) {
   const groups = new Map();
   items.forEach((item) => {
-    const detail = details[item.productId];
-    const key = detail?.sellerId ?? `unknown-${item.productId}`;
+    const key = item.sellerId ?? `unknown-${item.productId}`;
     if (!groups.has(key)) {
-      groups.set(key, { key, sellerName: detail?.sellerName ?? '판매자 정보 없음', items: [] });
+      groups.set(key, { key, sellerName: item.sellerName ?? UNKNOWN_SELLER, items: [] });
     }
-    groups.get(key).items.push({ ...item, detail });
+    groups.get(key).items.push({ ...item, speciesName: getSpeciesName(item, speciesNames) });
   });
   return [...groups.values()];
+}
+
+// 품종 이름: 장바구니 응답의 speciesName을 쓰고, 없으면 상품 상세에서 가져온 값으로 대체
+function getSpeciesName(item, speciesNames) {
+  return item.speciesName ?? speciesNames[item.productId] ?? null;
+}
+
+// 장바구니 응답에 speciesName이 없는 상품만 상세 조회 (실패한 상품은 품종 없이 표시)
+async function fetchMissingSpeciesNames(items) {
+  const missing = items.filter((item) => !item.speciesName);
+  const results = await Promise.allSettled(missing.map((item) => getProduct(item.productId)));
+  const names = {};
+  results.forEach((result, index) => {
+    const name = result.status === 'fulfilled' ? result.value.data.data?.species?.name : null;
+    if (name) names[missing[index].productId] = name;
+  });
+  return names;
 }
 
 // 배송지 고르기 팝업
@@ -131,13 +149,13 @@ function CheckoutPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const itemIdsParam = searchParams.get('items');
-  const { isLoggedIn, isInitializing } = useAuth();
+  const { isLoggedIn, isInitializing, user } = useAuth();
   const { refreshCart } = useCart();
   const { balance, refreshWallet } = useWallet();
 
-  // 주문할 장바구니 항목 + 상품 상세(판매자·품종·사진)
+  // 주문할 장바구니 항목 + 응답에 품종이 없을 때 상세에서 가져온 품종 이름
   const [orderItems, setOrderItems] = useState(null); // null = 불러오는 중
-  const [details, setDetails] = useState({}); // { [productId]: 상품 상세 }
+  const [speciesNames, setSpeciesNames] = useState({}); // { [productId]: 품종 이름 }
   const [loadError, setLoadError] = useState('');
 
   const [addresses, setAddresses] = useState(null); // null = 불러오는 중
@@ -157,15 +175,10 @@ function CheckoutPage() {
       try {
         const cart = await refreshCart();
         const items = cart.items.filter((item) => itemIds.includes(item.cartItemId));
-        // 상세 조회는 하나가 실패해도 나머지는 보여 줌 (판매자 정보 없음으로 표시)
-        const results = await Promise.allSettled(items.map((item) => getProduct(item.productId)));
+        const names = await fetchMissingSpeciesNames(items);
         if (ignore) return;
 
-        const nextDetails = {};
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') nextDetails[items[index].productId] = result.value.data.data;
-        });
-        setDetails(nextDetails);
+        setSpeciesNames(names);
         setOrderItems(items);
       } catch {
         if (!ignore) setLoadError('주문할 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
@@ -235,7 +248,7 @@ function CheckoutPage() {
     );
   }
 
-  const groups = groupBySeller(orderItems, details);
+  const groups = groupBySeller(orderItems, speciesNames);
   const selectedAddress = addresses.find((address) => address.addressId === selectedAddressId) ?? null;
   const hasUnavailable = orderItems.some((item) => !item.isPurchasable);
 
@@ -254,29 +267,24 @@ function CheckoutPage() {
   const canPay = isBalanceLoaded && !isShort && selectedAddress && !hasUnavailable && !isSubmitting;
 
   // 409 PRODUCT_UNAVAILABLE · PRICE_CHANGED: 서버가 모두 되돌려서 장바구니는 그대로 남음
-  // 에러 응답에는 상품 정보가 없어서, 장바구니와 상품 상태를 다시 조회해 문제 상품을 모음
+  // 에러 응답에는 상품 정보가 없어서, 장바구니를 다시 조회해 문제 상품을 모음
   const findFailedItems = async () => {
     try {
       const cart = await refreshCart();
       const orderedIds = orderItems.map((item) => item.cartItemId);
-      const problems = cart.items.filter(
-        (item) => orderedIds.includes(item.cartItemId) && (!item.isPurchasable || item.isChangedPrice),
-      );
-      // 결제 대기 / 판매완료 구분은 상품 상태로 (장바구니 응답에는 isPurchasable만 있음)
-      const results = await Promise.allSettled(problems.map((item) => getProduct(item.productId)));
-      return problems.map((item, index) => {
-        const detail = results[index].status === 'fulfilled' ? results[index].value.data.data : details[item.productId];
-        return {
+      const isProblem = (item) => !item.isPurchasable || item.isChangedPrice;
+      return cart.items
+        .filter((item) => orderedIds.includes(item.cartItemId) && isProblem(item))
+        .map((item) => ({
           cartItemId: item.cartItemId,
           title: item.title,
           price: Number(item.nowPrice),
           cartPrice: Number(item.price),
-          thumbnailUrl: detail?.imageUrls?.[0],
-          status: detail?.status,
+          thumbnailUrl: item.thumbnailUrl,
+          status: item.status,
           isPurchasable: item.isPurchasable,
           isChangedPrice: item.isChangedPrice,
-        };
-      });
+        }));
     } catch {
       return [];
     }
@@ -308,6 +316,12 @@ function CheckoutPage() {
       // 버튼을 누르는 사이 잔액이 줄어든 경우: 주문은 결제 대기로 남고 상품은 잠시 예약됨
       setSubmitError('잔액이 부족해 결제하지 못했어요. 예치금을 충전한 뒤 다시 결제해 주세요.');
     } catch (error) {
+      // 400 OWN_PRODUCT: 그사이 본인 상품이 섞인 경우 (장바구니 응답으로 미리 막지만 서버에서도 거절)
+      if (error.response?.data?.code === 'OWN_PRODUCT') {
+        setSubmitError('내가 판매하는 상품은 구매할 수 없어요. 장바구니에서 빼고 다시 주문해 주세요.');
+        refreshCart().catch(() => {});
+        return;
+      }
       const failedItems = error.response?.status === 409 ? await findFailedItems() : [];
       if (failedItems.length > 0) {
         navigate('/checkout/fail', { replace: true, state: { items: failedItems } });
@@ -375,15 +389,19 @@ function CheckoutPage() {
                   {group.items.map((item) => (
                     <li key={item.cartItemId} className={styles.item}>
                       <span className={styles.thumb}>
-                        <ProductThumbnail src={item.detail?.imageUrls?.[0]} alt="" size="small" />
+                        <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
                       </span>
                       <span className={styles.itemInfo}>
-                        {item.detail?.species?.name && (
-                          <span className={styles.species}>{item.detail.species.name}</span>
+                        {item.speciesName && (
+                          <span className={styles.species}>{item.speciesName}</span>
                         )}
                         <span className={styles.itemTitle}>{item.title}</span>
                         {!item.isPurchasable && (
-                          <span className={styles.itemWarning}>지금은 구매할 수 없는 상품이에요</span>
+                          <span className={styles.itemWarning}>
+                            {item.sellerId != null && item.sellerId === user?.memberId
+                              ? '내가 판매하는 상품은 구매할 수 없어요'
+                              : '지금은 구매할 수 없는 상품이에요'}
+                          </span>
                         )}
                         {item.isChangedPrice && (
                           <span className={styles.itemWarning}>

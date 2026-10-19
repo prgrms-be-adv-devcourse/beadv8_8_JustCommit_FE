@@ -4,7 +4,7 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { SETTLEMENT_FEE_RATE, getSalesStatus } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { formatDateTime, formatPrice, maskPhone } from '../../utils/format';
+import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import { fetchSalesOrder } from './salesOrderLoader';
 import styles from './SalesOrderDetailPage.module.css';
 
@@ -16,7 +16,6 @@ const STEPS = [
 ];
 
 // 지금 진행 중인 단계 (STEPS 인덱스, 4면 모든 단계 완료)
-// TODO: 백엔드 판매 주문 상세에 shipmentStatus가 생기면 실제 배송 단계가 표시됨
 function getCurrentStep(order, salesStatus) {
   if (salesStatus === 'CONFIRMED') return 4;
   switch (order.shipmentStatus) {
@@ -107,6 +106,8 @@ function SalesOrderDetailPage() {
 
   // 정산 기준: 구매 확정된 상품 금액 (백엔드 SellerOrder.settlementBaseAmount와 같은 기준)
   const isConfirmed = salesStatus === 'CONFIRMED';
+  // 백엔드는 정산 행이 있으면 COMPLETED, 없으면 NOT_SETTLED
+  const isSettled = order.settlementStatus === 'COMPLETED';
   const settleBase = items
     .filter((item) => item.status === 'CONFIRMED')
     .reduce((sum, item) => sum + Number(item.price), 0);
@@ -218,12 +219,15 @@ function SalesOrderDetailPage() {
           <h2 id="sod-settle" className={styles.cardTitle}>
             정산
           </h2>
-          {/* TODO: 백엔드 응답에 정산 상태가 생기면 "정산 완료"도 표시 */}
-          <span className={`${styles.settleBadge} ${isConfirmed ? styles.settleScheduled : ''}`}>
-            {isConfirmed ? '정산 예정' : '정산 전'}
-          </span>
+          {isSettled ? (
+            <span className={`${styles.settleBadge} ${styles.settleDone}`}>정산 완료</span>
+          ) : (
+            <span className={`${styles.settleBadge} ${isConfirmed ? styles.settleScheduled : ''}`}>
+              {isConfirmed ? '정산 예정' : '정산 전'}
+            </span>
+          )}
         </div>
-        {isConfirmed ? (
+        {isConfirmed || isSettled ? (
           <>
             <dl className={styles.settleList}>
               <div>
@@ -240,7 +244,11 @@ function SalesOrderDetailPage() {
                 <dd>{formatPrice(settleBase - fee)}</dd>
               </div>
             </dl>
-            <p className={styles.subText}>구매가 확정돼 정산을 기다리고 있어요.</p>
+            <p className={styles.subText}>
+              {isSettled
+                ? `${order.settledAt ? `${formatDate(order.settledAt)}에 ` : ''}정산됐어요.`
+                : '구매가 확정돼 정산을 기다리고 있어요.'}
+            </p>
           </>
         ) : (
           <p className={styles.settleNotice}>

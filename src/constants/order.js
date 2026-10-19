@@ -60,8 +60,7 @@ export const SETTLEMENT_FEE_RATE = 0.05;
 
 /**
  * 판매 주문의 배송 상태 키(SALES_STATUS)를 계산
- * TODO: 백엔드 판매 주문 응답에 shipmentStatus가 생기면 배송 중·배송 완료가 정확해짐
- *       지금은 주문 상태(PAID·COMPLETED·CANCELLED)와 상품 상태로만 판단
+ * 주문 상태(취소·구매 확정)를 먼저 보고, 나머지는 배송 상태(shipmentStatus)로 판단
  */
 export function getSalesStatus(order) {
   if (order.status === 'CANCELLED') return 'CANCELLED';
