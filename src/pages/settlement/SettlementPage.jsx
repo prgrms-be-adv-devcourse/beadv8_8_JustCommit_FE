@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BackLink from '../../components/common/BackLink';
 import { Navigate } from 'react-router-dom';
 import { getMySettlements } from '../../api/settlementApi';
 import useAuth from '../../hooks/useAuth';
@@ -122,6 +123,7 @@ function SettlementPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <h1 className={styles.heading}>정산</h1>
 
       <div className={styles.summary}>

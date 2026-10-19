@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BackLink from '../../components/common/BackLink';
 import { Link, Navigate } from 'react-router-dom';
 import SalesStatusBadge from '../../components/market/SalesStatusBadge';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
@@ -133,6 +134,7 @@ function SalesOrdersPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <h1 className={styles.heading}>판매 주문</h1>
 
       <div role="tablist" aria-label="배송 상태" className={styles.tabs}>
