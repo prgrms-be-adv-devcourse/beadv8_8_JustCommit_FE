@@ -21,11 +21,13 @@ export const DEFAULT_NOTIFICATION_TYPE = { kind: '알림', icon: 'notifications'
 
 // 알림을 누르면 이동할 곳
 // - 구매자: orderId가 있으면 주문 상세, 없으면(이전에 만든 알림) 주문 내역
-// - 판매자: 판매 주문 (TODO: 판매 주문 상세 화면이 생기면 /orders/seller/{sellerOrderId}로 이동)
+// - 판매자: sellerOrderId가 있으면 판매 주문 상세, 없으면 판매 주문 목록
 export function getNotificationTarget(item) {
   const { role } = NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE;
   if (role === 'buyer') return item.orderId ? `/orders/${item.orderId}` : '/orders';
-  if (role === 'seller') return '/orders/seller';
+  if (role === 'seller') {
+    return item.sellerOrderId ? `/orders/seller/${item.sellerOrderId}` : '/orders/seller';
+  }
   return null;
 }
 
