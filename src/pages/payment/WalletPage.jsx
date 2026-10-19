@@ -36,6 +36,14 @@ const TABS = [
   { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE', 'CASH_OUT', 'CASH_OUT_CANCEL'] },
 ];
 
+const EMPTY_TEXT = {
+  ALL: '거래가 발생하면 여기에 내역이 표시돼요.',
+  CHARGE: '예치금을 충전하면 여기에 내역이 표시돼요.',
+  PAYMENT: '상품을 결제하면 여기에 내역이 표시돼요.',
+  REFUND: '환불이 완료되면 여기에 내역이 표시돼요.',
+  SETTLEMENT: '판매 정산이 완료되면 여기에 내역이 표시돼요.',
+};
+
 // 2026-10-16T15:12:31 → 2026.10.16
 function formatDate(value) {
   const date = new Date(value);
@@ -104,7 +112,7 @@ function WalletPage() {
             receipt_long
           </span>
           <h3 className={styles.emptyTitle}>{emptyTitle}</h3>
-          <p className={styles.emptyText}>예치금을 충전하면 여기에 내역이 쌓여요.</p>
+          <p className={styles.emptyText}>{EMPTY_TEXT[tab]}</p>
         </div>
       );
     }
