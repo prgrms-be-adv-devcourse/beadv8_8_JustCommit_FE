@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import BackLink from '../../components/common/BackLink';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getNotifications,
@@ -188,6 +189,7 @@ function NotificationPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <div className={styles.header}>
         <h1 className={styles.heading}>알림</h1>
         {items.length > 0 && (
