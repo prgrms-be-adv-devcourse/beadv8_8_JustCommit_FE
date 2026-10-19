@@ -116,9 +116,9 @@ function OrderListPage() {
                 </div>
 
                 <div className={styles.cardBody}>
-                  {/* 주문 목록 응답에 사진 주소가 없어서 대체 썸네일 사용 */}
+                  {/* 대표 상품 사진. 없으면(사진 없는 상품·삭제된 상품) 대체 썸네일 */}
                   <span className={`${styles.thumb} ${status.muted ? styles.muted : ''}`}>
-                    <ProductThumbnail src={null} alt="" size="small" />
+                    <ProductThumbnail src={order.thumbnailUrl} alt="" size="small" />
                   </span>
                   <span className={styles.summary}>
                     <span className={styles.itemName}>
