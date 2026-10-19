@@ -298,6 +298,7 @@ function OrderDetailPage() {
                     <div className={`${styles.itemRow} ${badge.muted ? styles.muted : ''}`}>
                       <Link
                         to={`/products/${item.productId}`}
+                        state={{ orderItem: { productName: item.productName, price: item.price } }}
                         className={styles.thumb}
                         tabIndex={-1}
                         aria-hidden="true"
@@ -306,7 +307,11 @@ function OrderDetailPage() {
                         <ProductThumbnail src={null} alt="" size="small" />
                       </Link>
                       <span className={styles.itemInfo}>
-                        <Link to={`/products/${item.productId}`} className={styles.itemName}>
+                        <Link
+                          to={`/products/${item.productId}`}
+                          state={{ orderItem: { productName: item.productName, price: item.price } }}
+                          className={styles.itemName}
+                        >
                           {item.productName}
                         </Link>
                         <strong className={styles.itemPrice}>
