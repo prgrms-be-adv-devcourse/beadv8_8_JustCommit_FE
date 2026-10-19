@@ -5,7 +5,11 @@ import {
   readAllNotifications,
   readNotification,
 } from '../../api/notificationApi';
-import { DEFAULT_NOTIFICATION_TYPE, NOTIFICATION_TYPE } from '../../constants/notification';
+import {
+  DEFAULT_NOTIFICATION_TYPE,
+  NOTIFICATION_TYPE,
+  getNotificationTarget,
+} from '../../constants/notification';
 import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -96,7 +100,7 @@ function NotificationPage() {
         // 다음에 목록을 다시 열면 안 읽음으로 남아 있음
       }
     }
-    const target = (NOTIFICATION_TYPE[item.type] ?? DEFAULT_NOTIFICATION_TYPE).to;
+    const target = getNotificationTarget(item);
     if (target) navigate(target);
   };
 
