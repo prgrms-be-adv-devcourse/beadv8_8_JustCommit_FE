@@ -18,6 +18,8 @@ import CheckoutPage from './pages/market/CheckoutPage';
 import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
 import OrderFailPage from './pages/market/OrderFailPage';
+import OrderListPage from './pages/market/OrderListPage';
+import OrderDetailPage from './pages/market/OrderDetailPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 
 function App() {
@@ -41,7 +43,7 @@ function App() {
           <Route path="/mypage/info" element={<MyInfoPage />} />
           <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
-          <Route path="/orders" element={<ComingSoonPage title="주문 내역" />} />
+          <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<ComingSoonPage title="판매 주문" />} />
           <Route path="/wallet" element={<ComingSoonPage title="예치금" />} />
           <Route path="/settlements" element={<ComingSoonPage title="정산" />} />
@@ -53,7 +55,7 @@ function App() {
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/fail" element={<OrderFailPage />} />
-          <Route path="/orders/:orderId" element={<ComingSoonPage title="주문 상세" />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
           <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
