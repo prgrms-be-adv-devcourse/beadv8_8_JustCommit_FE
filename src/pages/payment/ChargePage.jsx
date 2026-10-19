@@ -10,6 +10,7 @@ import { safeReturnTo } from './chargeUtils';
 import styles from './Charge.module.css';
 
 const MIN_AMOUNT = 10000; // 백엔드 ChargeCreateRequest 최소 충전 금액
+const CHARGE_UNIT = 10000; // 충전 단위 (빠른 선택 버튼도 만 원 단위)
 const MAX_DIGITS = 8; // 입력 자릿수 제한 (최대 9,999만 원대)
 const QUICK_AMOUNTS = [10000, 50000, 100000];
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY; // .env.local
@@ -26,7 +27,10 @@ function ChargePage() {
   const shortage = Number(searchParams.get('shortage') ?? location.state?.shortage) || 0;
   const returnTo = safeReturnTo(searchParams.get('returnTo') ?? location.state?.from);
 
-  const [amount, setAmount] = useState(() => (shortage > 0 ? Math.max(shortage, MIN_AMOUNT) : 0));
+  // 부족 금액을 충전 단위(만 원)로 올림해서 미리 입력 (13,000원 부족 → 20,000원)
+  const [amount, setAmount] = useState(() =>
+    shortage > 0 ? Math.max(Math.ceil(shortage / CHARGE_UNIT) * CHARGE_UNIT, MIN_AMOUNT) : 0,
+  );
   const [errorMessage, setErrorMessage] = useState('');
   const [isPaying, setIsPaying] = useState(false);
 

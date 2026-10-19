@@ -261,3 +261,9 @@
   line-height: 1;
   pointer-events: none; /* 배지를 눌러도 링크가 눌리도록 */
 }
+
+/* 닉네임: 마이페이지 링크 표시 */
+.nickname {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
