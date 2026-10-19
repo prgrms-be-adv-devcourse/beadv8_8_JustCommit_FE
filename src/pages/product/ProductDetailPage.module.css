@@ -1,6 +1,23 @@
 .page { display: flex; flex-direction: column; gap: 24px; padding-bottom: 80px; color: #191c1e; }
 .message { padding: 4rem 0; text-align: center; color: #414844; }
 
+/* 숨긴 상품 (403 PRODUCT_HIDDEN) */
+.hiddenIcon {
+  width: 64px; height: 64px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: #e3ece5; color: #1b4332; font-size: 32px;
+}
+.hiddenTitle { margin: 16px 0 0; font-size: 18px; font-weight: 700; color: #012d1d; }
+.snapshot {
+  display: flex; flex-direction: column; gap: 4px; width: min(100%, 360px);
+  margin: 20px auto; padding: 16px 20px; box-sizing: border-box;
+  border: 1px solid #dde2de; border-radius: 12px; background: #ffffff; text-align: left;
+}
+.snapshotLabel { font-size: 13px; color: #717973; }
+.textLink {
+  padding: 0; border: 0; background: none; color: inherit;
+  font: inherit; text-decoration: underline; cursor: pointer;
+}
+
 .backLink {
   align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
   height: 44px; padding: 0 4px; border: 0; background: none;

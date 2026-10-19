@@ -33,7 +33,7 @@ function ProductDetail({ productId }) {
   const { isLoggedIn, user } = useAuth();
 
   const [product, setProduct] = useState(null);
-  const [loadState, setLoadState] = useState('loading'); // loading | done | error
+  const [loadState, setLoadState] = useState('loading'); // loading | done | hidden | error
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
@@ -45,8 +45,10 @@ function ProductDetail({ productId }) {
         setProduct(response.data.data);
         setLoadState('done');
       })
-      .catch(() => {
-        if (!ignore) setLoadState('error');
+      .catch((error) => {
+        if (ignore) return;
+        // 403 PRODUCT_HIDDEN: 판매자가 숨긴 상품을 본인이 아닌 사람이 조회 (삭제된 상품은 404)
+        setLoadState(error.response?.data?.code === 'PRODUCT_HIDDEN' ? 'hidden' : 'error');
       });
 
     return () => {
@@ -129,6 +131,33 @@ function ProductDetail({ productId }) {
 
   if (loadState === 'loading') {
     return <p className={styles.message}>상품을 불러오는 중...</p>;
+  }
+
+  if (loadState === 'hidden') {
+    // 주문 내역에서 들어왔으면 주문에 저장된 상품명·가격(스냅샷)을 함께 표시
+    const orderItem = location.state?.orderItem;
+    return (
+      <div className={styles.message}>
+        <span className={`material-symbols-outlined ${styles.hiddenIcon}`} aria-hidden="true">
+          visibility_off
+        </span>
+        <p className={styles.hiddenTitle}>판매자가 비공개 처리한 상품입니다</p>
+        {orderItem && (
+          <div className={styles.snapshot}>
+            <span className={styles.snapshotLabel}>주문한 상품</span>
+            <strong>{orderItem.productName}</strong>
+            <span>{formatPrice(Number(orderItem.price))}</span>
+          </div>
+        )}
+        {orderItem ? (
+          <button type="button" className={styles.textLink} onClick={goBack}>
+            주문 상세로 돌아가기
+          </button>
+        ) : (
+          <Link to="/">목록으로</Link>
+        )}
+      </div>
+    );
   }
 
   if (loadState === 'error') {
