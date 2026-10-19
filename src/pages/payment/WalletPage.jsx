@@ -16,7 +16,7 @@ const FETCH_SIZE = 100;
 const REF_TYPE = {
   CHARGE: { label: '충전', icon: 'add_card' },
   CHARGE_CANCEL: { label: '충전 취소', icon: 'credit_card_off' },
-  PAYMENT: { label: '상품 결제', icon: 'shopping_bag' },
+  PAYMENT: { label: '상품 결제', icon: 'shopping_cart' },
   SHIPPING_FEE: { label: '배송비', icon: 'local_shipping' },
   ORDER_REFUND: { label: '환불', icon: 'undo' },
   ORDER_ITEM_CANCEL_REFUND: { label: '주문 취소 환불', icon: 'undo' },
