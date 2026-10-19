@@ -78,8 +78,16 @@ function isCancelable(order, item, sellerOrder) {
   );
 }
 
-function ShipmentSteps({ shipmentStatus }) {
-  const currentStep = SHIPMENT_STATUS[shipmentStatus]?.step ?? 0;
+// "10/19 10:07" 형태 (배송 단계 아래 시각)
+function formatStepTime(value) {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`;
+}
+
+function ShipmentSteps({ sellerOrder }) {
+  const currentStep = SHIPMENT_STATUS[sellerOrder.shipmentStatus]?.step ?? 0;
 
   return (
     <ol aria-label="배송 단계" className={styles.steps}>
@@ -87,6 +95,8 @@ function ShipmentSteps({ shipmentStatus }) {
         const stepNumber = index + 1;
         const isDone = stepNumber <= currentStep;
         const isCurrent = stepNumber === currentStep;
+        // 지난 단계이고 시각 값이 있을 때만 표시 (백엔드에 아직 없는 필드는 undefined → 숨김)
+        const time = isDone ? sellerOrder[step.timeField] : null;
         return (
           <li
             key={step.label}
@@ -98,6 +108,11 @@ function ShipmentSteps({ shipmentStatus }) {
               <span className="material-symbols-outlined">{isDone ? 'check' : step.icon}</span>
             </span>
             <span className={styles.stepLabel}>{step.label}</span>
+            {time && (
+              <time className={styles.stepTime} dateTime={time}>
+                {formatStepTime(time)}
+              </time>
+            )}
           </li>
         );
       })}
@@ -301,7 +316,7 @@ function OrderDetailPage() {
                       <span className={`${styles.badge} ${styles[badge.tone]}`}>{badge.label}</span>
                     </div>
 
-                    {showSteps && <ShipmentSteps shipmentStatus={sellerOrder.shipmentStatus} />}
+                    {showSteps && <ShipmentSteps sellerOrder={sellerOrder} />}
 
                     {item.status === 'CANCELLED' && (
                       <p className={styles.cancelledNote}>
