@@ -1,0 +1,367 @@
+/* 시안 11-G 판매 주문 상세: 폭 960px, 바깥 여백은 공통 Layout이 담당 */
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.message {
+  margin: 0;
+  padding: 48px 0;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+.backLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 4px;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.backLink :global(.material-symbols-outlined) {
+  font-size: 20px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.meta {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 16px;
+}
+
+/* 흰 카드 공통 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.subText {
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+}
+
+/* 구매자 배송지 */
+.recipient {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.address {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 주문 상품 */
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.itemThumb {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.itemThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemStatus {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: #ecefec;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+}
+
+.species {
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
+
+.itemName {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 12px;
+  border-top: 1px solid #ecefec;
+}
+
+.total {
+  font-family: var(--font-headline);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.shippingNote {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+  text-align: right;
+}
+
+/* 배송 */
+.trackingNo {
+  margin-left: 4px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.autoBadge {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: #ecefec;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.steps {
+  margin: 0;
+  padding: 16px 8px 14px;
+  list-style: none;
+  display: flex;
+  border-radius: 8px;
+  background: var(--color-background);
+}
+
+.step {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.stepLine {
+  position: absolute;
+  top: 15px;
+  left: calc(-50% + 20px);
+  width: calc(100% - 40px);
+  height: 2px;
+  background: var(--color-outline-variant);
+}
+
+.stepLineDone {
+  background: var(--color-secondary);
+}
+
+.stepDot {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-primary);
+}
+
+.stepDot :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+.stepLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6e7571;
+}
+
+.stepDone .stepDot {
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+}
+
+.stepDone .stepLabel {
+  color: var(--color-on-surface-variant);
+}
+
+.stepNow .stepDot {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-secondary-container);
+}
+
+.stepNow .stepLabel {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* 정산 */
+.settleBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid #ecefec;
+  border-radius: var(--radius-full);
+  background: #ecefec;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settleScheduled {
+  border-color: var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+}
+
+.settleDone {
+  border-color: var(--color-secondary-container);
+  background: var(--color-secondary-container);
+  color: #00210f;
+}
+
+.settleNotice {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #e4f6ec;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.settleNotice :global(.material-symbols-outlined) {
+  font-size: 22px;
+  color: var(--color-secondary);
+}
+
+.settleList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.settleList > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.settleList dt {
+  color: var(--color-on-surface-variant);
+}
+
+.settleList dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.fee {
+  color: var(--color-error);
+}
+
+.settleList > .divider {
+  height: 1px;
+  background: #dde2de;
+}
+
+.settleTotal dt {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.settleTotal dd {
+  font-family: var(--font-headline);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+}

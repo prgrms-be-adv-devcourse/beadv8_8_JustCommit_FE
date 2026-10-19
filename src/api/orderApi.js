@@ -23,6 +23,18 @@ export function getOrder(orderId) {
   return client.get(`/api/v1/orders/${orderId}`);
 }
 
+// 판매 주문 목록 (최근 주문 순) params = { page, size }
+// → { content: [{ sellerOrderId, orderId, orderNo, totalAmount, itemCount, status, representativeItemName, createdAt }], totalPages, … }
+// totalAmount는 상품 금액 + 배송비
+export function getSellerOrders(params) {
+  return client.get('/api/v1/orders/seller', { params });
+}
+
+// 판매 주문 상세 → { sellerOrderId, orderNo, totalAmount, shippingFee, status, createdAt, recipient…, items[] }
+export function getSellerOrder(sellerOrderId) {
+  return client.get(`/api/v1/orders/seller/${sellerOrderId}`);
+}
+
 // 주문 상품 하나 취소 (택배 수거 전까지만 가능, 예치금 환불)
 export function cancelOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/cancel`);

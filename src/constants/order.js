@@ -45,3 +45,40 @@ export const CANCELABLE_SHIPMENT_STATUSES = ['READY', 'BOOKED'];
 
 // 배송 완료 후 자동 구매 확정까지 걸리는 날 (백엔드 자동 구매 확정 스케줄러)
 export const AUTO_CONFIRM_DAYS = 3;
+
+// 판매 주문 배송 상태 (시안 11-F 탭·배지 순서)
+export const SALES_STATUS = {
+  PREPARING: { label: '배송 준비', tone: 'preparing' },
+  SHIPPING: { label: '배송 중', tone: 'shipping' },
+  DELIVERED: { label: '배송 완료', tone: 'delivered' },
+  CONFIRMED: { label: '구매 확정', tone: 'confirmed' },
+  CANCELLED: { label: '주문 취소', tone: 'cancelled' },
+};
+
+// 백엔드 SettlementPolicy.FEE_RATE (판매 금액의 5%, 원 단위 버림)
+export const SETTLEMENT_FEE_RATE = 0.05;
+
+/**
+ * 판매 주문의 배송 상태 키(SALES_STATUS)를 계산
+ * 주문 상태(취소·구매 확정)를 먼저 보고, 나머지는 배송 상태(shipmentStatus)로 판단
+ */
+export function getSalesStatus(order) {
+  if (order.status === 'CANCELLED') return 'CANCELLED';
+  if (order.status === 'COMPLETED') return 'CONFIRMED';
+
+  // 상세 응답에만 items가 있음: 취소 안 된 상품이 모두 구매 확정이면 구매 확정
+  const liveItems = (order.items ?? []).filter((item) => item.status !== 'CANCELLED');
+  if (liveItems.length > 0 && liveItems.every((item) => item.status === 'CONFIRMED')) {
+    return 'CONFIRMED';
+  }
+
+  switch (order.shipmentStatus) {
+    case 'PICKED_UP':
+    case 'IN_TRANSIT':
+      return 'SHIPPING';
+    case 'DELIVERED':
+      return 'DELIVERED';
+    default:
+      return 'PREPARING';
+  }
+}
