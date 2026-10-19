@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BackLink from '../../components/common/BackLink';
 import { Link, Navigate } from 'react-router-dom';
 import { getOrders } from '../../api/orderApi';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
@@ -148,6 +149,7 @@ function OrderListPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/mypage" label="마이페이지" />
       <h1 className={styles.heading}>주문 내역</h1>
 
       <div role="tablist" aria-label="주문 상태" className={styles.tabs}>
