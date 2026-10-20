@@ -40,10 +40,15 @@
   font-size: 72px;
 }
 
-.badge {
+.badges {
   position: absolute;
   top: 12px;
   left: 12px;
+  display: flex;
+  gap: 6px;
+}
+
+.badge {
   display: inline-flex;
   align-items: center;
   height: 26px;
@@ -137,4 +142,11 @@
 
 .careTag > span {
   font-size: 12px;
+}
+
+/* 내 상품 배지: 상태 배지 옆, 진한 초록으로 구분 */
+.mine {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
 }

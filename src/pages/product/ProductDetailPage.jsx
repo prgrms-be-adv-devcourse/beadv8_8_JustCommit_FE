@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getProduct } from '../../api/productApi';
+import { changeProductHidden, getProduct } from '../../api/productApi';
 import {
   PRODUCT_STATUS,
   SPECIES_DIFFICULTY,
@@ -77,6 +77,24 @@ function ProductDetail({ productId }) {
   const goToCart = () => navigate('/cart');
   const [cartError, setCartError] = useState(null); // 실패 팝업 { title, message } (null이면 닫힘)
   const closeCartError = useCallback(() => setCartError(null), []);
+
+  // 내 상품 숨기기·숨김 해제 (판매완료 상품은 수정 대신 이 버튼)
+  const [isTogglingHidden, setIsTogglingHidden] = useState(false);
+  const handleToggleHidden = async () => {
+    if (isTogglingHidden) return;
+    setIsTogglingHidden(true);
+    try {
+      await changeProductHidden(product.productId, !product.hidden);
+      setProduct((prev) => ({ ...prev, hidden: !prev.hidden }));
+    } catch (error) {
+      setCartError({
+        title: '숨김 상태를 바꾸지 못했어요',
+        message: error.response?.data?.message ?? '잠시 후 다시 시도해 주세요.',
+      });
+    } finally {
+      setIsTogglingHidden(false);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
@@ -230,6 +248,13 @@ function ProductDetail({ productId }) {
             <div className={styles.chips}>
               {species?.name && <span className={styles.speciesChip}>{species.name}</span>}
               <span className={`${styles.statusBadge} ${styles[status.tone]}`}>{status.label}</span>
+              {/* hidden은 판매자 본인만 true로 받을 수 있음 (남이 보면 403) */}
+              {product.hidden && (
+                <span className={`${styles.statusBadge} ${styles.hiddenBadge}`}>
+                  <span className="material-symbols-outlined" aria-hidden="true">visibility_off</span>
+                  숨김
+                </span>
+              )}
             </div>
             <h1 id="product-title" className={styles.title}>{product.title}</h1>
             <p className={styles.price}>{formatPrice(product.price)}</p>
@@ -288,7 +313,30 @@ function ProductDetail({ productId }) {
             />
           )}
 
-          {isOwner ? (
+          {isOwner && isSoldOut ? (
+            // 판매완료 상품은 수정할 수 없어서 숨기기·숨김 해제만 제공
+            <div className={styles.blocked}>
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className={styles.cartButton}
+                  onClick={handleToggleHidden}
+                  disabled={isTogglingHidden}
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    {product.hidden ? 'visibility' : 'visibility_off'}
+                  </span>
+                  {product.hidden ? '숨김 해제' : '숨기기'}
+                </button>
+              </div>
+              <p className={styles.blockedText}>
+                <span className="material-symbols-outlined" aria-hidden="true">info</span>
+                {product.hidden
+                  ? '숨긴 상품은 구매자에게 보이지 않아요.'
+                  : '판매가 끝난 상품은 수정할 수 없어요.'}
+              </p>
+            </div>
+          ) : isOwner ? (
             <div className={styles.actions}>
               <Link
                 to={`/products/${product.productId}/edit`}
