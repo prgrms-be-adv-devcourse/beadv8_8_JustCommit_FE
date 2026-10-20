@@ -163,7 +163,6 @@ function SalesOrderDetailPage() {
                   {ITEM_STATUS_LABEL[item.status] && (
                     <span className={styles.itemStatus}>{ITEM_STATUS_LABEL[item.status]}</span>
                   )}
-                  {item.speciesName && <span className={styles.species}>{item.speciesName}</span>}
                   <span className={styles.itemName}>{item.productName}</span>
                   <span className={styles.subText}>{formatPrice(Number(item.price))}</span>
                 </span>
