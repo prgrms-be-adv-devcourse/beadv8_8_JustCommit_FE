@@ -96,10 +96,12 @@ function Header() {
 
           {showMemberMenu && (
             <div className={styles.wallet}>
-              <span className={`material-symbols-outlined ${styles.walletIcon}`}>
-                account_balance_wallet
-              </span>
-              <span className={styles.walletAmount}>{depositBalance === null ? '-' : formatPrice(depositBalance)}</span>
+              <Link to="/wallet" className={styles.walletLink} aria-label="예치금 거래 내역 보기">
+                <span className={`material-symbols-outlined ${styles.walletIcon}`}>
+                  account_balance_wallet
+                </span>
+                <span className={styles.walletAmount}>{depositBalance === null ? '-' : formatPrice(depositBalance)}</span>
+              </Link>
               <Link to="/deposit/charge" className={styles.chargeLink}>
                 충전
               </Link>
