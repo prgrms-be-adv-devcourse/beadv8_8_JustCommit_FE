@@ -246,7 +246,11 @@ function SalesOrderDetailPage() {
               </div>
               <div>
                 <dt>수수료</dt>
-                <dd className={styles.fee}>−{formatPrice(fee)}</dd>
+                <dd className={styles.fee}>
+                  {/* 금액이 작아 수수료가 0원이면 "−0원" 대신 "0원" */}
+                  {fee > 0 ? '−' : ''}
+                  {formatPrice(fee)}
+                </dd>
               </div>
               <div className={styles.divider} />
               <div className={styles.settleTotal}>
