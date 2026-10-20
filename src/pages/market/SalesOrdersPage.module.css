@@ -194,11 +194,6 @@
   text-decoration-color: currentColor;
 }
 
-.buyer {
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .amount {
   font-family: var(--font-headline);
   font-size: 15px;

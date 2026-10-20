@@ -99,7 +99,6 @@ function SalesOrdersPage() {
           <thead>
             <tr>
               <th scope="col">주문일</th>
-              <th scope="col">구매자</th>
               <th scope="col">상품</th>
               <th scope="col" className={styles.alignRight}>
                 금액
@@ -113,7 +112,6 @@ function SalesOrdersPage() {
               return (
                 <tr key={order.sellerOrderId}>
                   <td className={styles.date}>{formatDate(order.createdAt)}</td>
-                  <td className={styles.buyer}>{order.buyerName ?? '-'}</td>
                   <td className={styles.itemCell}>
                     <Link to={`/orders/seller/${order.sellerOrderId}`} className={styles.itemLink}>
                       <span className={styles.thumb}>
