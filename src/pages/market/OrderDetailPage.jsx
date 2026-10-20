@@ -191,6 +191,10 @@ function OrderDetailPage() {
   );
   const itemCount = sellerOrders.reduce((sum, sellerOrder) => sum + sellerOrder.items.length, 0);
 
+  const hasAutoConfirmTarget =
+    order.status === 'PAID' &&
+    sellerOrders.some((sellerOrder) => sellerOrder.items.some((item) => item.status === 'NORMAL'));
+
   const runAction = async () => {
     const { type, item } = pending;
     const action = ACTIONS[type];
@@ -253,13 +257,14 @@ function OrderDetailPage() {
           </div>
         </dl>
       </section>
-
+      {hasAutoConfirmTarget && (
       <div className={styles.notice}>
         <span className="material-symbols-outlined" aria-hidden="true">
           schedule
         </span>
         배송 완료 {AUTO_CONFIRM_DAYS}일 뒤 자동으로 구매 확정돼요
       </div>
+      )}
 
       <section aria-labelledby="goods-title" className={styles.goods}>
         <h2 id="goods-title" className={styles.sectionTitle}>
