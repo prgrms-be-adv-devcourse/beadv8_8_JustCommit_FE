@@ -65,6 +65,8 @@ export const SETTLEMENT_FEE_RATE = 0.05;
 export function getSalesStatus(order) {
   if (order.status === 'CANCELLED') return 'CANCELLED';
   if (order.status === 'COMPLETED') return 'CONFIRMED';
+  // 목록 응답: 판매자 주문 단위 구매 확정 시각 (판매자 몫 상품이 모두 확정되면 채워짐)
+  if (order.confirmedAt) return 'CONFIRMED';
 
   // 상세 응답에만 items가 있음: 취소 안 된 상품이 모두 구매 확정이면 구매 확정
   const liveItems = (order.items ?? []).filter((item) => item.status !== 'CANCELLED');
