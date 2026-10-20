@@ -4,15 +4,22 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { SETTLEMENT_FEE_RATE, getSalesStatus } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
+import {
+  formatDate,
+  formatDateTime,
+  formatPrice,
+  formatStepTime,
+  maskPhone,
+} from '../../utils/format';
 import { fetchSalesOrder } from './salesOrderLoader';
 import styles from './SalesOrderDetailPage.module.css';
 
+// timeField: 판매 주문 상세 응답에서 그 단계가 일어난 시각 (아직 안 된 단계는 null → 시각을 안 보여 줌)
 const STEPS = [
-  { label: '택배 예약', icon: 'event_available' },
-  { label: '접수 완료', icon: 'inventory_2' },
-  { label: '배송 중', icon: 'local_shipping' },
-  { label: '배송 완료', icon: 'home' },
+  { label: '택배 예약', icon: 'event_available', timeField: 'bookedAt' },
+  { label: '접수 완료', icon: 'inventory_2', timeField: 'pickedUpAt' },
+  { label: '배송 중', icon: 'local_shipping', timeField: 'inTransitAt' },
+  { label: '배송 완료', icon: 'home', timeField: 'deliveredAt' },
 ];
 
 // 지금 진행 중인 단계 (STEPS 인덱스, 4면 모든 단계 완료)
@@ -167,9 +174,6 @@ function SalesOrderDetailPage() {
             <span className={styles.subText}>판매 금액</span>
             <strong className={styles.total}>{formatPrice(saleAmount)}</strong>
           </div>
-          {shippingFee > 0 && (
-            <p className={styles.shippingNote}>배송비 {formatPrice(shippingFee)} 별도</p>
-          )}
         </section>
       </div>
 
@@ -190,6 +194,7 @@ function SalesOrderDetailPage() {
             const done = index < currentStep;
             const now = index === currentStep;
             const stateClass = done ? styles.stepDone : now ? styles.stepNow : '';
+            const time = order[step.timeField];
             return (
               <li
                 key={step.label}
@@ -208,6 +213,11 @@ function SalesOrderDetailPage() {
                   </span>
                 </span>
                 <span className={styles.stepLabel}>{step.label}</span>
+                {time && (
+                  <time className={styles.stepTime} dateTime={time}>
+                    {formatStepTime(time)}
+                  </time>
+                )}
               </li>
             );
           })}

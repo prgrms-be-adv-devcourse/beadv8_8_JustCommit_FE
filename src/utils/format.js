@@ -27,6 +27,16 @@ export function formatDateTime(value) {
 }
 
 /**
+ * 배송 단계 아래 시각을 "10/19 10:07" 형태로 변환
+ */
+export function formatStepTime(value) {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`;
+}
+
+/**
  * 초를 "04:59" 형태로 변환
  */
 export function formatTime(totalSeconds) {
