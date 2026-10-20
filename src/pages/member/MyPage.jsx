@@ -16,8 +16,8 @@ const MENU = [
 ];
 
 const SELL_MENU = [
-  { key: 'myProducts', to: '/mypage/products', icon: 'storefront', label: '내 판매 목록' },
-  { key: 'sales', to: '/orders/seller', icon: 'local_shipping', label: '판매 주문' },
+  { key: 'myProducts', to: '/mypage/products', icon: 'storefront', label: '판매 상품 목록' },
+  { key: 'sales', to: '/orders/seller', icon: 'local_shipping', label: '판매 주문 목록' },
   { key: 'settlements', to: '/settlements', icon: 'payments', label: '정산' },
 ];
 

@@ -44,7 +44,7 @@ export function getProduct(productId) {
   return client.get(`/api/v1/products/${productId}`);
 }
 
-// 내 판매 목록 (숨긴 상품 포함, 삭제된 상품 제외)
+// 판매 상품 목록 (숨긴 상품 포함, 삭제된 상품 제외)
 export function getMyProducts(params = {}) {
   return client.get('/api/v1/products/me', { params: compactParams(params) });
 }

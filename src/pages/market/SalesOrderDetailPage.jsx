@@ -88,7 +88,7 @@ function SalesOrderDetailPage() {
       <span className="material-symbols-outlined" aria-hidden="true">
         arrow_back
       </span>
-      판매 주문
+      판매 주문 목록
     </Link>
   );
 
