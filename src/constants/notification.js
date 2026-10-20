@@ -30,6 +30,3 @@ export function getNotificationTarget(item) {
   }
   return null;
 }
-
-// 헤더 배지의 안 읽은 수를 다시 조회하는 간격 (실시간 SSE 연결 전 임시)
-export const UNREAD_POLL_INTERVAL_MS = 30_000;
