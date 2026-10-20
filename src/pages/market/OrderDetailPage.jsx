@@ -12,6 +12,7 @@ import {
 } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
+import useWallet from '../../hooks/useWallet';
 import { formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import styles from './OrderDetailPage.module.css';
 
@@ -124,6 +125,7 @@ function OrderDetailPage() {
   usePageTitle('주문 상세');
   const { orderId } = useParams();
   const { isLoggedIn, isInitializing } = useAuth();
+  const { refreshWallet } = useWallet();
 
   const [order, setOrder] = useState(null);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error | notFound
@@ -202,6 +204,8 @@ function OrderDetailPage() {
     setBusyItemId(item.id);
     try {
       await action.request(item.id);
+      // 취소하면 결제 금액이 예치금으로 돌아오므로 헤더 잔액도 갱신
+      if (type === 'cancel') refreshWallet().catch(() => {});
       // 상태·배지·버튼이 서버 기준으로 바뀌도록 다시 조회
       setOrder(await fetchOrder(orderId));
     } catch (error) {

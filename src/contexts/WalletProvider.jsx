@@ -26,11 +26,22 @@ export function WalletProvider({ children }) {
     };
   }, [isLoggedIn]);
 
-  // 충전·결제 후 호출해서 잔액 갱신
+  // 충전·결제·취소 후, 정산 알림을 받았을 때 호출해서 잔액 갱신
   const refreshWallet = useCallback(async () => {
     const response = await getWalletBalance();
     setBalance(response.data.data.balance);
   }, []);
+
+  // 다른 탭·다른 기기에서 바뀐 잔액도 맞추려고, 탭이 다시 보이면 잔액 조회
+  useEffect(() => {
+    if (!isLoggedIn) return undefined;
+
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible') refreshWallet().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
+  }, [isLoggedIn, refreshWallet]);
 
   // 로그아웃 상태면 이전 잔액을 보여 주지 않음
   const visibleBalance = isLoggedIn ? balance : null;
