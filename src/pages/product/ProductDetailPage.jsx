@@ -56,9 +56,11 @@ function ProductDetail({ productId }) {
     };
   }, [productId]);
 
-  // 목록에서 들어왔으면 뒤로가기(필터 유지), 주소로 바로 들어왔으면 홈으로
+  // 등록·수정 후엔 메인(backTo), 목록에서 왔으면 뒤로가기(필터 유지), 직접 접속이면 홈
+  const backTo = location.state?.backTo?.startsWith('/') ? location.state.backTo : null;
   const goBack = () => {
-    if (location.key !== 'default') navigate(-1);
+    if (backTo) navigate(backTo);
+    else if (location.key !== 'default') navigate(-1);
     else navigate('/');
   };
 

@@ -294,7 +294,7 @@ function ProductForm({ productId }) {
         savedId = response.data.data.productId;
       }
       // 등록·수정 모두 상품 상세로 (양식 페이지는 기록에서 대체 → 뒤로 가면 이전 목록)
-      navigate(`/products/${savedId}`, { replace: true });
+      navigate(`/products/${savedId}`, { replace: true, state: { backTo: '/' } });
     } catch (error) {
       const fallback = isEdit ? '상품 수정에 실패했습니다.' : '상품 등록에 실패했습니다.';
       setErrorMessage(error.response?.data?.message ?? `${fallback} 다시 시도해 주세요.`);
