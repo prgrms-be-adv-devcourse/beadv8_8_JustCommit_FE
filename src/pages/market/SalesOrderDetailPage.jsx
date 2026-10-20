@@ -108,8 +108,8 @@ function SalesOrderDetailPage() {
   const salesStatus = getSalesStatus(order);
   const currentStep = getCurrentStep(order, salesStatus);
   const items = order.items ?? [];
-  const shippingFee = Number(order.shippingFee ?? 0);
-  const saleAmount = Number(order.totalAmount) - shippingFee;
+  // totalAmount: 배송비를 뺀 판매자 상품 금액
+  const saleAmount = Number(order.totalAmount);
 
   // 정산 기준: 구매 확정된 상품 금액 (백엔드 SellerOrder.settlementBaseAmount와 같은 기준)
   const isConfirmed = salesStatus === 'CONFIRMED';
