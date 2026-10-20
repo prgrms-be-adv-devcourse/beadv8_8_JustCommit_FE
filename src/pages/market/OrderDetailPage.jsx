@@ -13,7 +13,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
-import { formatDateTime, formatPrice, maskPhone } from '../../utils/format';
+import { formatDateTime, formatPrice, formatStepTime, maskPhone } from '../../utils/format';
 import styles from './OrderDetailPage.module.css';
 
 const ACTIONS = {
@@ -77,14 +77,6 @@ function isCancelable(order, item, sellerOrder) {
     item.status === 'NORMAL' &&
     CANCELABLE_SHIPMENT_STATUSES.includes(sellerOrder.shipmentStatus)
   );
-}
-
-// "10/19 10:07" 형태 (배송 단계 아래 시각)
-function formatStepTime(value) {
-  const date = new Date(value);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`;
 }
 
 function ShipmentSteps({ sellerOrder }) {
