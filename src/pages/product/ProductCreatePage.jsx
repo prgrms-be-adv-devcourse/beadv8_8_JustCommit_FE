@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
+  changeProductHidden,
   createProduct,
+  deleteProduct,
   getProduct,
   issueImageUploadUrls,
   searchSpecies,
   updateProduct,
   uploadToPresignedUrl,
 } from '../../api/productApi';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import styles from './ProductCreatePage.module.css';
 
 // 백엔드 ProductImageService 규칙과 같게 유지
@@ -69,6 +72,14 @@ function ProductForm({ productId }) {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 수정 모드: 숨기기·삭제 (양식 저장과 별개로 바로 반영)
+  const [isManaging, setIsManaging] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [manageError, setManageError] = useState(null); // 실패 안내 팝업 문구
+  // ConfirmModal의 useEffect가 onClose에 의존하므로 함수 고정
+  const closeDelete = useCallback(() => setDeleteOpen(false), []);
+  const closeManageError = useCallback(() => setManageError(null), []);
 
   // 페이지를 떠날 때 새 파일 미리보기 URL만 해제 (이미 올라간 사진 주소는 대상 아님)
   const photosRef = useRef(photos);
@@ -302,6 +313,30 @@ function ProductForm({ productId }) {
     }
   };
 
+  const handleToggleHidden = async () => {
+    setIsManaging(true);
+    try {
+      await changeProductHidden(productId, !loadedProduct.hidden);
+      setLoadedProduct((prev) => ({ ...prev, hidden: !prev.hidden }));
+    } catch (error) {
+      setManageError(error.response?.data?.message ?? '숨김 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsManaging(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    setDeleteOpen(false);
+    setIsManaging(true);
+    try {
+      await deleteProduct(productId);
+      navigate(MY_PRODUCTS_PATH, { replace: true });
+    } catch (error) {
+      setManageError(error.response?.data?.message ?? '상품을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      setIsManaging(false);
+    }
+  };
+
   let submitLabel = isEdit ? '수정하기' : '등록하기';
   if (isSubmitting) submitLabel = isEdit ? '수정 중...' : '등록 중...';
 
@@ -497,6 +532,74 @@ function ProductForm({ productId }) {
           </button>
         </div>
       </form>
+
+      {isEdit && (
+        <section className={styles.manage} aria-labelledby="manage-title">
+          <div className={styles.manageText}>
+            <h2 id="manage-title" className={styles.manageTitle}>
+              상품 관리
+              {loadedProduct.hidden && (
+                <span className={styles.hiddenBadge}>
+                  <span className="material-symbols-outlined" aria-hidden="true">visibility_off</span>
+                  숨김
+                </span>
+              )}
+            </h2>
+            <p className={styles.manageHint}>
+              {loadedProduct.hidden
+                ? '숨긴 상품은 구매자에게 보이지 않아요.'
+                : '숨기면 목록과 검색에서 구매자에게 보이지 않아요.'}{' '}
+              수정 내용 저장과 별개로 바로 반영돼요.
+            </p>
+          </div>
+          <div className={styles.manageActions}>
+            <button
+              type="button"
+              className={styles.manageButton}
+              onClick={handleToggleHidden}
+              disabled={isManaging || isSubmitting}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {loadedProduct.hidden ? 'visibility' : 'visibility_off'}
+              </span>
+              {loadedProduct.hidden ? '숨김 해제' : '숨기기'}
+            </button>
+            <button
+              type="button"
+              className={`${styles.manageButton} ${styles.deleteButton}`}
+              onClick={() => setDeleteOpen(true)}
+              disabled={isManaging || isSubmitting}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">delete</span>
+              삭제
+            </button>
+          </div>
+        </section>
+      )}
+
+      {deleteOpen && (
+        <ConfirmModal
+          icon="delete"
+          title="상품을 삭제할까요?"
+          message={`"${loadedProduct.title}"이(가) 목록과 검색에서 사라지고 되돌릴 수 없어요.`}
+          confirmText="삭제"
+          cancelText="취소"
+          onConfirm={confirmDelete}
+          onClose={closeDelete}
+        />
+      )}
+
+      {manageError && (
+        <ConfirmModal
+          icon="info"
+          title="처리하지 못했어요"
+          message={manageError}
+          confirmText="확인"
+          cancelText={null}
+          onConfirm={closeManageError}
+          onClose={closeManageError}
+        />
+      )}
     </div>
   );
 }

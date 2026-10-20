@@ -167,3 +167,100 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 수정 모드: 숨기기·삭제 (양식 아래 별도 카드) */
+.manage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 20px 32px;
+  border: 1px solid #dde2de;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.manageText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 260px;
+}
+
+.manageTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #012d1d;
+}
+
+.hiddenBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid #c1c8c2;
+  border-radius: 999px;
+  background: #eef1ef;
+  color: #414844;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hiddenBadge :global(.material-symbols-outlined) {
+  font-size: 14px;
+}
+
+.manageHint {
+  margin: 0;
+  font-size: 13px;
+  color: #414844;
+  word-break: keep-all;
+}
+
+.manageActions {
+  display: flex;
+  gap: 8px;
+}
+
+.manageButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #d5dad7;
+  border-radius: 8px;
+  background: #fff;
+  color: #191c1e;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manageButton :global(.material-symbols-outlined) {
+  font-size: 18px;
+}
+
+.manageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  border-color: #f2b8b5;
+  color: #b3261e;
+}
+
+@media (max-width: 600px) {
+  .manage {
+    padding: 20px;
+  }
+}
