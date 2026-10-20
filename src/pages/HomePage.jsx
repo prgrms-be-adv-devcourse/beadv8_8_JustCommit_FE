@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import SpeciesFilter from '../components/product/SpeciesFilter';
+import useAuth from '../hooks/useAuth';
 import usePageTitle from '../hooks/usePageTitle';
-import { getProducts, getSpecies } from '../api/productApi';
+import { getMyProducts, getProducts, getSpecies } from '../api/productApi';
 import {
   PRODUCT_SORTS,
   SPECIES_CATEGORIES,
@@ -53,6 +54,22 @@ const HERO_POINTS = [
     description: '배송이 끝나고 3일이 지나면 자동으로 구매 확정돼요.',
   },
 ];
+
+// 목록 응답에 sellerId가 없어서, 판매자면 내 상품 id를 따로 받아 '내 상품' 태그에 사용
+// TODO: 목록 API에 sellerId가 생기면 이 조회는 빼고 product.sellerId로 비교
+const MY_PRODUCTS_PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
+const MY_PRODUCTS_MAX_PAGES = 10;
+
+async function fetchMyProductIds() {
+  const ids = new Set();
+  for (let page = 0; page < MY_PRODUCTS_MAX_PAGES; page += 1) {
+    const response = await getMyProducts({ page, size: MY_PRODUCTS_PAGE_SIZE });
+    const data = response.data.data;
+    data.content.forEach((product) => ids.add(product.productId));
+    if (page + 1 >= data.totalPages) break;
+  }
+  return ids;
+}
 
 function readFilters(searchParams) {
   return Object.fromEntries(Object.keys(INITIAL_FILTERS).map((key) => [key, searchParams.get(key) ?? '']));
@@ -163,6 +180,27 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const { user } = useAuth();
+  const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
+  const [myProductIds, setMyProductIds] = useState(null);
+
+  useEffect(() => {
+    if (!canSell) return undefined;
+
+    let ignore = false;
+    fetchMyProductIds()
+      .then((ids) => {
+        if (!ignore) setMyProductIds(ids);
+      })
+      .catch(() => {
+        // 태그만 못 보여줄 뿐 목록은 그대로 사용 가능
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [canSell, user?.memberId]);
 
   // 정렬을 뺀 조건이 하나라도 있으면 "필터 적용 중"
   const isFiltered = Object.entries(filters).some(([key, value]) => key !== 'sort' && value !== '');
@@ -341,7 +379,7 @@ function HomePage() {
         <ul className={styles.grid}>
           {products.map((product) => (
             <li key={product.productId}>
-              <ProductCard product={product} />
+              <ProductCard product={product} isMine={canSell && Boolean(myProductIds?.has(product.productId))} />
             </li>
           ))}
         </ul>

@@ -9,7 +9,8 @@ import { formatPrice, formatRelativeTime } from '../../utils/format';
 import ProductThumbnail from './ProductThumbnail';
 import styles from './ProductCard.module.css';
 
-function ProductCard({ product }) {
+// isMine: 로그인한 판매자 본인 상품이면 상태 배지 옆에 '내 상품' 표시
+function ProductCard({ product, isMine = false }) {
   const status = PRODUCT_STATUS[product.status] ?? { label: product.status, tone: 'pending' };
   const isSoldOut = product.status === 'SOLD_OUT';
   // 관리 태그: 품종에 값이 없는 항목은 빼고 표시
@@ -30,7 +31,10 @@ function ProductCard({ product }) {
           alt={`${product.title} 사진`}
           loading="lazy"
         />
-        <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
+        <span className={styles.badges}>
+          <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
+          {isMine && <span className={`${styles.badge} ${styles.mine}`}>내 상품</span>}
+        </span>
       </div>
 
       <div className={styles.body}>

@@ -146,3 +146,7 @@
   gap: 6px;
   text-decoration: none;
 }
+
+/* 내 상품: 숨김 표시 */
+.hiddenBadge { gap: 4px; border-color: #c1c8c2; background: #eef1ef; color: #414844; }
+.hiddenBadge :global(.material-symbols-outlined) { font-size: 16px; }
