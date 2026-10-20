@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { addAddress, getAddresses } from '../../api/memberApi';
 import { createCartOrder } from '../../api/orderApi';
-import { getProduct } from '../../api/productApi';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
@@ -38,34 +37,17 @@ function pickDefaultAddress(addresses) {
 // 탈퇴 등으로 판매자 회원이 없으면 sellerName이 null로 옴
 const UNKNOWN_SELLER = '알 수 없는 판매자';
 
-// 장바구니 응답의 판매자 정보로 판매자별 묶기 (품종 이름도 함께 채움)
-function groupBySeller(items, speciesNames) {
+// 장바구니 응답의 판매자 정보로 판매자별 묶기
+function groupBySeller(items) {
   const groups = new Map();
   items.forEach((item) => {
     const key = item.sellerId ?? `unknown-${item.productId}`;
     if (!groups.has(key)) {
       groups.set(key, { key, sellerName: item.sellerName ?? UNKNOWN_SELLER, items: [] });
     }
-    groups.get(key).items.push({ ...item, speciesName: getSpeciesName(item, speciesNames) });
+    groups.get(key).items.push(item);
   });
   return [...groups.values()];
-}
-
-// 품종 이름: 장바구니 응답의 speciesName을 쓰고, 없으면 상품 상세에서 가져온 값으로 대체
-function getSpeciesName(item, speciesNames) {
-  return item.speciesName ?? speciesNames[item.productId] ?? null;
-}
-
-// 장바구니 응답에 speciesName이 없는 상품만 상세 조회 (실패한 상품은 품종 없이 표시)
-async function fetchMissingSpeciesNames(items) {
-  const missing = items.filter((item) => !item.speciesName);
-  const results = await Promise.allSettled(missing.map((item) => getProduct(item.productId)));
-  const names = {};
-  results.forEach((result, index) => {
-    const name = result.status === 'fulfilled' ? result.value.data.data?.species?.name : null;
-    if (name) names[missing[index].productId] = name;
-  });
-  return names;
 }
 
 // 배송지 고르기 팝업
@@ -153,9 +135,8 @@ function CheckoutPage() {
   const { refreshCart } = useCart();
   const { balance, refreshWallet } = useWallet();
 
-  // 주문할 장바구니 항목 + 응답에 품종이 없을 때 상세에서 가져온 품종 이름
+  // 주문할 장바구니 항목 (품종 이름은 장바구니 응답의 speciesName)
   const [orderItems, setOrderItems] = useState(null); // null = 불러오는 중
-  const [speciesNames, setSpeciesNames] = useState({}); // { [productId]: 품종 이름 }
   const [loadError, setLoadError] = useState('');
 
   const [addresses, setAddresses] = useState(null); // null = 불러오는 중
@@ -175,10 +156,8 @@ function CheckoutPage() {
       try {
         const cart = await refreshCart();
         const items = cart.items.filter((item) => itemIds.includes(item.cartItemId));
-        const names = await fetchMissingSpeciesNames(items);
         if (ignore) return;
 
-        setSpeciesNames(names);
         setOrderItems(items);
       } catch {
         if (!ignore) setLoadError('주문할 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
@@ -248,7 +227,7 @@ function CheckoutPage() {
     );
   }
 
-  const groups = groupBySeller(orderItems, speciesNames);
+  const groups = groupBySeller(orderItems);
   const selectedAddress = addresses.find((address) => address.addressId === selectedAddressId) ?? null;
   const hasUnavailable = orderItems.some((item) => !item.isPurchasable);
 
