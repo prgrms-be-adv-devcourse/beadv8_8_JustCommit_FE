@@ -25,7 +25,7 @@ function getItemName(order) {
 }
 
 function SalesOrdersPage() {
-  usePageTitle('판매 주문');
+  usePageTitle('판매 주문 목록');
   const { user, isLoggedIn, isInitializing } = useAuth();
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
@@ -144,7 +144,7 @@ function SalesOrdersPage() {
   return (
     <div className={styles.page}>
       <BackLink to="/mypage" label="마이페이지" />
-      <h1 className={styles.heading}>판매 주문</h1>
+      <h1 className={styles.heading}>판매 주문 목록</h1>
 
       <div role="tablist" aria-label="배송 상태" className={styles.tabs}>
         {TABS.map((item) => {

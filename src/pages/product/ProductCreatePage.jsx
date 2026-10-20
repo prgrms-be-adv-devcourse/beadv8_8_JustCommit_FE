@@ -165,7 +165,7 @@ function ProductForm({ productId }) {
       <div className={styles.page}>
         <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
           <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-          내 판매 목록
+          판매 상품 목록
         </Link>
         <p className={styles.stateMessage}>{blockedMessage}</p>
       </div>
@@ -344,7 +344,7 @@ function ProductForm({ productId }) {
     <div className={styles.page}>
       <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
         <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-        내 판매 목록
+        판매 상품 목록
       </Link>
       <h1 className={styles.pageTitle}>{isEdit ? '상품 수정' : '상품 등록'}</h1>
 

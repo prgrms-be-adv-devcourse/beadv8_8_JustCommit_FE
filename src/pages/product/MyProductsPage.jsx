@@ -51,7 +51,7 @@ function getErrorMessage(error, fallback) {
 }
 
 function MyProductsPage() {
-  usePageTitle('내 판매 목록');
+  usePageTitle('판매 상품 목록');
   const { user, isLoggedIn, isInitializing } = useAuth();
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
@@ -138,7 +138,7 @@ function MyProductsPage() {
       return <p className={styles.message}>내 상품을 불러오는 중...</p>;
     }
     if (loadState === 'error') {
-      return <p className={styles.message}>내 판매 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>;
+      return <p className={styles.message}>판매 상품 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>;
     }
     if (visibleProducts.length === 0) {
       return (
@@ -223,7 +223,7 @@ function MyProductsPage() {
     <div className={styles.page}>
       <BackLink to="/mypage" label="마이페이지" />
       <div className={styles.header}>
-        <h1 className={styles.heading}>내 판매 목록</h1>
+        <h1 className={styles.heading}>판매 상품 목록</h1>
         <Link to="/products/new" className={styles.createLink}>
           + 상품 등록
         </Link>
