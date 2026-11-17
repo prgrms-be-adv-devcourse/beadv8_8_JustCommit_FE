@@ -1,164 +1,88 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import { startKakaoLogin } from '../../utils/oauth';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
 import usePageTitle from '../../hooks/usePageTitle';
-import styles from './LoginPage.module.css';
+import { startKakaoLogin } from '../../utils/oauth';
+import LoginView from './login/LoginView';
 
-function KakaoIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-      <path d="M12 3C6.477 3 2 6.477 2 10.768c0 2.766 1.834 5.188 4.606 6.539l-.936 3.473c-.083.308.261.55.518.379l4.135-2.735c.555.076 1.11.112 1.677.112 5.523 0 10-3.477 10-7.768C22 6.477 17.523 3 12 3z" />
-    </svg>
-  );
+// 카카오 로그인 실패 코드 → 위쪽 안내 상자 (OAuthCallbackPage가 state.socialError로 넘김)
+// TODO(member): 지금 백엔드 SocialLoginFailureHandler는 이유와 관계없이 SOCIAL_LOGIN_FAILED만 넘깁니다.
+//   SOCIAL_EMAIL_CONFLICT · SOCIAL_EMAIL_REQUIRED와 가린 이메일(ki***@example.com)을 콜백 주소로 넘겨 주면 시안 06-1-3 · 06-1-4가 나옵니다.
+function toSocialNotice({ code, maskedEmail }) {
+  if (code === 'SOCIAL_EMAIL_CONFLICT') {
+    return {
+      type: 'error',
+      text: `카카오 계정의 이메일(${maskedEmail ?? '{가린 이메일}'})로 이미 가입한 계정이 있어요. 이메일과 비밀번호로 로그인해 주세요.`,
+    };
+  }
+  if (code === 'SOCIAL_EMAIL_REQUIRED') {
+    return { type: 'warning', text: '카카오 로그인에는 이메일 제공 동의가 필요해요. 다시 시작할 때 이메일 제공에 동의해 주세요.' };
+  }
+  return { type: 'error', text: '카카오 로그인에 실패했어요. 다시 시도해 주세요.' };
+}
+
+function getInitialNotice(state) {
+  if (state?.socialError) return toSocialNotice(state.socialError);
+  if (state?.errorMessage) return { type: 'error', text: state.errorMessage };
+  return null;
 }
 
 function LoginPage() {
   usePageTitle('로그인');
   const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const [form, setForm] = useState({ email: '', password: '' });
   const location = useLocation();
-  const [errorMessage, setErrorMessage] = useState(location.state?.errorMessage ?? '');
+  const { login, isLoggedIn, isInitializing } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [notice] = useState(() => getInitialNotice(location.state));
+  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  // 이미 로그인한 사용자는 원래 가려던 곳(없으면 홈)으로
+  if (!isInitializing && isLoggedIn && !isSubmitting) {
+    return <Navigate to={location.state?.from ?? '/'} replace />;
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setErrorMessage('');
-    setIsSubmitting(true);
+    if (isSubmitting) return;
+    if (!email.trim() || !password) {
+      setError({ text: '이메일과 비밀번호를 입력해 주세요', highlight: false });
+      return;
+    }
 
+    setError(null);
+    setIsSubmitting(true);
     try {
-      await login(form);
+      await login({ email: email.trim(), password });
       navigate(location.state?.from ?? '/', { replace: true });
-    } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message ?? '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+    } catch (loginError) {
+      const code = loginError.response?.data?.code;
+      setError(
+        code === 'LOGIN_FAILED'
+          ? { text: '이메일 또는 비밀번호가 맞지 않아요', highlight: true }
+          : {
+              text: loginError.response?.data?.message ?? '로그인에 실패했어요. 잠시 후 다시 시도해 주세요.',
+              highlight: false,
+            },
       );
-    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleKakaoLogin = () => {
-    startKakaoLogin();
-  };
-
   return (
-    <div className={styles.page}>
-      <div className={styles.wrapper}>
-        <div className={`${styles.glow} ${styles.glowTop}`} aria-hidden="true" />
-        <div className={`${styles.glow} ${styles.glowBottom}`} aria-hidden="true" />
-
-        <div className={styles.card}>
-          {/* 로고 · 인사 */}
-          <div className={styles.brand}>
-            <Link to="/" className={styles.logo}>
-              <img src="/favicon.svg" alt="" className={styles.logoIcon} />
-              <span>replant</span>
-            </Link>
-            <h1 className={styles.title}>식물 집사님, 반갑습니다</h1>
-            <p className={styles.subtitle}>반려식물 안전 에스크로 마켓에 오신 것을 환영해요</p>
-          </div>
-
-          {/* 에러 배너 */}
-          {errorMessage && (
-            <div className={styles.errorBanner} role="alert">
-              <span className={`material-symbols-outlined ${styles.errorIcon}`} aria-hidden="true">
-                error
-              </span>
-              <p>{errorMessage}</p>
-            </div>
-          )}
-
-          {/* 로그인 폼 */}
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <Input
-              label="이메일"
-              icon="mail"
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="example@replant.kr"
-              autoComplete="email"
-              required
-            />
-            <Input
-              label="비밀번호"
-              icon="lock"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="비밀번호를 입력하세요"
-              autoComplete="current-password"
-              required
-            />
-            <Button
-              type="submit"
-              fullWidth
-              rightIcon={isSubmitting ? undefined : 'arrow_forward'}
-              disabled={isSubmitting}
-              className={styles.submitButton}
-            >
-              {isSubmitting ? '로그인 중...' : '로그인'}
-            </Button>
-          </form>
-
-          {/* 간편 로그인 */}
-          <div className={styles.divider}>
-            <span>또는 간편 로그인</span>
-          </div>
-          <Button variant="kakao" fullWidth leftIcon={<KakaoIcon />} onClick={handleKakaoLogin}>
-            카카오로 시작하기
-          </Button>
-
-          {/* 회원가입 안내 */}
-          <p className={styles.signup}>
-            아직 replant 회원이 아니신가요?
-            <Link to="/signup" className={styles.signupLink}>
-              회원가입하기
-              <span className="material-symbols-outlined" aria-hidden="true">
-                chevron_right
-              </span>
-            </Link>
-          </p>
-        </div>
-
-        {/* 안심 거래 배너 */}
-        <div className={styles.trustBanner}>
-          <div className={styles.trustIcon}>
-            <span className="material-symbols-outlined" aria-hidden="true">
-              verified_user
-            </span>
-          </div>
-          <div className={styles.trustText}>
-            <div className={styles.trustTitle}>
-              <span>replant 안심 인증 거래</span>
-              <span className={styles.badge}>1개체 1판매</span>
-            </div>
-            <p>사진 속 실물 그대로, 수령 확정 시 정산되는 안심 에스크로 마켓입니다.</p>
-          </div>
-        </div>
-
-        {/* 약관 링크 */}
-        <nav className={styles.policyLinks}>
-          <Link to="/terms">이용약관</Link>
-          <span aria-hidden="true">•</span>
-          <Link to="/privacy">개인정보처리방침</Link>
-          <span aria-hidden="true">•</span>
-          <Link to="/safety-policy">안전 보증 정책</Link>
-        </nav>
-      </div>
-    </div>
+    <LoginView
+      email={email}
+      password={password}
+      onEmailChange={(event) => setEmail(event.target.value)}
+      onPasswordChange={(event) => setPassword(event.target.value)}
+      onSubmit={handleSubmit}
+      onKakao={startKakaoLogin}
+      notice={notice}
+      error={error}
+      isSubmitting={isSubmitting}
+    />
   );
 }
 

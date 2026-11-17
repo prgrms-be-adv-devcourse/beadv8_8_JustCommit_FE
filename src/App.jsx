@@ -9,6 +9,8 @@ import ErrorPage from './components/common/ErrorPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
+import FindIdPage from './pages/member/find/FindIdPage';
+import ResetPasswordPage from './pages/member/find/ResetPasswordPage';
 import SellerRegisterPage from './pages/member/SellerRegisterPage';
 import MyPage from './pages/member/MyPage';
 import MyInfoPage from './pages/member/mypage/MyInfoPage';
@@ -35,7 +37,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Layout 밖: 헤더·푸터 없는 페이지 */}
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
         {/* Layout 안: 헤더·푸터 있는 페이지 */}
@@ -43,8 +44,6 @@ function App() {
           <Route path="/" element={<HomePage />} />
           {/* 검색 결과: 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
           <Route path="/search" element={<HomePage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/signup/social" element={<SocialSignupPage />} />
 
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
           <Route path="/mypage" element={<MyPage />} />
@@ -75,6 +74,15 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 시안 06 회원: 로그인 · 아이디 찾기 · 비밀번호 재설정 · 회원가입 */}
+        <Route element={<Layout designed />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/find-id" element={<FindIdPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signup/social" element={<SocialSignupPage />} />
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}

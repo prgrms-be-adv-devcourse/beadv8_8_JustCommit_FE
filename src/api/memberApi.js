@@ -31,6 +31,8 @@ export function signup(form) {
   return client.post('/api/v1/users', form);
 }
 
+// TODO(member): 판매자 등록에는 「상품 사진 외부 전송(검수) · 학습 이용」 동의가 필수 (BE docs/services/member.md 정책 「권한」).
+// 지금 API는 intro만 받으므로, 동의 항목(내용 · 버전)이 요청에 추가되면 함께 보냅니다.
 export function registerSeller(intro) {
   return client.post('/api/v1/sellers', { intro });
 }
@@ -56,4 +58,45 @@ export function socialSignup(signupToken, form) {
   return client.post('/api/v1/users/social', form, {
     headers: { Authorization: `Bearer ${signupToken}` },
   });
+}
+
+// ---------------------------------------------------------------------------
+// 아직 백엔드에 없는 API (BE docs/reference/external-apis.md 「추가 예정」: 아이디 찾기 · 비밀번호 재설정)
+// 경로 · 요청 · 응답은 회원 담당이 정하면 채웁니다. 그 전까지는 「준비 중」 오류를 돌려줍니다.
+// ---------------------------------------------------------------------------
+function notReady() {
+  const error = new Error('NOT_READY');
+  error.response = { data: { code: 'NOT_READY', message: '아직 준비 중인 기능이에요. 잠시만 기다려 주세요.' } };
+  return Promise.reject(error);
+}
+
+// TODO(member): 아이디 찾기 인증번호 발송. 예상 응답 data: { expiresIn, resendAvailableIn }
+// eslint-disable-next-line no-unused-vars
+export function sendFindIdCode(email) {
+  return notReady();
+}
+
+// TODO(member): 아이디 찾기 인증번호 확인 + 계정 조회.
+// 예상 응답 data: { email, provider: 'LOCAL' | 'KAKAO', nickname, joinedAt }
+// eslint-disable-next-line no-unused-vars
+export function findId({ email, code }) {
+  return notReady();
+}
+
+// TODO(member): 비밀번호 재설정 인증번호 발송 (이메일 인증 목적: 비밀번호 재설정). 예상 응답 data: { expiresIn, resendAvailableIn }
+// eslint-disable-next-line no-unused-vars
+export function sendPasswordResetCode(email) {
+  return notReady();
+}
+
+// TODO(member): 비밀번호 재설정 인증번호 확인
+// eslint-disable-next-line no-unused-vars
+export function verifyPasswordResetCode({ email, code }) {
+  return notReady();
+}
+
+// TODO(member): 새 비밀번호 저장 (성공하면 모든 기기 로그아웃)
+// eslint-disable-next-line no-unused-vars
+export function resetPassword({ email, newPassword }) {
+  return notReady();
 }
