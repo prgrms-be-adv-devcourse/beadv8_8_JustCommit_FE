@@ -44,3 +44,20 @@ export function cancelOrderItem(orderItemId) {
 export function confirmOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/confirm`);
 }
+
+// TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · market)
+// 경로 · 요청 형식은 담당이 확정하면 맞춥니다. 버튼을 누르면 부르고, API가 없으면 실패 안내가 보입니다.
+
+// 판매자 수락 · 거절: 체크한 주문상품만 거절(사유 없음), 나머지는 수락
+export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds) {
+  return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`, { rejectedOrderItemIds });
+}
+
+// 반품 승인 · 거절 (판매자)
+export function approveReturn(orderItemId) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/return/approve`);
+}
+
+export function rejectReturn(orderItemId) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/return/reject`);
+}

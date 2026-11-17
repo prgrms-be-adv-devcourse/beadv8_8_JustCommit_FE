@@ -63,3 +63,28 @@ export function deleteProduct(productId) {
 export function updateProduct(productId, form) {
   return client.put(`/api/v1/products/${productId}`, form);
 }
+
+// TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · products/me/counts)
+// 경로 · 응답은 담당이 확정하면 맞춥니다. 조회 함수는 아직 부르지 않고 화면에 자리 문구를 씁니다.
+// 이의 신청은 버튼을 누르면 부릅니다 (API가 없으면 실패 안내가 보임).
+
+// 등록 제한 현황 → { reviewingCount, reviewingLimit, registeredToday, registerLimit, reviewedToday, reviewLimit }
+export function getMyProductQuota() {
+  return client.get('/api/v1/products/me/quota');
+}
+
+// 내 상품 상태별 개수 (전체 · 판매 중 · 거래 중 · 판매 완료 · 검수 중 · 반려 · 숨김)
+export function getMyProductCounts() {
+  return client.get('/api/v1/products/me/counts');
+}
+
+// 검수 결과 → { stage: CHECKING|MANUAL|DELAYED|PASSED|REJECTED, steps[], rejectReason, decidedBy: AUTO|ADMIN,
+//              decidedAt, expiresAt, reReviewLeft, appealable }
+export function getProductReview(productId) {
+  return client.get(`/api/v1/products/${productId}/review`);
+}
+
+// 자동 반려 이의 신청 (메모 필수, 200자)
+export function appealProductReview(productId, memo) {
+  return client.post(`/api/v1/products/${productId}/review/appeal`, { memo });
+}
