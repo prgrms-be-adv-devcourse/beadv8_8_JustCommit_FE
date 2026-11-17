@@ -1,27 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
-  changeProductHidden,
   createProduct,
-  deleteProduct,
   getProduct,
   issueImageUploadUrls,
   searchSpecies,
   updateProduct,
   uploadToPresignedUrl,
 } from '../../api/productApi';
-import ConfirmModal from '../../components/common/ConfirmModal';
-import styles from './ProductCreatePage.module.css';
+import ErrorPage from '../../components/common/ErrorPage';
+import { EDITABLE_PRODUCT_STATUSES, QUOTA_PLACEHOLDER } from '../../constants/seller';
+import ProductFormView, { MAX_PHOTOS } from './ProductFormView';
 
-// 백엔드 ProductImageService 규칙과 같게 유지
+// 백엔드 ProductImageService 규칙과 같게 유지 (시안 안내: JPEG · PNG, 10MB 이하)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_PHOTOS = 10;
-const TITLE_MAX_LENGTH = 100;
 const SEARCH_DELAY_MS = 300;
-const MY_PRODUCTS_PATH = '/mypage/products';
 
 let photoSeq = 0;
 
@@ -31,20 +27,7 @@ function toUploadedPhoto(url) {
   return { id: photoSeq, file: null, url, previewUrl: url };
 }
 
-// 검색어와 일치하는 부분만 굵게
-function HighlightedName({ name, keyword }) {
-  const index = keyword ? name.indexOf(keyword) : -1;
-  if (index < 0) return name;
-  return (
-    <>
-      {name.slice(0, index)}
-      <strong className={styles.match}>{name.slice(index, index + keyword.length)}</strong>
-      {name.slice(index + keyword.length)}
-    </>
-  );
-}
-
-// 등록·수정 겸용 양식 (productId가 있으면 수정 모드)
+// 등록 · 수정 겸용 양식 (productId가 있으면 수정 모드)
 function ProductForm({ productId }) {
   const isEdit = Boolean(productId);
   usePageTitle(isEdit ? '상품 수정' : '상품 등록');
@@ -53,7 +36,7 @@ function ProductForm({ productId }) {
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
   const fileInputRef = useRef(null);
 
-  // 수정 모드: 불러온 상품 (판매자·상태 확인, 화면에 없는 값 보존용)
+  // 수정 모드: 불러온 상품 (판매자 · 상태 확인, 화면에 없는 값 보존용)
   const [loadedProduct, setLoadedProduct] = useState(null);
   const [loadState, setLoadState] = useState(isEdit ? 'loading' : 'done');
 
@@ -72,14 +55,6 @@ function ProductForm({ productId }) {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // 수정 모드: 숨기기·삭제 (양식 저장과 별개로 바로 반영)
-  const [isManaging, setIsManaging] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [manageError, setManageError] = useState(null); // 실패 안내 팝업 문구
-  // ConfirmModal의 useEffect가 onClose에 의존하므로 함수 고정
-  const closeDelete = useCallback(() => setDeleteOpen(false), []);
-  const closeManageError = useCallback(() => setManageError(null), []);
 
   // 페이지를 떠날 때 새 파일 미리보기 URL만 해제 (이미 올라간 사진 주소는 대상 아님)
   const photosRef = useRef(photos);
@@ -146,30 +121,13 @@ function ProductForm({ productId }) {
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
   if (!canSell) return <Navigate to="/seller/register" replace />;
-
-  if (loadState === 'loading') {
-    return <p className={styles.stateMessage}>상품 정보를 불러오는 중...</p>;
-  }
+  if (loadState === 'loading') return <main className="flex-1" />;
 
   // 수정할 수 없는 경우 (실제 권한 검사는 백엔드가 함)
-  let blockedMessage = null;
-  if (loadState === 'error') {
-    blockedMessage = '상품 정보를 불러오지 못했어요.';
-  } else if (isEdit && loadedProduct.sellerId !== user.memberId) {
-    blockedMessage = '내가 등록한 상품만 수정할 수 있어요.';
-  } else if (isEdit && loadedProduct.status !== 'ACTIVE') {
-    blockedMessage = '판매중인 상품만 수정할 수 있어요.';
-  }
-  if (blockedMessage) {
-    return (
-      <div className={styles.page}>
-        <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
-          <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-          판매 상품 목록
-        </Link>
-        <p className={styles.stateMessage}>{blockedMessage}</p>
-      </div>
-    );
+  if (loadState === 'error') return <ErrorPage type="PRODUCT_NOT_FOUND" />;
+  if (isEdit && loadedProduct.sellerId !== user.memberId) return <ErrorPage type="FORBIDDEN" />;
+  if (isEdit && !EDITABLE_PRODUCT_STATUSES.includes(loadedProduct.status)) {
+    return <Navigate to="/mypage/products" replace />;
   }
 
   // ── 사진 ──
@@ -179,7 +137,7 @@ function ProductForm({ productId }) {
 
     const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
     if (valid.length < files.length) {
-      setErrorMessage('JPG·PNG·WEBP 형식의 10MB 이하 사진만 올릴 수 있어요.');
+      setErrorMessage('JPEG · PNG 형식의 10MB 이하 사진만 올릴 수 있어요.');
     } else {
       setErrorMessage('');
     }
@@ -196,22 +154,27 @@ function ProductForm({ productId }) {
     setPhotos((prev) => [...prev, ...added]);
   };
 
-  const removePhoto = (id) => {
-    setPhotos((prev) => {
-      const target = prev.find((p) => p.id === id);
-      if (target?.file) URL.revokeObjectURL(target.previewUrl);
-      return prev.filter((p) => p.id !== id);
-    });
-  };
-
-  const movePhoto = (from, to) => {
-    if (from === null || from === to) return;
-    setPhotos((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
+  const photoHandlers = {
+    onAdd: () => fileInputRef.current?.click(),
+    onRemove: (id) =>
+      setPhotos((prev) => {
+        const target = prev.find((p) => p.id === id);
+        if (target?.file) URL.revokeObjectURL(target.previewUrl);
+        return prev.filter((p) => p.id !== id);
+      }),
+    onDragStart: setDragIndex,
+    onDragEnd: () => setDragIndex(null),
+    onDrop: (to) => {
+      const from = dragIndex;
+      setDragIndex(null);
+      if (from === null || from === to) return;
+      setPhotos((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(from, 1);
+        next.splice(to, 0, moved);
+        return next;
+      });
+    },
   };
 
   // ── 품종 ──
@@ -221,33 +184,40 @@ function ProductForm({ productId }) {
     setIsDropdownOpen(false);
   };
 
-  const handleSpeciesChange = (event) => {
-    setSpeciesQuery(event.target.value);
-    setSpecies(null); // 글자를 고치면 선택 해제 → 목록에서 다시 골라야 함
-    setIsDropdownOpen(true);
-  };
-
-  const handleSpeciesKeyDown = (event) => {
-    if (!isDropdownOpen || speciesOptions.length === 0) return;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      setActiveOption((i) => Math.min(i + 1, speciesOptions.length - 1));
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setActiveOption((i) => Math.max(i - 1, 0));
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      selectSpecies(speciesOptions[activeOption]);
-    } else if (event.key === 'Escape') {
-      setIsDropdownOpen(false);
-    }
+  const speciesProps = {
+    query: speciesQuery,
+    options: speciesOptions,
+    isOpen: isDropdownOpen,
+    activeIndex: activeOption,
+    onSelect: selectSpecies,
+    onOpen: () => setIsDropdownOpen(true),
+    onClose: () => setTimeout(() => setIsDropdownOpen(false), 150),
+    onChange: (event) => {
+      setSpeciesQuery(event.target.value);
+      setSpecies(null); // 글자를 고치면 선택 해제 → 목록에서 다시 골라야 함
+      setIsDropdownOpen(true);
+    },
+    onKeyDown: (event) => {
+      if (!isDropdownOpen || speciesOptions.length === 0) return;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setActiveOption((i) => Math.min(i + 1, speciesOptions.length - 1));
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setActiveOption((i) => Math.max(i - 1, 0));
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        selectSpecies(speciesOptions[activeOption]);
+      } else if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    },
   };
 
   // ── 저장 ──
   const priceNumber = Number(price);
-  const hasPhoto = photos.length > 0; // 사진 최소 1장 필수
   const canSubmit =
-    hasPhoto &&
+    photos.length > 0 &&
     species !== null &&
     title.trim() !== '' &&
     priceNumber > 0 &&
@@ -304,8 +274,8 @@ function ProductForm({ productId }) {
         const response = await createProduct(body);
         savedId = response.data.data.productId;
       }
-      // 등록·수정 모두 상품 상세로 (양식 페이지는 기록에서 대체 → 뒤로 가면 이전 목록)
-      navigate(`/products/${savedId}`, { replace: true, state: { backTo: '/' } });
+      // 등록 · 수정 모두 검수를 받으므로 검수 결과 화면으로 (양식 페이지는 기록에서 대체)
+      navigate(`/products/${savedId}/review`, { replace: true });
     } catch (error) {
       const fallback = isEdit ? '상품 수정에 실패했습니다.' : '상품 등록에 실패했습니다.';
       setErrorMessage(error.response?.data?.message ?? `${fallback} 다시 시도해 주세요.`);
@@ -313,298 +283,40 @@ function ProductForm({ productId }) {
     }
   };
 
-  const handleToggleHidden = async () => {
-    setIsManaging(true);
-    try {
-      await changeProductHidden(productId, !loadedProduct.hidden);
-      setLoadedProduct((prev) => ({ ...prev, hidden: !prev.hidden }));
-    } catch (error) {
-      setManageError(error.response?.data?.message ?? '숨김 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setIsManaging(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setDeleteOpen(false);
-    setIsManaging(true);
-    try {
-      await deleteProduct(productId);
-      navigate(MY_PRODUCTS_PATH, { replace: true });
-    } catch (error) {
-      setManageError(error.response?.data?.message ?? '상품을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      setIsManaging(false);
-    }
-  };
-
-  let submitLabel = isEdit ? '수정하기' : '등록하기';
-  if (isSubmitting) submitLabel = isEdit ? '수정 중...' : '등록 중...';
-
   return (
-    <div className={styles.page}>
-      <Link to={MY_PRODUCTS_PATH} className={styles.backLink}>
-        <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-        판매 상품 목록
-      </Link>
-      <h1 className={styles.pageTitle}>{isEdit ? '상품 수정' : '상품 등록'}</h1>
-
-      <form className={styles.form} onSubmit={handleSubmit} noValidate>
-        {errorMessage && (
-          <div className={styles.errorBanner} role="alert">
-            <span className="material-symbols-outlined" aria-hidden="true">error</span>
-            {errorMessage}
-          </div>
-        )}
-
-        {/* 사진 */}
-        <div className={styles.field}>
-          <div className={styles.photoHeader}>
-            <span id="photo-label" className={styles.label}>
-              사진 <span className={styles.optional}>({photos.length}/{MAX_PHOTOS})</span>
-            </span>
-            <span className={styles.hint}>첫 번째 사진이 대표 사진이 돼요. 끌어서 순서를 바꿀 수 있어요.</span>
-          </div>
-          <ul aria-labelledby="photo-label" className={styles.photoGrid}>
-            {photos.map((photo, index) => (
-              <li
-                key={photo.id}
-                draggable={!isSubmitting}
-                onDragStart={() => setDragIndex(index)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => {
-                  movePhoto(dragIndex, index);
-                  setDragIndex(null);
-                }}
-                onDragEnd={() => setDragIndex(null)}
-                className={`${styles.photo} ${index === 0 ? styles.coverPhoto : ''} ${dragIndex === index ? styles.dragging : ''}`}
-              >
-                <img src={photo.previewUrl} alt={`상품 사진 ${index + 1}`} />
-                {index === 0 && <span className={styles.coverBadge}>대표</span>}
-                <span className={`material-symbols-outlined ${styles.dragHandle}`} aria-hidden="true">
-                  drag_indicator
-                </span>
-                <button
-                  type="button"
-                  aria-label={`사진 ${index + 1} 삭제`}
-                  className={styles.removeButton}
-                  onClick={() => removePhoto(photo.id)}
-                  disabled={isSubmitting}
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">close</span>
-                </button>
-              </li>
-            ))}
-            {photos.length < MAX_PHOTOS && (
-              <li className={styles.addCell}>
-                <button
-                  type="button"
-                  className={styles.addButton}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isSubmitting}
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">add_a_photo</span>
-                  사진 추가
-                </button>
-              </li>
-            )}
-          </ul>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ALLOWED_TYPES.join(',')}
-            multiple
-            hidden
-            onChange={handleFiles}
-          />
-        </div>
-
-        {/* 품종 */}
-        <div className={styles.field}>
-          <label htmlFor="pf-species" className={styles.label}>품종</label>
-          <div className={styles.comboWrap}>
-            <span className={`${styles.combo} ${isDropdownOpen ? styles.comboOpen : ''}`}>
-              <span className="material-symbols-outlined" aria-hidden="true">search</span>
-              <input
-                id="pf-species"
-                type="text"
-                role="combobox"
-                aria-expanded={isDropdownOpen}
-                aria-controls="pf-species-list"
-                aria-autocomplete="list"
-                autoComplete="off"
-                placeholder="품종을 검색해 주세요"
-                value={speciesQuery}
-                onChange={handleSpeciesChange}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 150)}
-                onKeyDown={handleSpeciesKeyDown}
-                disabled={isSubmitting}
-              />
-              <span className="material-symbols-outlined" aria-hidden="true">expand_more</span>
-            </span>
-            {isDropdownOpen && (
-              <ul id="pf-species-list" role="listbox" className={styles.dropdown}>
-                {speciesOptions.length === 0 && <li className={styles.emptyOption}>검색 결과가 없어요</li>}
-                {speciesOptions.map((option, index) => (
-                  <li
-                    key={option.speciesId}
-                    role="option"
-                    aria-selected={index === activeOption}
-                    className={`${styles.option} ${index === activeOption ? styles.optionActive : ''}`}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => selectSpecies(option)}
-                  >
-                    <HighlightedName name={option.name} keyword={speciesQuery.trim()} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* 상품명 */}
-        <label className={styles.field}>
-          <span className={styles.label}>상품명</span>
-          <input
-            type="text"
-            className={styles.input}
-            placeholder="예) 알로카시아 프라이덱 (40cm, 잎 6장)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={TITLE_MAX_LENGTH}
-            disabled={isSubmitting}
-          />
-        </label>
-
-        {/* 가격 */}
-        <div className={styles.field}>
-          <label htmlFor="pf-price" className={styles.label}>가격</label>
-          <span className={styles.priceBox}>
-            <input
-              id="pf-price"
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={price ? Number(price).toLocaleString('ko-KR') : ''}
-              onChange={(e) => setPrice(e.target.value.replace(/\D/g, '').slice(0, 9))}
-              disabled={isSubmitting}
-            />
-            <span>원</span>
-          </span>
-        </div>
-
-        {/* 설명 */}
-        <label className={styles.field}>
-          <span className={styles.label}>설명</span>
-          <textarea
-            rows={7}
-            className={styles.textarea}
-            placeholder="키운 기간, 크기, 잎 상태, 화분 등 식물의 상태를 자세히 적어 주세요."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </label>
-
-        <div className={styles.notice}>
-          <span className="material-symbols-outlined" aria-hidden="true">info</span>
-          식물 1개체당 판매글 1개만 등록돼요
-        </div>
-
-        {!hasPhoto && (
-          <div className={`${styles.notice} ${styles.noticeError}`} role="status">
-            <span className="material-symbols-outlined" aria-hidden="true">photo_camera</span>
-            사진을 1장 이상 등록해 주세요
-          </div>
-        )}
-
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            className={styles.cancelButton}
-            onClick={() => navigate(MY_PRODUCTS_PATH)}
-            disabled={isSubmitting}
-          >
-            취소
-          </button>
-          <button type="submit" className={styles.submitButton} disabled={!canSubmit}>
-            {submitLabel}
-          </button>
-        </div>
-      </form>
-
-      {isEdit && (
-        <section className={styles.manage} aria-labelledby="manage-title">
-          <div className={styles.manageText}>
-            <h2 id="manage-title" className={styles.manageTitle}>
-              상품 관리
-              {loadedProduct.hidden && (
-                <span className={styles.hiddenBadge}>
-                  <span className="material-symbols-outlined" aria-hidden="true">visibility_off</span>
-                  숨김
-                </span>
-              )}
-            </h2>
-            <p className={styles.manageHint}>
-              {loadedProduct.hidden
-                ? '숨긴 상품은 구매자에게 보이지 않아요.'
-                : '숨기면 목록과 검색에서 구매자에게 보이지 않아요.'}{' '}
-              수정 내용 저장과 별개로 바로 반영돼요.
-            </p>
-          </div>
-          <div className={styles.manageActions}>
-            <button
-              type="button"
-              className={styles.manageButton}
-              onClick={handleToggleHidden}
-              disabled={isManaging || isSubmitting}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {loadedProduct.hidden ? 'visibility' : 'visibility_off'}
-              </span>
-              {loadedProduct.hidden ? '숨김 해제' : '숨기기'}
-            </button>
-            <button
-              type="button"
-              className={`${styles.manageButton} ${styles.deleteButton}`}
-              onClick={() => setDeleteOpen(true)}
-              disabled={isManaging || isSubmitting}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">delete</span>
-              삭제
-            </button>
-          </div>
-        </section>
-      )}
-
-      {deleteOpen && (
-        <ConfirmModal
-          icon="delete"
-          title="상품을 삭제할까요?"
-          message={`"${loadedProduct.title}"이(가) 목록과 검색에서 사라지고 되돌릴 수 없어요.`}
-          confirmText="삭제"
-          cancelText="취소"
-          onConfirm={confirmDelete}
-          onClose={closeDelete}
-        />
-      )}
-
-      {manageError && (
-        <ConfirmModal
-          icon="info"
-          title="처리하지 못했어요"
-          message={manageError}
-          confirmText="확인"
-          cancelText={null}
-          onConfirm={closeManageError}
-          onClose={closeManageError}
-        />
-      )}
-    </div>
+    <>
+      <ProductFormView
+        isEdit={isEdit}
+        quota={QUOTA_PLACEHOLDER}
+        status={loadedProduct?.status}
+        photos={photos}
+        photoHandlers={photoHandlers}
+        species={speciesProps}
+        title={title}
+        onTitleChange={setTitle}
+        priceText={price ? Number(price).toLocaleString('ko-KR') : ''}
+        onPriceChange={(value) => setPrice(value.replace(/\D/g, '').slice(0, 9))}
+        description={description}
+        onDescriptionChange={setDescription}
+        canSubmit={canSubmit}
+        isSubmitting={isSubmitting}
+        errorMessage={errorMessage}
+        onCancel={() => navigate(-1)}
+        onSubmit={handleSubmit}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ALLOWED_TYPES.join(',')}
+        multiple
+        hidden
+        onChange={handleFiles}
+      />
+    </>
   );
 }
 
-// 상품 ID가 바뀌면 key로 양식을 새로 만들어 이전 입력이 남지 않게 함
+// 다른 상품으로 이동하면 양식을 새로 만들도록 key로 다시 마운트
 function ProductCreatePage() {
   const { productId } = useParams();
   return <ProductForm key={productId ?? 'new'} productId={productId} />;
