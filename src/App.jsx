@@ -11,8 +11,14 @@ import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
 import SellerRegisterPage from './pages/member/SellerRegisterPage';
 import MyPage from './pages/member/MyPage';
-import MyInfoPage from './pages/member/mypage/MyInfoPage';
-import AddressPage from './pages/member/mypage/AddressPage';
+import NicknamePage from './pages/member/account/NicknamePage';
+import PasswordPage from './pages/member/account/PasswordPage';
+import BankAccountPage from './pages/member/account/BankAccountPage';
+import AddressesPage from './pages/member/account/AddressesPage';
+import WithdrawPage from './pages/member/account/WithdrawPage';
+import ReviewsPage from './pages/review/ReviewsPage';
+import ReviewWritePage from './pages/review/ReviewWritePage';
+import ReviewDonePage from './pages/review/ReviewDonePage';
 import CartPage from './pages/market/CartPage';
 import WalletPage from './pages/payment/WalletPage';
 import ChargePage from './pages/payment/ChargePage';
@@ -47,9 +53,6 @@ function App() {
           <Route path="/signup/social" element={<SocialSignupPage />} />
 
           {/* 헤더 메뉴 (TODO: 각 기능 구현 시 실제 페이지로 교체) */}
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/mypage/info" element={<MyInfoPage />} />
-          <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
           <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<SalesOrdersPage />} />
@@ -57,7 +60,6 @@ function App() {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<SettlementPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/deposit/charge" element={<ChargePage />} />
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
           <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
@@ -75,6 +77,20 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 시안 06-4 마이페이지 · 06-5 회원 정보 수정 · 06-6 알림 · 05-2 리뷰 작성 · 05-3 리뷰 관리 */}
+        <Route element={<Layout designed />}>
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/account" element={<NicknamePage />} />
+          <Route path="/mypage/account/password" element={<PasswordPage />} />
+          <Route path="/mypage/account/bank" element={<BankAccountPage />} />
+          <Route path="/mypage/addresses" element={<AddressesPage />} />
+          <Route path="/mypage/account/withdraw" element={<WithdrawPage />} />
+          <Route path="/mypage/reviews" element={<ReviewsPage />} />
+          <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/orders/:orderId/review" element={<ReviewWritePage />} />
+          <Route path="/orders/:orderId/review/done" element={<ReviewDonePage />} />
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
