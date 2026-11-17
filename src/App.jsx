@@ -24,6 +24,7 @@ import OrderExpiredPage from './pages/market/OrderExpiredPage';
 import OrderFailPage from './pages/market/OrderFailPage';
 import OrderListPage from './pages/market/OrderListPage';
 import OrderDetailPage from './pages/market/OrderDetailPage';
+import RefundRequestPage from './pages/market/RefundRequestPage';
 import MyProductsPage from './pages/product/MyProductsPage';
 import SalesOrdersPage from './pages/market/SalesOrdersPage';
 import SalesOrderDetailPage from './pages/market/SalesOrderDetailPage';
@@ -66,7 +67,6 @@ function App() {
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/fail" element={<OrderFailPage />} />
-          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
           <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
@@ -75,6 +75,12 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 시안으로 다시 만든 화면: 주문 상세 (03-5 · 04-1 · 04-4 · 05-1) · 반품 신청 (04-3) */}
+        <Route element={<Layout designed />}>
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/orders/:orderId/items/:orderItemId/return" element={<RefundRequestPage />} />
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
