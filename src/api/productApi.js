@@ -88,3 +88,14 @@ export function getProductReview(productId) {
 export function appealProductReview(productId, memo) {
   return client.post(`/api/v1/products/${productId}/review/appeal`, { memo });
 }
+
+// ===== 판매자 상점 (시안 02-4-4 B안) =====
+// TODO: 판매자별 판매 중 상품 목록 API가 없음. GET products(ProductSearchRequest)에 sellerId 필터가 없고,
+//  BE docs/reference/external-apis.md 「추가할 API」의 market 「확장 화면은 판매자 상점(리뷰 · 판매 상품)」에 해당.
+//  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId= 또는 /api/v1/sellers/{sellerId}/products).
+//  지금은 서버를 부르지 않고 빈 목록을 돌려줍니다 → 화면은 「판매 중 0개」 빈 상태로 보임.
+// 응답 → { content: [{ productId, title, price, thumbnailUrl, status, createdAt }], totalElements }
+// eslint-disable-next-line no-unused-vars
+export function getSellerProducts(sellerId, params = {}) {
+  return Promise.resolve({ data: { content: [], totalElements: 0 } });
+}

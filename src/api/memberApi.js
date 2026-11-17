@@ -143,3 +143,10 @@ export function deleteAddress(addressId) {
 export function withdraw() {
   return client.delete('/api/v1/users/me');
 }
+
+// 판매자 공개 정보 (로그인 없이 조회, 숫자 id만) → { sellerId, nickname, intro, createdAt }
+// BE docs/reference/external-apis.md member `GET sellers/{sellerId}`
+// TODO: 판매 완료 수는 응답에 없음 (판매자 상점 B안에 필요) → 필드 추가 요청
+export function getSeller(sellerId) {
+  return client.get(`/api/v1/sellers/${sellerId}`);
+}

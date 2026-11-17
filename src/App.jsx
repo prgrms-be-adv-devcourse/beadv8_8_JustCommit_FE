@@ -7,6 +7,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 // 02 탐색 · 상품
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/product/ProductDetailPage';
+import SellerShopPage from './pages/member/SellerShopPage';
 // 03 구매 · 주문
 import CartPage from './pages/market/CartPage';
 import CheckoutPage from './pages/market/CheckoutPage';
@@ -77,6 +78,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<HomePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
+          <Route path="/sellers/:sellerId" element={<SellerShopPage />} />
 
           {/* 03 구매 · 주문 */}
           <Route path="/cart" element={<CartPage />} />

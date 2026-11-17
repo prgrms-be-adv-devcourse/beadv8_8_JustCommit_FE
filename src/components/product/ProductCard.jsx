@@ -21,7 +21,8 @@ const OVERLAY = {
   },
 };
 
-function ProductCard({ product }) {
+// tabularPrice: 가격에 tabular-nums (시안 02-4-4 판매자 상점 카드는 있고, 02-1-1 메인 카드는 없음)
+function ProductCard({ product, tabularPrice = false }) {
   const isSoldOut = product.status === 'SOLD_OUT';
   const overlay = OVERLAY[product.status];
 
@@ -60,7 +61,9 @@ function ProductCard({ product }) {
           {product.title}
         </h3>
         <div className="flex items-center justify-between mt-1">
-          <span className={`text-[18px] font-bold text-[#191919]${isSoldOut ? ' line-through' : ''}`}>
+          <span
+            className={`text-[18px] font-bold text-[#191919]${isSoldOut ? ' line-through' : ''}${tabularPrice ? ' tabular-nums' : ''}`}
+          >
             {formatPrice(product.price)}
           </span>
           <span className="text-xs text-gray-400">{formatRelativeTime(product.createdAt)}</span>
