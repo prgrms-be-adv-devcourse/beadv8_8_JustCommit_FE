@@ -30,7 +30,7 @@ function SellerRegisterView({
           <span className="text-sm font-bold text-[#111827]">정산 받을 계좌</span>
           <div className="h-12 px-4 flex items-center justify-between bg-[#f3f4f6] border border-[#e5e7eb] text-[15px] text-[#111827] tabular-nums">
             <span>{account}</span>
-            <Link to="/mypage/info" className="text-[13px] font-semibold text-[#0f4c3a] underline">
+            <Link to="/mypage/account/bank" className="text-[13px] font-semibold text-[#0f4c3a] underline">
               계좌 변경
             </Link>
           </div>

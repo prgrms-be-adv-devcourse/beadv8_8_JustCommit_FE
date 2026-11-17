@@ -55,7 +55,7 @@ function WithdrawView({
           <div className="h-12 px-4 flex items-center justify-between bg-[#f3f4f6] border border-[#e5e7eb] text-[15px] text-[#111827] tabular-nums">
             <span>{account}</span>
             {/* TODO: 계좌 변경 화면(member 「계좌 변경」 API 추가 예정)이 생기면 그 경로로 */}
-            <Link to="/mypage/info" className="text-[13px] font-semibold text-[#0f4c3a] underline">
+            <Link to="/mypage/account/bank" className="text-[13px] font-semibold text-[#0f4c3a] underline">
               계좌 변경
             </Link>
           </div>

@@ -62,12 +62,6 @@ export function confirmOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/confirm`);
 }
 
-// 결제 대기(PAYMENT_PENDING) 주문을 예치금으로 결제 (충전 화면에서 충전이 끝난 뒤 자동 호출)
-// TODO: docs/reference/external-apis.md의 POST orders/{id}/pay. 응답 형식은 백엔드 확정 후 맞춤
-export function payOrder(orderId) {
-  return client.post(`/api/v1/orders/${orderId}/pay`);
-}
-
 // TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · market)
 // 경로 · 요청 형식은 담당이 확정하면 맞춥니다. 버튼을 누르면 부르고, API가 없으면 실패 안내가 보입니다.
 

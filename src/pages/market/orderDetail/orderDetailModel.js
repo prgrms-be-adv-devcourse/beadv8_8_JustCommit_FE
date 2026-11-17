@@ -368,8 +368,8 @@ function buildReview(order, sellerOrders, now) {
       if (now < deadline.getTime()) {
         row.state = 'ready';
         row.deadline = `${formatMonthDay(deadline)}까지 작성 가능`;
-        // TODO: 리뷰 작성 화면 경로는 리뷰 갈래에서 정함
-        row.writeTo = `/reviews/new?sellerOrderId=${sellerOrder.id}`;
+        // 리뷰 작성 화면 (시안 05-2): /orders/{orderId}/review?sellerOrderId=
+        row.writeTo = `/orders/${order.orderId}/review?sellerOrderId=${sellerOrder.id}`;
       } else {
         row.state = 'expired';
       }
