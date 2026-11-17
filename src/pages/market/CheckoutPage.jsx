@@ -256,9 +256,12 @@ function CheckoutPage() {
   const shortage = balance != null ? Math.max(0, total - balance) : 0;
   const hasUnavailable = cartItems?.some((item) => !item.isPurchasable) ?? false;
 
-  // 충전하러 가기: 충전이 끝나면 이 주문서로 돌아와 바로 결제
+  // 충전하러 가기: 시안 07-2-2 「주문서에서 넘어온 충전」. 주문 번호를 주소에 붙여야 그 화면이 나오고,
+  // 충전이 끝나면 충전 완료 화면이 이 주문을 자동 결제(POST orders/{id}/pay)한 뒤 주문 완료로 보냄
   const goToCharge = (orderId, shortAmount) => {
-    navigate('/deposit/charge', { state: { from: `/checkout?orderId=${orderId}&pay=1`, shortage: shortAmount } });
+    navigate(`/deposit/charge?orderId=${orderId}`, {
+      state: { from: `/checkout?orderId=${orderId}&pay=1`, shortage: shortAmount },
+    });
   };
 
   const goToComplete = (order) => {
