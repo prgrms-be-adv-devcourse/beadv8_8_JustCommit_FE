@@ -4,11 +4,11 @@ import ModalButton from '../../components/common/ModalButton';
 import { ActionErrorBar } from '../../components/common/ActionError';
 import { ADMIN_REJECT_REASONS, OTHER_REASON_MAX_LENGTH } from '../../constants/imageReview';
 
-// 시안 09-2-3 반려 사유 선택 (AdminReviewReject)
-// initialCode: 처음 골라 둘 사유 (자동 반려 건이면 그 사유). onSubmit({ reasonCode, reasonText })
-function AdminReviewRejectModal({ initialCode = null, onClose, onSubmit, busy = false, error }) {
+// 시안 09-2-3 반려 사유 선택 (AdminReviewReject) · 09-2-4 「기타」 직접 입력 (AdminReviewRejectOther)
+// initialCode: 처음 골라 둘 사유 (자동 반려 건이면 그 사유), initialText: 「기타」 입력칸 처음 값. onSubmit({ reasonCode, reasonText })
+function AdminReviewRejectModal({ initialCode = null, initialText = '', onClose, onSubmit, busy = false, error }) {
   const [code, setCode] = useState(initialCode);
-  const [otherText, setOtherText] = useState('');
+  const [otherText, setOtherText] = useState(initialText);
 
   const isOther = code === 'OTHER';
   const canSubmit = code && (!isOther || otherText.trim()) && !busy;
@@ -19,6 +19,8 @@ function AdminReviewRejectModal({ initialCode = null, onClose, onSubmit, busy = 
   };
 
   const handleKey = (event, reasonCode) => {
+    // 「기타」 입력칸 안에서 누른 키(스페이스 · 엔터)는 그대로 글자로 들어가게 둠
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       setCode(reasonCode);
@@ -51,41 +53,70 @@ function AdminReviewRejectModal({ initialCode = null, onClose, onSubmit, busy = 
       >
         {ADMIN_REJECT_REASONS.map((reason) => {
           const checked = reason.code === code;
+          const radio = (
+            <span
+              className={`w-4 h-4 border-2 shrink-0 flex items-center justify-center ${
+                checked ? 'border-[#0f4c3a]' : 'border-[#d1d5db]'
+              }`}
+            >
+              {checked && <span className="w-2 h-2 bg-[#0f4c3a]"></span>}
+            </span>
+          );
+          const label = (
+            <>
+              <span className="w-[132px] font-semibold text-[#111827]">{reason.label}</span>
+              <span className="flex-1 text-[13px] text-[#4b5563]">{reason.message}</span>
+            </>
+          );
+          const expanded = checked && reason.code === 'OTHER';
           return (
             <li
               key={reason.code}
               role="radio"
               aria-checked={checked}
               tabIndex={0}
-              className={`px-4 py-3 flex items-center gap-3 cursor-pointer ${checked ? 'bg-[#f4f8f6]' : ''}`}
+              className={
+                expanded
+                  ? 'px-4 py-3 space-y-3 bg-[#f4f8f6]'
+                  : `px-4 py-3 flex items-center gap-3 cursor-pointer ${checked ? 'bg-[#f4f8f6]' : ''}`
+              }
               onClick={() => setCode(reason.code)}
               onKeyDown={(event) => handleKey(event, reason.code)}
             >
-              <span
-                className={`w-4 h-4 border-2 shrink-0 flex items-center justify-center ${
-                  checked ? 'border-[#0f4c3a]' : 'border-[#d1d5db]'
-                }`}
-              >
-                {checked && <span className="w-2 h-2 bg-[#0f4c3a]"></span>}
-              </span>
-              <span className="w-[132px] font-semibold text-[#111827]">{reason.label}</span>
-              <span className="flex-1 text-[13px] text-[#4b5563]">{reason.message}</span>
+              {expanded ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    {radio}
+                    {label}
+                  </div>
+                  {/* 「기타」: 판매자에게 보일 문구를 직접 입력 (docs: 필수, 200자) */}
+                  <div className="relative">
+                    <textarea
+                      rows={3}
+                      maxLength={OTHER_REASON_MAX_LENGTH}
+                      value={otherText}
+                      onChange={(event) => setOtherText(event.target.value)}
+                      aria-label="기타 반려 사유"
+                      className="w-full p-3 pb-8 bg-white border border-[#0f4c3a] text-[14px] text-[#111827] leading-relaxed resize-none focus:ring-0 focus:border-[#0f4c3a]"
+                    />
+                    <span className="absolute right-3 bottom-2.5 text-[13px] text-[#6b7280] tabular-nums">
+                      {`${otherText.length} / ${OTHER_REASON_MAX_LENGTH}`}
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-[#6b7280]">
+                    {`판매자에게 이 내용이 그대로 보여요. ${OTHER_REASON_MAX_LENGTH}자까지 쓸 수 있어요.`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  {radio}
+                  {label}
+                </>
+              )}
             </li>
           );
         })}
       </ul>
-      {/* 시안에 없는 부분: 「기타」를 고르면 판매자에게 보일 문구를 직접 입력 (docs: 필수, 200자) */}
-      {isOther && (
-        <textarea
-          value={otherText}
-          onChange={(event) => setOtherText(event.target.value)}
-          maxLength={OTHER_REASON_MAX_LENGTH}
-          rows={3}
-          placeholder="판매자에게 보일 반려 사유를 적어 주세요 (200자까지)"
-          aria-label="기타 반려 사유"
-          className="w-full px-3 py-2 border border-[#d1d5db] text-[14px] text-[#111827] resize-none focus:outline-none focus:border-[#0f4c3a]"
-        />
-      )}
       <ActionErrorBar message={error} />
     </Modal>
   );

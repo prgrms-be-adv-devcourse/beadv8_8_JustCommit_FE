@@ -6,7 +6,7 @@ import { inputClass } from './accountStyle';
 
 // 시안 06-5-5 계좌 변경 (이메일 인증) · 06-5-6 계좌 입력
 // props
-//   currentAccount: '국민은행 ***4567 · 예금주 김*식'
+//   currentAccount: 'KB국민은행 ***4567 · 예금주 김개식'
 //   isVerified: 인증을 마쳤으면 계좌 입력 화면
 //   인증: email, codeSent, resendSeconds, codeSecondsText('4:18'), code, onCodeChange, onSend, onVerify, verifyError
 //   입력: form{bankCode,accountNo,accountHolder}, onFormChange(name, value), canSubmit, isSubmitting, onSubmit, submitError

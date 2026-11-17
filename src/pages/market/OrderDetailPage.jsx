@@ -6,8 +6,8 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import OrderDetailView from './orderDetail/OrderDetailView';
-import { CancelModal, TrackingModal } from './orderDetail/OrderDetailModals';
-import { buildCancelTarget, buildOrderDetailView } from './orderDetail/orderDetailModel';
+import { CancelModal, ConfirmModal, TrackingModal } from './orderDetail/OrderDetailModals';
+import { buildCancelTarget, buildConfirmTarget, buildOrderDetailView } from './orderDetail/orderDetailModel';
 
 const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로고침은 10초에 한 번
 
@@ -30,13 +30,15 @@ function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error | notFound
   const [busyItemId, setBusyItemId] = useState(null);
-  const [itemErrors, setItemErrors] = useState({});
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState(null);
   // 취소 409 뒤 다시 불러온 상태를 화면에 반영하기 위한 표시 (모달 없이)
   const [duplicateCancelIds, setDuplicateCancelIds] = useState(() => new Set());
   const [lockedSellerOrderIds, setLockedSellerOrderIds] = useState(() => new Set());
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState(null);
   const [trackingGroup, setTrackingGroup] = useState(null);
   const [refreshCooldown, setRefreshCooldown] = useState(0);
 
@@ -72,13 +74,17 @@ function OrderDetailPage() {
 
   const view = useMemo(
     () =>
-      order && buildOrderDetailView(order, { errors: itemErrors, duplicateCancelIds, lockedSellerOrderIds }),
-    [order, itemErrors, duplicateCancelIds, lockedSellerOrderIds],
+      order && buildOrderDetailView(order, { duplicateCancelIds, lockedSellerOrderIds }),
+    [order, duplicateCancelIds, lockedSellerOrderIds],
   );
 
   const closeCancel = useCallback(() => {
     setCancelTarget(null);
     setCancelError(null);
+  }, []);
+  const closeConfirm = useCallback(() => {
+    setConfirmTarget(null);
+    setConfirmError(null);
   }, []);
   const closeTracking = useCallback(() => setTrackingGroup(null), []);
 
@@ -93,23 +99,27 @@ function OrderDetailPage() {
     reload().catch(() => {});
   };
 
-  const confirmItem = async (item) => {
-    setBusyItemId(item.id);
-    setItemErrors((errors) => ({ ...errors, [item.id]: null }));
+  // 모달의 「구매 확정」을 눌렀을 때만 확정. 실패하면 모달 안에 오류를 보여 줌
+  const runConfirm = async () => {
+    const { itemId } = confirmTarget;
+    setConfirming(true);
+    setConfirmError(null);
+    setBusyItemId(itemId);
     try {
-      await confirmOrderItem(item.id);
+      await confirmOrderItem(itemId);
+      closeConfirm();
       await reload();
     } catch (error) {
-      const message = error.response?.data?.message ?? '구매를 확정하지 못했어요. 잠시 후 다시 시도해 주세요.';
-      setItemErrors((errors) => ({ ...errors, [item.id]: message }));
+      setConfirmError(error.response?.data?.message ?? '구매를 확정하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
+      setConfirming(false);
       setBusyItemId(null);
     }
   };
 
   const handleAction = (type, item) => {
     if (type === 'return') navigate(`/orders/${orderId}/items/${item.id}/return`);
-    if (type === 'confirm') confirmItem(item);
+    if (type === 'confirm') setConfirmTarget(buildConfirmTarget(order, item.id));
     if (type === 'cancel') setCancelTarget(buildCancelTarget(order, item.id));
   };
 
@@ -170,6 +180,15 @@ function OrderDetailPage() {
           error={cancelError}
           onClose={closeCancel}
           onConfirm={runCancel}
+        />
+      )}
+      {confirmTarget && (
+        <ConfirmModal
+          target={confirmTarget}
+          confirming={confirming}
+          error={confirmError}
+          onClose={closeConfirm}
+          onConfirm={runConfirm}
         />
       )}
       {tracking && (

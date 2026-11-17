@@ -10,6 +10,7 @@ import {
   SignupInfoView,
   SignupSellerView,
 } from './signup/SignupViews';
+import { TERMS_REQUIRED_MESSAGE } from './signup/memberRules';
 import useMemberInfoForm from './signup/useMemberInfoForm';
 
 // 시안 06-3-1 ~ 06-3-8 이메일 회원가입
@@ -28,6 +29,7 @@ function SignupPage() {
   const emailCode = useEmailCode({ sendCode: sendEmailCode, verifyCode: verifyEmailCode });
   const info = useMemberInfoForm({ withPassword: true });
   const [infoError, setInfoError] = useState('');
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   const [role, setRole] = useState('seller');
   const [intro, setIntro] = useState('');
@@ -66,11 +68,22 @@ function SignupPage() {
 
   if (step === STEP.INFO) {
     const handleNext = () => {
-      const problem = info.validate();
+      // 체크해야 다음으로 넘어감
+      const problem = info.validate() ?? (termsAgreed ? null : TERMS_REQUIRED_MESSAGE);
       setInfoError(problem ?? '');
       if (!problem) goStep(STEP.SELLER);
     };
-    return <SignupInfoView email={verifiedEmail} form={info.form} on={info.on} onNext={handleNext} error={infoError} />;
+    return (
+      <SignupInfoView
+        email={verifiedEmail}
+        form={info.form}
+        on={info.on}
+        termsAgreed={termsAgreed}
+        onTermsChange={setTermsAgreed}
+        onNext={handleNext}
+        error={infoError}
+      />
+    );
   }
 
   if (step === STEP.SELLER) {
@@ -89,6 +102,7 @@ function SignupPage() {
       setSubmitError('');
       setIsSubmitting(true);
       try {
+        // TODO(member): 가입 요청에 이용약관 · 개인정보처리방침 동의 필드가 없음. 생기면 termsAgreed(· 약관 버전)를 함께 보냄
         await signup({ email: verifiedEmail, password: info.password, ...info.toProfileRequest() });
       } catch (error) {
         setSubmitError(getMessage(error, '가입하지 못했어요. 잠시 후 다시 시도해 주세요.'));

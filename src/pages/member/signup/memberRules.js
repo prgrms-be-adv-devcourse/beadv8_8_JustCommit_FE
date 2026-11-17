@@ -26,3 +26,6 @@ export function formatPhone(digits) {
   if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
+
+// 회원가입 · 카카오 가입의 [필수] 이용약관 · 개인정보처리방침 동의를 안 했을 때
+export const TERMS_REQUIRED_MESSAGE = '이용약관과 개인정보처리방침에 동의해야 가입할 수 있어요';

@@ -5,6 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatTime } from '../../utils/format';
 import { SocialSignupView } from './signup/SignupViews';
+import { TERMS_REQUIRED_MESSAGE } from './signup/memberRules';
 import useMemberInfoForm from './signup/useMemberInfoForm';
 
 // 시안 06-3-9 카카오 가입 (가입 토큰 10분 안에 정보 입력)
@@ -65,6 +66,7 @@ function SocialSignupPage() {
   const remaining = useRemainingSeconds(claims.expiresAt);
   const info = useMemberInfoForm({ withPassword: false });
   const [error, setError] = useState('');
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isLoggedIn && !isSubmitting) {
@@ -85,7 +87,8 @@ function SocialSignupPage() {
       goLoginAgain();
       return;
     }
-    const problem = info.validate();
+    // 체크해야 가입 버튼이 동작
+    const problem = info.validate() ?? (termsAgreed ? null : TERMS_REQUIRED_MESSAGE);
     if (problem) {
       setError(problem);
       return;
@@ -94,6 +97,7 @@ function SocialSignupPage() {
     setError('');
     setIsSubmitting(true);
     try {
+      // TODO(member): 카카오 가입 요청에 이용약관 · 개인정보처리방침 동의 필드가 없음. 생기면 termsAgreed(· 약관 버전)를 함께 보냄
       await socialSignup(signupToken, info.toProfileRequest());
     } catch (signupError) {
       if (signupError.response?.status === 401) {
@@ -124,6 +128,8 @@ function SocialSignupPage() {
       remainingText={remaining === null ? '{남은 시간}' : formatTime(remaining)}
       form={info.form}
       on={info.on}
+      termsAgreed={termsAgreed}
+      onTermsChange={setTermsAgreed}
       onSubmit={handleSubmit}
       error={error}
       isSubmitting={isSubmitting}

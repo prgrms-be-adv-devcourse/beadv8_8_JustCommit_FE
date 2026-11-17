@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { changeAccount, sendAccountEmailCode, verifyAccountEmailCode } from '../../../api/memberApi';
 import { ACTION_ERROR } from '../../../constants/actionError';
-import { BANKS } from '../../../constants/banks';
+import { formatBankAccount } from '../../../constants/banks';
 import useCountdown from '../../../hooks/useCountdown';
 import usePageTitle from '../../../hooks/usePageTitle';
 import AccountGuard from './AccountGuard';
@@ -20,11 +20,8 @@ function formatMinSec(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-// 화면은 뒤 4자리만 (번호 마스킹 · 예금주 표시는 백엔드 응답 그대로)
 function formatAccount(account) {
-  if (!account) return '등록된 계좌가 없어요';
-  const bankName = BANKS.find((bank) => bank.code === account.bankCode)?.name ?? account.bankCode;
-  return `${bankName} ${account.maskedAccountNo} · 예금주 ${account.accountHolder}`;
+  return account ? formatBankAccount(account) : '등록된 계좌가 없어요';
 }
 
 function BankAccountPage() {

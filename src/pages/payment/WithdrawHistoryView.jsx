@@ -14,7 +14,7 @@ const STATUS = {
 };
 
 // 시안 07-4-3 인출 내역 · 07-4-4 인출 내역 빈 상태
-// cashOuts: [{ cashOutId, requestedAt('2026.10.15 11:02'), amount, account('국민은행 ***4567'), status }]
+// cashOuts: [{ cashOutId, requestedAt('2026.10.15 11:02'), amount, account('KB국민은행 ***4567'), status }]
 function WithdrawHistoryView({ cashOuts }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">

@@ -3,15 +3,18 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { registerSeller } from '../../api/memberApi';
+import { formatBankAccount } from '../../constants/banks';
+import useMyInfo from './account/useMyInfo';
 import SellerRegisterView from './SellerRegisterView';
 
-// TODO: 백엔드에 정산 계좌 조회(마스킹된 은행 · 계좌 끝 4자리 · 예금주)가 생기면 교체
+// 정산 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 자리 문구
 const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
 
 function SellerRegisterPage() {
   usePageTitle('판매자 등록');
   const { user, isLoggedIn, isInitializing, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const { myInfo } = useMyInfo();
 
   const [intro, setIntro] = useState('');
   const [agreed, setAgreed] = useState(false);
@@ -43,7 +46,7 @@ function SellerRegisterPage() {
 
   return (
     <SellerRegisterView
-      account={ACCOUNT_PLACEHOLDER}
+      account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
       intro={intro}
       onIntroChange={setIntro}
       agreed={agreed}

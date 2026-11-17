@@ -444,6 +444,24 @@ export function buildCancelTarget(order, itemId) {
   return null;
 }
 
+/** 구매 확정 확인 모달(시안 03-5-4)용: 상품 이름 · 상품 금액 · 자동 구매 확정일 */
+export function buildConfirmTarget(order, itemId) {
+  for (const sellerOrder of order.sellerOrders ?? []) {
+    const item = sellerOrder.items.find((candidate) => candidate.id === itemId);
+    if (!item) continue;
+    const autoConfirm = sellerOrder.deliveredAt
+      ? formatMonthDay(addHours(sellerOrder.deliveredAt, AUTO_CONFIRM_DAYS * 24))
+      : '{자동 구매 확정일}';
+    return {
+      itemId,
+      itemName: item.productName,
+      price: formatPrice(item.price),
+      autoConfirmNote: `확정하지 않아도 ${autoConfirm}에 자동으로 구매 확정돼요.`,
+    };
+  }
+  return null;
+}
+
 /** 반품 신청 화면용: 주문에서 주문상품 · 판매자 주문 찾기 */
 export function findOrderItem(order, orderItemId) {
   const sellerOrders = order.sellerOrders ?? [];

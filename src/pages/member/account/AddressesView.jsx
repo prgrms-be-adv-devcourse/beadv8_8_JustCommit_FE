@@ -3,7 +3,7 @@ import AccountLayout from './AccountLayout';
 
 // 시안 06-5-7 배송지 관리 (4 / 4 가득 참) · 06-5-8 배송지 추가 모달은 AddressModal
 // props
-//   addresses = [{ addressId, recipientName, addressName, phoneText, addressText, isDefault }] (기본 배송지가 맨 위)
+//   addresses = [{ addressId, recipientName, addressName, phoneText, addressText, addressLine, isDefault }] (기본 배송지가 맨 위)
 //   maxCount(4), onAdd, onEdit(address), onDelete(address), onSetDefault(address), busyId, actionError
 
 const OUTLINE_BUTTON = 'h-9 w-[72px] bg-white border border-[#d1d5db] text-sm font-semibold';
