@@ -18,6 +18,9 @@ import WalletPage from './pages/payment/WalletPage';
 import ChargePage from './pages/payment/ChargePage';
 import ChargeSuccessPage from './pages/payment/ChargeSuccessPage';
 import ChargeFailPage from './pages/payment/ChargeFailPage';
+import ChargeHistoryPage from './pages/payment/ChargeHistoryPage';
+import WithdrawPage from './pages/payment/WithdrawPage';
+import WithdrawHistoryPage from './pages/payment/WithdrawHistoryPage';
 import CheckoutPage from './pages/market/CheckoutPage';
 import OrderCompletePage from './pages/market/OrderCompletePage';
 import OrderExpiredPage from './pages/market/OrderExpiredPage';
@@ -54,13 +57,9 @@ function App() {
           <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<SalesOrdersPage />} />
           <Route path="/orders/seller/:sellerOrderId" element={<SalesOrderDetailPage />} />
-          <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<SettlementPage title="정산" />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/notifications" element={<NotificationPage />} />
-          <Route path="/deposit/charge" element={<ChargePage />} />
-          <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
-          <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
@@ -75,6 +74,17 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 시안 07 예치금 (충전 · 충전 내역 · 인출) */}
+        <Route element={<Layout designed />}>
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/charges" element={<ChargeHistoryPage />} />
+          <Route path="/wallet/withdraw" element={<WithdrawPage />} />
+          <Route path="/wallet/withdrawals" element={<WithdrawHistoryPage />} />
+          <Route path="/deposit/charge" element={<ChargePage />} />
+          <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
+          <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
