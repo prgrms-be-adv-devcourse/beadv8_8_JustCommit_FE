@@ -47,13 +47,8 @@ function OrderRow({ row }) {
       <div className="flex-1 min-w-0 space-y-1">
         <p className="text-[13px] text-[#6b7280]">{row.sellerText}</p>
         <p className="text-[15px] font-medium text-[#111827] truncate">
-          {row.itemName}
-          {row.moreCount > 0 && (
-            <>
-              {' '}
-              <span className="text-[#6b7280] font-normal">{`외 ${row.moreCount}건`}</span>
-            </>
-          )}
+          {row.moreCount > 0 ? `${row.itemName} ` : row.itemName}
+          {row.moreCount > 0 && <span className="text-[#6b7280] font-normal">{`외 ${row.moreCount}건`}</span>}
         </p>
         {row.note && <RowNote note={row.note} />}
       </div>
