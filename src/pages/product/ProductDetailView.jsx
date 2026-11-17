@@ -250,14 +250,14 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
                 <span className="text-base font-semibold text-[#111827]">{product.sellerName}</span>
               </div>
             </div>
-            {/* TODO: 판매자 상점(02-4) 화면을 정하면 그 경로로 연결 */}
-            <a
-              href="#"
+            {/* 판매자 상점 B안 (02-4-4). 상점의 「< 상품 상세」가 이 상품으로 돌아오도록 상품 번호를 넘김 */}
+            <Link
+              to={`/sellers/${product.sellerId}`}
+              state={{ fromProductId: product.productId }}
               className="text-sm font-medium text-[#0f4c3a] hover:underline flex items-center"
-              onClick={(event) => event.preventDefault()}
             >
               상점 보기 ›
-            </a>
+            </Link>
           </div>
 
           <div className="space-y-3 text-sm mb-8">

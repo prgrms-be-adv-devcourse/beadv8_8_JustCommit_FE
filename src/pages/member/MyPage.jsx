@@ -67,7 +67,7 @@ function MyPage() {
         // TODO: 수락 대기 판매 주문 수 API 없음
         salesOrders: '{수락 대기 수}',
       }}
-      // TODO: 판매자 상점 경로는 상점 화면 갈래에서 정함 (임시)
+      // 판매자 상점 B안 (02-4-4). sellerId = memberId (BE SellerProfileService)
       links={{ shop: `/sellers/${user.memberId}` }}
     />
   );
