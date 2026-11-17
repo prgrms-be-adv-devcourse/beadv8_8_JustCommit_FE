@@ -29,6 +29,11 @@ import SalesOrdersPage from './pages/market/SalesOrdersPage';
 import SalesOrderDetailPage from './pages/market/SalesOrderDetailPage';
 import SettlementPage from './pages/settlement/SettlementPage';
 import NotificationPage from './pages/notification/NotificationPage';
+import AdminLayout from './components/layout/AdminLayout';
+import RequireAdmin from './components/admin/RequireAdmin';
+import AdminReviewsPage from './pages/admin/AdminReviewsPage';
+import AdminReviewDetailPage from './pages/admin/AdminReviewDetailPage';
+import AdminFeeReportPage from './pages/admin/AdminFeeReportPage';
 
 function App() {
   return (
@@ -75,6 +80,15 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 관리자: 시안 09 (관리자가 아니면 403 오류 화면) */}
+        <Route element={<RequireAdmin />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            <Route path="/admin/reviews/:imageReviewId" element={<AdminReviewDetailPage />} />
+            <Route path="/admin/reports/fees" element={<AdminFeeReportPage />} />
+          </Route>
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
