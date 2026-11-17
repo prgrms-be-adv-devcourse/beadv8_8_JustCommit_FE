@@ -5,7 +5,7 @@ import ProductDetailPage from './pages/product/ProductDetailPage';
 import ProductCreatePage from './pages/product/ProductCreatePage';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
-import NotFoundPage from './pages/NotFoundPage';
+import ErrorPage from './components/common/ErrorPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import LoginPage from './pages/member/LoginPage';
 import SignupPage from './pages/member/SignupPage';
@@ -77,9 +77,9 @@ function App() {
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
         </Route>
 
-        {/* 404: 헤더는 보이고 푸터는 숨김 */}
-        <Route element={<Layout hideFooter />}>
-          <Route path="*" element={<NotFoundPage />} />
+        {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
+        <Route element={<Layout designed />}>
+          <Route path="*" element={<ErrorPage type="NOT_FOUND" />} />
         </Route>
       </Routes>
     </BrowserRouter>

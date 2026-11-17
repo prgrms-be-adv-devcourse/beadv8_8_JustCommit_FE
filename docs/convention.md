@@ -27,71 +27,50 @@ export default ProductListPage;
 
 ## 스타일
 
-### CSS Modules
+### Tailwind CSS
 
-컴포넌트마다 같은 이름의 `.module.css` 파일을 만듭니다.
-
-```
-ProductCard.jsx
-ProductCard.module.css
-```
+새 화면은 캔버스 「replant 웹 시안」의 HTML을 Tailwind 클래스 그대로 옮겨 만듭니다. 시안과 같은 Tailwind v3를 쓰므로 클래스가 같으면 화면도 같습니다.
 
 ```jsx
-import styles from './ProductCard.module.css';
-
-<div className={styles.card}>...</div>
+<button type="button" className="h-9 w-[88px] bg-[#0f4c3a] text-white text-[14px] font-medium">확인</button>
 ```
 
-- 클래스 이름이 파일마다 고유하게 바뀌므로 다른 파일과 겹치지 않습니다.
-- 클래스 이름은 camelCase로 씁니다. (`styles.primaryButton`)
-- 클래스 두 개를 함께 쓸 때
-
-```jsx
-<span className={`material-symbols-outlined ${styles.icon}`}>search</span>
-```
-
-### 디자인 토큰 (CSS 변수)
-
-색상·간격·글자 크기·모서리는 `index.css`에 정의된 변수를 사용합니다. Stitch 디자인 값을 그대로 옮긴 것입니다.
-
-```css
-.button {
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--text-label-md);
-  color: var(--color-on-primary);
-  background-color: var(--color-primary-container);
-  border-radius: var(--radius-full);
-}
-```
-
-| 종류 | 변수 예시 |
+| 규칙 | 내용 |
 |---|---|
-| 색상 | `--color-primary`, `--color-secondary`, `--color-surface-container-low`, `--color-error` |
-| 간격 | `--space-xs` ~ `--space-xl`, `--margin`, `--gutter` |
-| 글자 크기 | `--text-headline-xl` ~ `--text-label-sm` (줄 높이는 `--leading-*`) |
-| 글꼴 | `--font-headline`, `--font-body` |
-| 모서리 | `--radius`, `--radius-lg`, `--radius-xl`, `--radius-2xl`, `--radius-full` |
+| 클래스 | 시안 HTML의 `class`를 바꾸지 않고 `className`으로 옮깁니다. 색은 시안처럼 `bg-[#0f4c3a]` 같은 값으로 씁니다 |
+| 설정 | `tailwind.config.js`는 시안의 `tailwind.config`와 같게 둡니다 (`replant.forest` 색 하나) |
+| 전역 규칙 | `index.css` 맨 위: 모든 요소 Pretendard 글꼴 · 모서리 0px. 원형 배지만 인라인 `border-radius: 9999px !important`로 예외 (`CountBadge` 참고) |
+| 글자 조각 | 「닉네임 + 님」처럼 이어지는 글자는 한 문자열로 그립니다 (`` {`${nickname}님`} ``). 조각으로 나누면 글자 폭이 달라져 시안과 어긋납니다 |
+| 모달 | 시안은 캔버스용으로 `absolute`지만, 앱에서는 `fixed`로 화면에 고정합니다 (`Modal` 컴포넌트) |
+| 없는 값 | 백엔드에 아직 없는 값은 `{넣을값}` 형태의 자리 문구로 둡니다 (예: `{검수 대기 수}`) |
+| 확인 | 시안 HTML과 같은 상태로 1440px 화면을 캡처해 픽셀을 비교합니다 |
 
-- 색상 값(`#012d1d` 등)을 직접 쓰지 않고 변수를 사용합니다. 디자인이 바뀌면 `index.css`만 고치면 됩니다.
-- Stitch 코드는 Tailwind 클래스로 되어 있습니다. 그대로 쓰지 않고, 클래스가 뜻하는 값을 CSS로 옮겨 씁니다. (예: `px-4 py-2 rounded-full` → `padding: var(--space-sm) var(--space-md); border-radius: var(--radius-full);`)
+### 레이아웃
+
+| 컴포넌트 | 쓰는 곳 |
+|---|---|
+| `Layout designed` | 새 시안 화면. 헤더 · 화면 · 푸터만 쌓고, 화면이 직접 `<main className="flex-1 max-w-[1240px] ...">`을 그립니다 |
+| `Layout` | 시안 이전 화면 (CSS Modules). 다시 만들면 `designed`로 옮깁니다 |
+| `AdminLayout` | 관리자 화면 (관리자 헤더 + 공통 푸터) |
 
 ### 공통 컴포넌트
 
-버튼, 입력창처럼 여러 페이지에서 반복되는 요소는 `src/components/common/`에 만들어 함께 씁니다. 긴 스타일은 공통 컴포넌트 안에 두고, 페이지 코드는 짧게 유지합니다.
+여러 화면에서 반복되는 요소는 `src/components/common/`에 둡니다.
 
-```jsx
-<Button type="submit">로그인</Button>
-```
+| 컴포넌트 | 시안 | 내용 |
+|---|---|---|
+| `Modal` · `ModalButton` | 화면 시안의 모달 (예: 04-1 취소 확인) | 너비 · 위 여백(`top`) · 바닥 버튼. 버튼은 `secondary` · `primary` · `danger`, 기본 88px |
+| `ActionErrorBar` · `ActionErrorLine` | 01-1-5 동작 실패 안내 | 토스트 대신 쓰는 빨간 안내 바 · 버튼 아래 한 줄 (문구는 `constants/actionError.js`) |
+| `ErrorPage` | 01-1-5 전체 오류 화면 5종 | `NOT_FOUND` · `PRODUCT_NOT_FOUND` · `PRODUCT_HIDDEN` · `FORBIDDEN` · `SERVER_ERROR` |
+| `CountBadge` | 01-2-1 헤더 | 장바구니 · 알림 숫자 배지 (0이면 안 보임, 100 이상은 99+) |
+
+### 시안 이전 화면 (CSS Modules)
+
+아직 다시 만들지 않은 화면은 컴포넌트마다 같은 이름의 `.module.css`와 `index.css`의 CSS 변수(`--color-primary` 등)를 씁니다. 새로 만드는 화면에는 쓰지 않고, 다시 만든 화면의 `.module.css`는 지웁니다.
 
 ### 아이콘
 
-Material Symbols를 사용합니다. (`index.html`에서 불러옴)
-
-```jsx
-<span className="material-symbols-outlined">shopping_bag</span>
-```
-
-아이콘 이름은 Google Fonts의 Material Symbols에서 찾을 수 있습니다.
+시안은 아이콘을 인라인 SVG로 그리므로 새 화면도 시안의 `<svg>`를 그대로 씁니다. 시안 이전 화면은 Material Symbols(`index.html`에서 불러옴)를 씁니다.
 
 ## API 호출
 
