@@ -4,12 +4,14 @@ import { requestCashOut } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
+import { formatBankAccount } from '../../constants/banks';
+import useMyInfo from '../member/account/useMyInfo';
 import { formatPrice } from '../../utils/format';
 import { parseAmount } from './chargeUtils';
 import WithdrawView from './WithdrawView';
 
 const MAX_DIGITS = 9;
-// TODO: 받는 계좌 조회 API(member 계좌)가 생기면 "{은행} ***{끝 4자리} · 예금주 {마스킹 이름}"으로 채움
+// 받는 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 자리 문구
 const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
 
 // 시안 07-4-1 인출 · 07-4-2 금액 초과 (인출 가능 금액 = 판매 정산금만, 충전금은 인출 안 됨)
@@ -18,6 +20,7 @@ function WithdrawPage() {
   const navigate = useNavigate();
   const { isLoggedIn, isInitializing } = useAuth();
   const { balance, chargeBalance, withdrawableBalance, refreshWallet } = useWallet();
+  const { myInfo } = useMyInfo();
 
   const [amount, setAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +60,7 @@ function WithdrawPage() {
       balance={balance === null ? null : Number(balance)}
       chargeBalance={chargeBalance ?? '{충전금}'}
       withdrawableBalance={withdrawableBalance ?? '{인출 가능 금액}'}
-      account={ACCOUNT_PLACEHOLDER}
+      account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
       amount={amount}
       onAmountChange={(text) => setAmount(parseAmount(text, MAX_DIGITS))}
       onAll={() => hasWithdrawable && setAmount(withdrawableBalance)}

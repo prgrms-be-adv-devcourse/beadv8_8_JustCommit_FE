@@ -60,6 +60,43 @@ export function CancelModal({ target, cancelling, error, onClose, onConfirm }) {
   );
 }
 
+// 시안 03-5-4 구매 확정 확인 (모달의 「구매 확정」을 눌러야 확정)
+// target = { itemName, price, autoConfirmNote }
+export function ConfirmModal({ target, confirming, error, onClose, onConfirm }) {
+  return (
+    <Modal
+      title="구매를 확정할까요?"
+      width={440}
+      top={160}
+      onClose={confirming ? undefined : onClose}
+      footer={
+        <>
+          <ModalButton onClick={onClose} disabled={confirming}>
+            닫기
+          </ModalButton>
+          <ModalButton variant="primary" onClick={onConfirm} disabled={confirming}>
+            구매 확정
+          </ModalButton>
+        </>
+      }
+    >
+      <p className="text-[#4b5563] leading-relaxed">구매를 확정하면 판매자에게 정산되고, 취소하거나 반품할 수 없어요.</p>
+      <dl className="border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
+        <div className="px-4 py-3 flex justify-between">
+          <dt className="text-[#6b7280]">확정할 상품</dt>
+          <dd className="text-[#111827] font-medium">{target.itemName}</dd>
+        </div>
+        <div className="px-4 py-3 flex justify-between">
+          <dt className="text-[#6b7280]">상품 금액</dt>
+          <dd className="text-[#111827] font-bold tabular-nums">{target.price}</dd>
+        </div>
+      </dl>
+      <p className="text-[13px] text-[#6b7280]">{target.autoConfirmNote}</p>
+      <ActionErrorBar message={error} />
+    </Modal>
+  );
+}
+
 // 시안 03-5-3 배송 조회 모달
 // tracking = { sellerName, invoiceNo, events: [{ time, status, location }] } — 첫 줄이 최신
 export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, onClose }) {

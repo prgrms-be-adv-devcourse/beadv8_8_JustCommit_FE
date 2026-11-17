@@ -4,7 +4,7 @@ import InfoNote from '../../components/wallet/InfoNote';
 import { won } from './chargeUtils';
 
 // 시안 07-4-1 인출 · 07-4-2 인출 금액 초과
-// account: "국민은행 ***4567 · 예금주 김*식" 형태 한 줄
+// account: "KB국민은행 ***4567 · 예금주 김개식" 형태 한 줄
 // isOver: 인출 가능 금액을 넘었을 때 (빨간 테두리 · 안내 · 신청 버튼 비활성)
 function WithdrawView({
   balance,

@@ -11,7 +11,7 @@ export function getNotifications(params) {
 
 // 안 읽은 알림 수 → { count }
 export function getUnreadNotificationCount() {
-  return client.get('/api/v1/notifications/unread-count');
+  return client.get('/api/v1/notifications/unreadCount');
 }
 
 // 알림 하나 읽음 → NotificationResponse

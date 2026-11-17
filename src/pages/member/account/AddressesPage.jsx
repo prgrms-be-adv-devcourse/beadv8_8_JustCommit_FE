@@ -7,6 +7,7 @@ import usePageTitle from '../../../hooks/usePageTitle';
 import { formatPhone } from '../../../utils/format';
 import AddressModal from '../mypage/AddressModal';
 import AccountLayout from './AccountLayout';
+import AddressDeleteModal from './AddressDeleteModal';
 import AddressesView from './AddressesView';
 
 const MAX_ADDRESSES = 4; // 회원당 최대 4개 (BE docs/services/member.md 「정책」 배송지)
@@ -25,6 +26,10 @@ function toViewAddress(address) {
     ...address,
     isDefault: isDefaultAddress(address),
     phoneText: formatPhone(address.recipientPhone),
+    // 삭제 확인 모달(06-5-11): 「배송지 이름 · 주소」 한 줄
+    addressLine: [address.addressName, [address.address1, address.address2].filter(Boolean).join(', ')]
+      .filter(Boolean)
+      .join(' · '),
     addressText: `(${address.zipcode}) ${[address.address1, address.address2].filter(Boolean).join(', ')}`,
   };
 }
@@ -38,6 +43,9 @@ function AddressesPage() {
   const [actionError, setActionError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [modal, setModal] = useState(null); // null | { initial: 배송지 | null }
+  const [deleteTarget, setDeleteTarget] = useState(null); // 삭제 확인 모달에 띄운 배송지
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!isLoggedIn) return undefined;
@@ -60,6 +68,10 @@ function AddressesPage() {
   }, []);
 
   const closeModal = useCallback(() => setModal(null), []);
+  const closeDelete = useCallback(() => {
+    setDeleteTarget(null);
+    setDeleteError('');
+  }, []);
 
   // 모달에서 호출: 실패하면 에러를 던져서 모달이 메시지를 보여 줌
   const handleSubmit = async (form) => {
@@ -86,6 +98,21 @@ function AddressesPage() {
     }
   };
 
+  // 삭제 확인 모달의 「삭제」: 실패하면 모달 안에 메시지
+  const runDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await deleteAddress(deleteTarget.addressId);
+      await refresh();
+      closeDelete();
+    } catch (error) {
+      setDeleteError(errorMessage(error));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (isInitializing) return <main className="flex-1" />;
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/mypage/addresses' }} />;
   if (loadError || !addresses) {
@@ -109,11 +136,20 @@ function AddressesPage() {
         maxCount={MAX_ADDRESSES}
         onAdd={() => setModal({ initial: null })}
         onEdit={(address) => setModal({ initial: address })}
-        onDelete={(address) => runAction(address.addressId, () => deleteAddress(address.addressId))}
+        onDelete={setDeleteTarget}
         onSetDefault={(address) => runAction(address.addressId, () => setDefaultAddress(address.addressId))}
         busyId={busyId}
         actionError={actionError}
       />
+      {deleteTarget && (
+        <AddressDeleteModal
+          address={deleteTarget}
+          deleting={deleting}
+          error={deleteError}
+          onClose={closeDelete}
+          onConfirm={runDelete}
+        />
+      )}
       {modal && <AddressModal initial={modal.initial} onSubmit={handleSubmit} onClose={closeModal} />}
     </>
   );

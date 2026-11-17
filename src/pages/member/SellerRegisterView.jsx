@@ -4,7 +4,7 @@ import { ActionErrorLine } from '../../components/common/ActionError';
 export const INTRO_MAX_LENGTH = 500;
 
 // 시안 08-1-1 판매자 등록 (화면만, 데이터는 props)
-// account: 「국민은행 ***4567 · 예금주 김*식」처럼 완성된 문자열
+// account: 「KB국민은행 ***4567 · 예금주 김개식」처럼 완성된 문자열
 function SellerRegisterView({
   account,
   intro,

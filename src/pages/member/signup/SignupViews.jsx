@@ -4,6 +4,7 @@ import { AuthHeading, DoneMark, FieldHint, SubmitButton } from '../../../compone
 import authInputClass from '../../../components/member/authInputClass';
 import EmailCodeFields from '../../../components/member/EmailCodeFields';
 import MemberInfoFields from '../../../components/member/MemberInfoFields';
+import TermsAgreement from '../../../components/member/TermsAgreement';
 
 // 시안 06-3 회원가입: 1 이메일 인증 → 2 정보 입력 → 3 판매자 등록 (선택) → 가입 완료, 카카오 가입
 
@@ -111,13 +112,14 @@ export function SignupEmailView({ emailCode, on }) {
   );
 }
 
-// 06-3-5 정보 입력
-export function SignupInfoView({ email, form, on, onNext, error }) {
+// 06-3-5 정보 입력 (가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
+export function SignupInfoView({ email, form, on, termsAgreed, onTermsChange, onNext, error }) {
   return (
     <SignupCard width={560}>
       <SignupStepper current={1} />
       <AuthHeading title="정보 입력" description={`${email} · 모든 항목을 입력해야 가입할 수 있어요`} relaxed={false} />
       <MemberInfoFields form={form} on={on} withPassword />
+      <TermsAgreement agreed={termsAgreed} onChange={onTermsChange} />
       <div>
         <SubmitButton type="button" onClick={onNext}>
           다음
@@ -302,8 +304,8 @@ export function SignupDoneView({ nickname, to, error }) {
   );
 }
 
-// 06-3-9 카카오 가입 (정보 입력 한 장)
-export function SocialSignupView({ email, remainingText, form, on, onSubmit, error, isSubmitting }) {
+// 06-3-9 카카오 가입 (정보 입력 한 장, 가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
+export function SocialSignupView({ email, remainingText, form, on, termsAgreed, onTermsChange, onSubmit, error, isSubmitting }) {
   return (
     <SignupCard width={560}>
       <AuthHeading
@@ -337,6 +339,7 @@ export function SocialSignupView({ email, remainingText, form, on, onSubmit, err
           </label>
         }
       />
+      <TermsAgreement agreed={termsAgreed} onChange={onTermsChange} />
       <div>
         <SubmitButton type="button" onClick={onSubmit} disabled={isSubmitting}>
           가입 완료

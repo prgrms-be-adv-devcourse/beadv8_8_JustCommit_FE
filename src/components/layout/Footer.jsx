@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Modal from '../common/Modal';
-import ModalButton from '../common/ModalButton';
+import TermsModal from '../common/TermsModal';
 import logo from '../../assets/logo.png';
 
 // 시안: 캔버스 「replant 웹 시안」 01-2-2 공통 푸터
@@ -37,21 +36,7 @@ function Footer() {
         </div>
       </div>
 
-      {isTermsOpen && (
-        <Modal
-          title="이용약관"
-          width={680}
-          bodyClassName="text-sm text-[#4b5563] max-h-[360px] overflow-y-auto space-y-4 pr-4 border-b border-[#f3f4f6]"
-          onClose={() => setIsTermsOpen(false)}
-          footer={
-            <ModalButton variant="primary" fit className="px-6" onClick={() => setIsTermsOpen(false)}>
-              확인
-            </ModalButton>
-          }
-        >
-          <p className="text-sm text-[#4b5563]">약관은 준비 중이에요.</p>
-        </Modal>
-      )}
+      {isTermsOpen && <TermsModal onClose={() => setIsTermsOpen(false)} />}
     </footer>
   );
 }
