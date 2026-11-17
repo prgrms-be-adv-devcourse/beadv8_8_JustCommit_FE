@@ -44,3 +44,9 @@ export function cancelOrderItem(orderItemId) {
 export function confirmOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/confirm`);
 }
+
+// 결제 대기(PAYMENT_PENDING) 주문을 예치금으로 결제 (충전 화면에서 충전이 끝난 뒤 자동 호출)
+// TODO: docs/reference/external-apis.md의 POST orders/{id}/pay. 응답 형식은 백엔드 확정 후 맞춤
+export function payOrder(orderId) {
+  return client.post(`/api/v1/orders/${orderId}/pay`);
+}

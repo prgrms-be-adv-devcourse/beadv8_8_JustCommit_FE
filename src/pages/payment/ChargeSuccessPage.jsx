@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { payOrder } from '../../api/orderApi';
 import { confirmCharge } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
-import { formatPrice } from '../../utils/format';
-import { ChargeFailCard } from './ChargeFailPage';
-import { safeReturnTo } from './chargeUtils';
-import styles from './Charge.module.css';
+import { ChargeFailView, ChargeProcessingView, ChargeSuccessView } from './ChargeResultView';
 
+const ORDER_PAY_FAILED = '충전은 완료됐지만 주문을 결제하지 못했어요. 주문 내역에서 다시 확인해 주세요.';
+
+// 토스 결제 성공 후 돌아오는 화면: 충전 승인 → (주문서에서 왔으면) 그 주문 자동 결제
 function ChargeSuccessPage() {
   usePageTitle('충전 완료');
   const navigate = useNavigate();
@@ -20,13 +21,13 @@ function ChargeSuccessPage() {
   // 승인이 끝나면 결과만 화면 상태로 남김 → 새로고침해도 다시 승인하지 않음
   const savedResult = location.state?.chargeResult ?? null;
 
-  // 토스가 성공 주소에 붙여 주는 값 + 결제창을 열 때 붙여 둔 chargeId
+  // 토스가 성공 주소에 붙여 주는 값 + 결제창을 열 때 붙여 둔 chargeId · marketOrderId
   const chargeId = searchParams.get('chargeId');
   const paymentKey = searchParams.get('paymentKey');
-  const orderId = searchParams.get('orderId');
+  const pgOrderNo = searchParams.get('orderId'); // 토스 orderId = 우리 충전의 pgOrderNo
   const amount = searchParams.get('amount');
-  const returnTo = safeReturnTo(searchParams.get('returnTo'));
-  const hasParams = Boolean(chargeId && paymentKey && orderId && amount);
+  const marketOrderId = searchParams.get('marketOrderId');
+  const hasParams = Boolean(chargeId && paymentKey && pgOrderNo && amount);
 
   const [errorMessage, setErrorMessage] = useState('');
   const startedRef = useRef(false);
@@ -36,73 +37,52 @@ function ChargeSuccessPage() {
     if (!isLoggedIn || savedResult || !hasParams || startedRef.current) return;
     startedRef.current = true;
 
-    confirmCharge(chargeId, { paymentKey, orderId, amount: Number(amount) })
-      .then((response) => {
+    const finish = (result) => {
+      refreshWallet().catch(() => {});
+      navigate('/deposit/charge/success', { replace: true, state: { chargeResult: result } });
+    };
+
+    confirmCharge(chargeId, { paymentKey, orderId: pgOrderNo, amount: Number(amount) })
+      .then(async (response) => {
         const { amount: charged, balanceAfter } = response.data.data;
-        refreshWallet().catch(() => {});
-        navigate('/deposit/charge/success', {
-          replace: true,
-          state: { chargeResult: { amount: charged, balanceAfter, returnTo } },
-        });
+        const result = { amount: Number(charged), balanceAfter: Number(balanceAfter) };
+        if (!marketOrderId) {
+          finish(result);
+          return;
+        }
+        // 주문서에서 온 충전: 충전이 끝나면 결제 대기 주문을 바로 결제
+        try {
+          await payOrder(marketOrderId);
+          refreshWallet().catch(() => {});
+          navigate(`/orders/${marketOrderId}/complete`, { replace: true });
+        } catch (error) {
+          finish({ ...result, orderError: error.response?.data?.message ?? ORDER_PAY_FAILED });
+        }
       })
       .catch((error) => {
         setErrorMessage(error.response?.data?.message ?? '충전을 마무리하지 못했어요.');
       });
-  }, [isLoggedIn, savedResult, hasParams, chargeId, paymentKey, orderId, amount, returnTo, navigate, refreshWallet]);
+  }, [isLoggedIn, savedResult, hasParams, chargeId, paymentKey, pgOrderNo, amount, marketOrderId, navigate, refreshWallet]);
 
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
 
   if (savedResult) {
     return (
-      <div className={styles.page}>
-        <section aria-labelledby="cs-title" className={`${styles.card} ${styles.resultCard}`}>
-          <span className={`material-symbols-outlined ${styles.resultIcon}`} aria-hidden="true">
-            check
-          </span>
-          <h1 id="cs-title" className={styles.resultTitle}>
-            충전이 완료됐어요
-          </h1>
-          <dl className={styles.summary}>
-            <div className={styles.summaryRow}>
-              <dt>충전 금액</dt>
-              <dd>{formatPrice(Number(savedResult.amount))}</dd>
-            </div>
-            <div className={styles.summaryRow}>
-              <dt>현재 예치금</dt>
-              <dd className={styles.summaryStrong}>{formatPrice(Number(savedResult.balanceAfter))}</dd>
-            </div>
-          </dl>
-          {savedResult.returnTo ? (
-            <div className={styles.resultActions}>
-              <Link to="/wallet" className={styles.outlineButton}>
-                예치금 보기
-              </Link>
-              <Link to={savedResult.returnTo} className={styles.primaryButton}>
-                주문서로 돌아가기
-              </Link>
-            </div>
-          ) : (
-            <Link to="/wallet" className={styles.primaryButton}>
-              예치금 보기
-            </Link>
-          )}
-        </section>
-      </div>
+      <ChargeSuccessView
+        amount={savedResult.amount}
+        balanceAfter={savedResult.balanceAfter}
+        errorMessage={savedResult.orderError}
+      />
     );
   }
 
   if (!hasParams || errorMessage) {
-    return <ChargeFailCard detail={errorMessage || '결제 정보를 찾을 수 없어요.'} />;
+    const retryTo = marketOrderId ? `/deposit/charge?orderId=${encodeURIComponent(marketOrderId)}` : undefined;
+    return <ChargeFailView retryTo={retryTo} />;
   }
 
-  return (
-    <div className={styles.page}>
-      <section className={`${styles.card} ${styles.resultCard}`}>
-        <p className={styles.resultDesc}>충전을 마무리하는 중이에요...</p>
-      </section>
-    </div>
-  );
+  return <ChargeProcessingView />;
 }
 
 export default ChargeSuccessPage;
