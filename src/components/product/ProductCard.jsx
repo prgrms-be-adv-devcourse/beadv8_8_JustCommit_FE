@@ -1,60 +1,70 @@
 import { Link } from 'react-router-dom';
-import {
-  PRODUCT_STATUS,
-  SPECIES_DIFFICULTY,
-  SPECIES_LIGHT,
-  SPECIES_WATERING,
-} from '../../constants/product';
 import { formatPrice, formatRelativeTime } from '../../utils/format';
 import ProductThumbnail from './ProductThumbnail';
-import styles from './ProductCard.module.css';
 
-// isMine: 로그인한 판매자 본인 상품이면 상태 배지 옆에 '내 상품' 표시
-function ProductCard({ product, isMine = false }) {
-  const status = PRODUCT_STATUS[product.status] ?? { label: product.status, tone: 'pending' };
+// 상품 목록 카드 (시안 02-1-1 메인)
+// 거래 중(PAYMENT_PENDING): 어둡게 + RESERVED / 판매 완료(SOLD_OUT): 흑백 + 더 어둡게 + SOLD OUT + 가격 취소선
+const OVERLAY = {
+  PAYMENT_PENDING: {
+    dim: 'rgba(0, 0, 0, 0.3)',
+    label: 'RESERVED',
+    badgeClass:
+      'inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold tracking-wider text-white backdrop-blur-md shadow-sm rounded-none select-none font-bold border-0',
+    badgeStyle: { backgroundColor: 'rgb(15, 76, 58)', border: '2px solid rgb(255, 255, 255)' },
+  },
+  SOLD_OUT: {
+    dim: 'rgba(0, 0, 0, 0.6)',
+    label: 'SOLD OUT',
+    badgeClass:
+      'inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold tracking-wider text-white bg-[#000000] backdrop-blur-md shadow-sm rounded-none select-none font-bold border-0',
+    badgeStyle: { border: '2px solid rgb(255, 255, 255)' },
+  },
+};
+
+function ProductCard({ product }) {
   const isSoldOut = product.status === 'SOLD_OUT';
-  // 관리 태그: 품종에 값이 없는 항목은 빼고 표시
-  const careTags = [
-    { icon: 'light_mode', label: SPECIES_LIGHT[product.light] },
-    { icon: 'water_drop', label: SPECIES_WATERING[product.watering] },
-    { icon: 'signal_cellular_alt', label: SPECIES_DIFFICULTY[product.difficulty] },
-  ].filter((tag) => tag.label);
+  const overlay = OVERLAY[product.status];
 
   return (
-    <Link
-      to={`/products/${product.productId}`}
-      className={`${styles.card} ${isSoldOut ? styles.soldOutCard : ''}`}
-    >
-      <div className={styles.thumb}>
-        <ProductThumbnail
-          src={product.thumbnailUrl}
-          alt={`${product.title} 사진`}
-          loading="lazy"
-        />
-        <span className={styles.badges}>
-          <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
-          {isMine && <span className={`${styles.badge} ${styles.mine}`}>내 상품</span>}
-        </span>
-      </div>
-
-      <div className={styles.body}>
-        <span className={styles.title}>{product.title}</span>
-        <span className={styles.price}>{formatPrice(product.price)}</span>
-        <span className={styles.meta}>
-          {product.speciesName} · {formatRelativeTime(product.createdAt)}
-        </span>
-        {careTags.length > 0 && (
-          <span className={styles.careTags}>
-            {careTags.map((tag) => (
-              <span key={tag.icon} className={styles.careTag}>
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {tag.icon}
-                </span>
-                {tag.label}
-              </span>
-            ))}
-          </span>
+    <Link to={`/products/${product.productId}`} className="group flex flex-col cursor-pointer" data-purpose="product-card">
+      <div className="relative aspect-square w-full rounded-2xl bg-[#f0f5f1] overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:opacity-95">
+        {isSoldOut ? (
+          <ProductThumbnail
+            src={product.thumbnailUrl}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover rounded-xl grayscale transition-all duration-200 group-hover:scale-105"
+            style={{ filter: 'grayscale(100%)' }}
+          />
+        ) : (
+          <ProductThumbnail
+            src={product.thumbnailUrl}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover rounded-xl transition-transform duration-200 group-hover:scale-105"
+          />
         )}
+        {overlay && (
+          <>
+            <div className="absolute inset-0 pointer-events-none z-0" style={{ backgroundColor: overlay.dim }} />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <span className={overlay.badgeClass} style={overlay.badgeStyle}>
+                {overlay.label}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="pt-3">
+        <h3 className="text-[15px] text-gray-800 line-clamp-1 group-hover:text-replant-forest transition-colors">
+          {product.title}
+        </h3>
+        <div className="flex items-center justify-between mt-1">
+          <span className={`text-[18px] font-bold text-[#191919]${isSoldOut ? ' line-through' : ''}`}>
+            {formatPrice(product.price)}
+          </span>
+          <span className="text-xs text-gray-400">{formatRelativeTime(product.createdAt)}</span>
+        </div>
       </div>
     </Link>
   );

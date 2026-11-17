@@ -40,9 +40,6 @@ function App() {
 
         {/* Layout 안: 헤더·푸터 있는 페이지 */}
         <Route element={<Layout />}>
-          <Route path="/" element={<HomePage />} />
-          {/* 검색 결과: 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
-          <Route path="/search" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/social" element={<SocialSignupPage />} />
 
@@ -62,7 +59,6 @@ function App() {
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
           <Route path="/deposit/charge/fail" element={<ChargeFailPage />} />
           <Route path="/products/new" element={<ProductCreatePage />} />
-          <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/fail" element={<OrderFailPage />} />
@@ -77,8 +73,13 @@ function App() {
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
         </Route>
 
-        {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
+        {/* 시안으로 다시 만든 화면 + 404 (시안 01-1-5 오류 화면, 헤더 · 푸터 모두 보임) */}
         <Route element={<Layout designed />}>
+          {/* 02-1 메인 · 상품 목록. 검색 결과는 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<HomePage />} />
+          {/* 02-3 상품 상세 */}
+          <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="*" element={<ErrorPage type="NOT_FOUND" />} />
         </Route>
       </Routes>
