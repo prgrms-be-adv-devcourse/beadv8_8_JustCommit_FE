@@ -1,27 +1,30 @@
 import { useEffect, useState } from 'react';
-import BackLink from '../../components/common/BackLink';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { getOrders } from '../../api/orderApi';
-import ProductThumbnail from '../../components/product/ProductThumbnail';
-import { ORDER_STATUS } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { formatDate, formatPrice } from '../../utils/format';
-import styles from './OrderListPage.module.css';
+import { formatDate, formatPrice, formatTime } from '../../utils/format';
+import OrderListView from './OrderListView';
 
-// 탭별로 묶는 주문 상태. 결제 대기는 "전체"에서만 보인다 (주문서에서 잔액 부족을 미리 막아 거의 생기지 않음)
+// 시안 03-4 주문 목록
+// 탭은 주문 단위가 아니라 판매자 주문 단계로 셈 (판매자가 여럿이면 한 주문이 여러 탭에 들어감)
+
 const TABS = [
-  { value: 'ALL', label: '전체', statuses: null },
-  { value: 'PAID', label: '결제 완료', statuses: ['PAID'] },
-  { value: 'COMPLETED', label: '거래 완료', statuses: ['COMPLETED'] },
-  { value: 'CLOSED', label: '취소', statuses: ['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED'] },
+  { value: 'ALL', label: '전체' },
+  { value: 'PENDING', label: '결제 대기' },
+  { value: 'ACCEPT', label: '판매자 확인 중' },
+  { value: 'SHIPPING', label: '배송' },
+  { value: 'CONFIRMED', label: '구매 확정' },
+  { value: 'CANCELLED', label: '취소' },
 ];
 
 const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
 const MAX_PAGES = 10; // 안전장치: 최대 500건까지
+const PAYMENT_WINDOW_MS = 10 * 60 * 1000; // 결제 대기 10분 (주문 생성 시각부터)
+const AUTO_CONFIRM_MS = 72 * 60 * 60 * 1000; // 배송 완료 후 72시간 뒤 자동 구매 확정
+const ACCEPT_WINDOW_MS = 24 * 60 * 60 * 1000; // 결제 완료 후 24시간 안에 판매자 수락
 
-// TODO: 백엔드에 상태 조건·탭별 개수 조회가 생기면 페이지 단위 조회로 교체
-// 지금은 주문 목록 API에 상태 필터가 없어서 전부 받아 탭과 개수를 프론트에서 계산
+// TODO: 백엔드에 상태 조건 · 탭별 개수 조회가 생기면 페이지 단위 조회로 교체
 async function fetchAllOrders() {
   const all = [];
   for (let page = 0; page < MAX_PAGES; page += 1) {
@@ -33,17 +36,193 @@ async function fetchAllOrders() {
   return all;
 }
 
-function matchesTab(order, tab) {
-  return !tab.statuses || tab.statuses.includes(order.status);
+// "10월 15일 14:20"
+function formatMonthDayTime(ms) {
+  const date = new Date(ms);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes}`;
+}
+
+// "10월 11일"
+function formatMonthDay(ms) {
+  const date = new Date(ms);
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+// 판매자 주문 단계 (배지 · 탭 · 안내)
+const STAGES = {
+  ACCEPT: { badge: { label: '판매자 확인 중', tone: 'amber' }, tab: 'ACCEPT' },
+  PICKUP: { badge: { label: '픽업 대기', tone: 'green' }, tab: 'SHIPPING' },
+  SHIPPING: { badge: { label: '배송 중', tone: 'green' }, tab: 'SHIPPING' },
+  DELIVERED: { badge: { label: '배송 완료', tone: 'green' }, tab: 'SHIPPING' },
+  CONFIRMED: { badge: { label: '구매 확정', tone: 'dark' }, tab: 'CONFIRMED' },
+  REJECTED: { badge: { label: '판매자 거절', tone: 'gray' }, tab: 'CANCELLED', muted: true },
+  AUTO_CANCELLED: { badge: { label: '자동 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
+  CANCELLED: { badge: { label: '주문 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
+  UNKNOWN: { badge: { label: '{배송 상태}', tone: 'green' }, tab: 'SHIPPING' },
+};
+
+// 판매자 주문 → 단계
+// TODO: 주문 목록 응답에 판매자 주문(sellerOrders[])이 아직 없음. 생기면 아래 필드 이름을 확인
+//  { sellerName, representativeItemName, itemCount, thumbnailUrl, status, cancelReason(SELLER · AUTO · BUYER),
+//    shipmentStatus, paidAt, deliveredAt, confirmedAt, cancelledItemCount, refundAmount }
+function getStage(sellerOrder) {
+  if (sellerOrder.status === 'CANCELLED') {
+    if (sellerOrder.cancelReason === 'AUTO') return 'AUTO_CANCELLED';
+    if (sellerOrder.cancelReason === 'SELLER') return 'REJECTED';
+    return 'CANCELLED';
+  }
+  if (sellerOrder.status === 'ACCEPT_PENDING') return 'ACCEPT';
+  if (sellerOrder.confirmedAt || sellerOrder.status === 'CONFIRMED') return 'CONFIRMED';
+  switch (sellerOrder.shipmentStatus) {
+    case 'READY':
+    case 'BOOKED':
+      return 'PICKUP';
+    case 'PICKED_UP':
+    case 'IN_TRANSIT':
+      return 'SHIPPING';
+    case 'DELIVERED':
+      return 'DELIVERED';
+    default:
+      return 'UNKNOWN';
+  }
+}
+
+function getStageNote(stage, sellerOrder) {
+  const refund = sellerOrder.refundAmount != null ? formatPrice(Number(sellerOrder.refundAmount)) : '{환불 금액}';
+  if (stage !== 'REJECTED' && stage !== 'AUTO_CANCELLED' && sellerOrder.cancelledItemCount > 0) {
+    const count = sellerOrder.cancelledItemCount;
+    return { strong: `일부 취소 ${count}건`, text: `판매자가 ${count}건을 거절해 ${refund}이 예치금으로 환불됐어요` };
+  }
+  switch (stage) {
+    case 'ACCEPT': {
+      const deadline = sellerOrder.paidAt
+        ? formatMonthDayTime(new Date(sellerOrder.paidAt).getTime() + ACCEPT_WINDOW_MS)
+        : '{수락 마감 시각}';
+      return { tone: 'amber', text: `${deadline}까지 판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요` };
+    }
+    case 'PICKUP':
+      return { tone: 'gray', text: '택배사가 곧 상품을 가지러 가요' };
+    case 'DELIVERED': {
+      const date = sellerOrder.deliveredAt
+        ? formatMonthDay(new Date(sellerOrder.deliveredAt).getTime() + AUTO_CONFIRM_MS)
+        : '{자동 구매 확정일}';
+      return { tone: 'gray', text: `${date}에 자동으로 구매 확정돼요` };
+    }
+    case 'REJECTED':
+      return { tone: 'gray', text: `판매자가 주문을 거절해 ${refund}이 예치금으로 환불됐어요` };
+    case 'AUTO_CANCELLED':
+      return { tone: 'gray', text: `판매자가 24시간 안에 수락하지 않아 ${refund}이 예치금으로 환불됐어요` };
+    default:
+      return null;
+  }
+}
+
+function getRemainingSeconds(order, now) {
+  const expiresAt = order.expiresAt
+    ? new Date(order.expiresAt).getTime()
+    : new Date(order.createdAt).getTime() + PAYMENT_WINDOW_MS;
+  return Math.max(0, Math.ceil((expiresAt - now) / 1000));
+}
+
+// 주문 목록 응답 → 화면 카드 + 들어갈 탭
+function toCard(order, now) {
+  const base = {
+    orderId: order.orderId,
+    dateText: formatDate(order.createdAt),
+    orderNo: order.orderNo,
+    totalAmount: Number(order.totalAmount),
+  };
+  const sellerOrders = order.sellerOrders ?? [];
+  const sellerCount = order.sellerCount ?? (sellerOrders.length || null);
+  const summaryRow = {
+    key: 'summary',
+    itemName: order.representativeItemName,
+    moreCount: (order.itemCount ?? 1) - 1,
+    thumbnailUrl: order.thumbnailUrl,
+  };
+
+  // 결제 대기: 주문 전체를 한 줄로 + 남은 시간 + 이어서 결제하기
+  if (order.status === 'PAYMENT_PENDING') {
+    return {
+      ...base,
+      tabs: ['PENDING'],
+      headerBadge: { label: '결제 대기', tone: 'pending' },
+      rows: [{ ...summaryRow, sellerText: sellerCount ? `판매자 ${sellerCount}곳` : '{판매자 수}' }],
+      footerNote: {
+        tone: 'red',
+        text: `남은 시간 ${formatTime(getRemainingSeconds(order, now))} · 10분 안에 결제하지 않으면 주문이 취소돼요`,
+      },
+      payTo: `/checkout?orderId=${order.orderId}`,
+    };
+  }
+
+  // 결제 시간 만료 · 결제 실패: 주문 전체를 한 줄로, 흐리게
+  if (order.status === 'EXPIRED' || order.status === 'PAYMENT_FAILED') {
+    const expired = order.status === 'EXPIRED';
+    return {
+      ...base,
+      tabs: ['CANCELLED'],
+      headerBadge: { label: expired ? '결제 시간 만료' : '결제 실패', tone: 'gray' },
+      rows: [
+        {
+          ...summaryRow,
+          sellerText: sellerOrders[0]?.sellerName ?? (sellerCount > 1 ? `판매자 ${sellerCount}곳` : '{판매자 이름}'),
+          muted: true,
+        },
+      ],
+      footerNote: expired
+        ? { tone: 'gray', text: '10분 안에 결제하지 않아 주문이 취소됐어요 · 예치금은 빠져나가지 않았어요' }
+        : null,
+    };
+  }
+
+  // 판매자 주문 정보가 아직 없으면 주문 상태로 한 줄 (TODO: sellerOrders가 생기면 이 분기는 안 탐)
+  if (sellerOrders.length === 0) {
+    let stage = 'UNKNOWN';
+    if (order.status === 'COMPLETED') stage = 'CONFIRMED';
+    if (order.status === 'CANCELLED') stage = 'CANCELLED';
+    return {
+      ...base,
+      tabs: [STAGES[stage].tab],
+      rows: [
+        { ...summaryRow, sellerText: '{판매자 이름}', muted: STAGES[stage].muted, badge: STAGES[stage].badge },
+      ],
+    };
+  }
+
+  const rows = sellerOrders.map((sellerOrder, index) => {
+    const stage = getStage(sellerOrder);
+    return {
+      key: sellerOrder.sellerOrderId ?? index,
+      stage,
+      sellerText: sellerOrder.sellerName ?? '{판매자 이름}',
+      itemName: sellerOrder.representativeItemName,
+      moreCount: (sellerOrder.itemCount ?? 1) - 1,
+      thumbnailUrl: sellerOrder.thumbnailUrl,
+      muted: STAGES[stage].muted,
+      note: getStageNote(stage, sellerOrder),
+      badge: STAGES[stage].badge,
+    };
+  });
+  return {
+    ...base,
+    tabs: [...new Set(rows.map((row) => STAGES[row.stage].tab))],
+    headerText: rows.length > 1 ? `판매자 ${rows.length}곳` : null,
+    rows,
+  };
 }
 
 function OrderListPage() {
-  usePageTitle('주문 내역');
+  usePageTitle('주문 목록');
   const { isLoggedIn, isInitializing } = useAuth();
 
   const [orders, setOrders] = useState([]);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
   const [tabValue, setTabValue] = useState('ALL');
+  const [expandedIds, setExpandedIds] = useState([]);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!isLoggedIn) return undefined;
@@ -64,119 +243,42 @@ function OrderListPage() {
     };
   }, [isLoggedIn]);
 
+  // 결제 대기 주문이 있으면 남은 시간을 1초마다 갱신
+  const hasPending = orders.some((order) => order.status === 'PAYMENT_PENDING');
+  useEffect(() => {
+    if (!hasPending) return undefined;
+    const timerId = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timerId);
+  }, [hasPending]);
+
   if (isInitializing) {
-    return <p className={styles.message}>불러오는 중...</p>;
+    return <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-8 pb-16 text-[14px] text-[#6b7280]">불러오는 중...</main>;
   }
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: '/orders' }} />;
   }
 
-  const tab = TABS.find((item) => item.value === tabValue);
-  const visibleOrders = orders.filter((order) => matchesTab(order, tab));
+  const cards = orders.map((order) => toCard(order, now));
+  const tabs = TABS.map((tab) => ({
+    ...tab,
+    count: loadState === 'done' ? cards.filter((card) => tab.value === 'ALL' || card.tabs.includes(tab.value)).length : null,
+  }));
+  const visibleCards = cards.filter((card) => tabValue === 'ALL' || card.tabs.includes(tabValue));
 
-  const renderBody = () => {
-    if (loadState === 'loading') {
-      return <p className={styles.message}>주문 내역을 불러오는 중...</p>;
-    }
-    if (loadState === 'error') {
-      return (
-        <p className={styles.message}>주문 내역을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>
-      );
-    }
-    if (visibleOrders.length === 0) {
-      return (
-        <div className={styles.empty}>
-          <span className={`material-symbols-outlined ${styles.emptyIcon}`} aria-hidden="true">
-            receipt_long
-          </span>
-          <h2 className={styles.emptyTitle}>
-            {orders.length === 0 ? '아직 주문한 식물이 없어요' : '이 상태의 주문이 없어요'}
-          </h2>
-          <p className={styles.emptyText}>마음에 드는 식물을 찾아 첫 주문을 해 보세요.</p>
-          <Link to="/" className={styles.primaryLink}>
-            식물 둘러보기
-          </Link>
-        </div>
-      );
-    }
-
-    return (
-      <ul className={styles.list}>
-        {visibleOrders.map((order) => {
-          const status = ORDER_STATUS[order.status] ?? { label: order.status, tone: 'closed' };
-          const moreCount = (order.itemCount ?? 1) - 1;
-
-          return (
-            <li key={order.orderId}>
-              <Link to={`/orders/${order.orderId}`} className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <strong className={styles.date}>{formatDate(order.createdAt)}</strong>
-                  <span className={styles.orderNo}>주문 번호 {order.orderNo}</span>
-                  <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
-                </div>
-
-                <div className={styles.cardBody}>
-                  {/* 대표 상품 사진. 없으면(사진 없는 상품·삭제된 상품) 대체 썸네일 */}
-                  <span className={`${styles.thumb} ${status.muted ? styles.muted : ''}`}>
-                    <ProductThumbnail src={order.thumbnailUrl} alt="" size="small" />
-                  </span>
-                  <span className={styles.summary}>
-                    <span className={styles.itemName}>
-                      {order.representativeItemName}
-                      {moreCount > 0 && <span className={styles.more}> 외 {moreCount}건</span>}
-                    </span>
-                    <span className={styles.amountLabel}>
-                      결제 금액
-                      <strong className={styles.amount}>
-                        {formatPrice(Number(order.totalAmount))}
-                      </strong>
-                    </span>
-                  </span>
-                  <span className={styles.detailLink}>
-                    주문 상세
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      chevron_right
-                    </span>
-                  </span>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
+  let message = null;
+  if (loadState === 'loading') message = '주문 목록을 불러오는 중...';
+  if (loadState === 'error') message = '주문 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 
   return (
-    <div className={styles.page}>
-      <BackLink to="/mypage" label="마이페이지" />
-      <h1 className={styles.heading}>주문 내역</h1>
-
-      <div role="tablist" aria-label="주문 상태" className={styles.tabs}>
-        {TABS.map((item) => {
-          const isSelected = tabValue === item.value;
-          return (
-            <button
-              key={item.value}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              className={`${styles.tab} ${isSelected ? styles.tabSelected : ''}`}
-              onClick={() => setTabValue(item.value)}
-            >
-              {item.label}
-              {loadState === 'done' && (
-                <span className={styles.tabCount}>
-                  {orders.filter((order) => matchesTab(order, item)).length}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {renderBody()}
-    </div>
+    <OrderListView
+      tabs={tabs}
+      selectedTab={tabValue}
+      cards={visibleCards}
+      expandedIds={expandedIds}
+      message={message}
+      onSelectTab={setTabValue}
+      onExpand={(orderId) => setExpandedIds((prev) => [...prev, orderId])}
+    />
   );
 }
 
