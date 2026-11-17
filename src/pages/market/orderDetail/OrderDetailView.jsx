@@ -104,14 +104,10 @@ function DistanceBox({ distance, refreshCooldown, onRefresh }) {
           )}
         </span>
       </div>
-      {!distance.locked && (
-        <>
-          <p className="text-xs font-medium text-[#92400e]">기사님이 수거지 2km 안으로 들어오면 취소할 수 없어요.</p>
-          <p className="text-xs text-[#6b7280]">
-            표시된 거리는 조회한 순간 기준이라 실제와 다를 수 있어요. 2km 안이면 취소가 거절될 수 있어요.
-          </p>
-        </>
-      )}
+      <p className="text-xs font-medium text-[#92400e]">기사님이 수거지 2km 안으로 들어오면 취소할 수 없어요.</p>
+      <p className="text-xs text-[#6b7280]">
+        표시된 거리는 조회한 순간 기준이라 실제와 다를 수 있어요. 2km 안이면 취소가 거절될 수 있어요.
+      </p>
     </div>
   );
 }
