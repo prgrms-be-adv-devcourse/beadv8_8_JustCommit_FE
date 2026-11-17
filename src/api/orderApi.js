@@ -67,3 +67,15 @@ export function approveReturn(orderItemId) {
 export function rejectReturn(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return/reject`);
 }
+
+// TODO: 반품 신청 API (BE docs/services/market.md 「⬜ 반품 신청」, 경로 · 본문 미정)
+// form = { reason: 'DAMAGED' | 'NOT_AS_DESCRIBED' | 'OTHER', detail } (사유 이름도 백엔드 확정 후 맞춤)
+export function requestReturn(orderItemId, form) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/return`, form);
+}
+
+// TODO: 배송 조회 API (택배 이벤트 목록, 경로 미정). 생기기 전까지 화면은 자리 문구를 씀
+// → { trackingNo, events: [{ occurredAt, status, location }] } (최신순)
+export function getShipmentTracking(shipmentId) {
+  return client.get(`/api/v1/shipments/${shipmentId}/tracking`);
+}
