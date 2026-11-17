@@ -51,12 +51,10 @@ function App() {
           <Route path="/mypage/info" element={<MyInfoPage />} />
           <Route path="/mypage/addresses" element={<AddressPage />} />
           <Route path="/mypage/products" element={<MyProductsPage />} />
-          <Route path="/orders" element={<OrderListPage />} />
           <Route path="/orders/seller" element={<SalesOrdersPage />} />
           <Route path="/orders/seller/:sellerOrderId" element={<SalesOrderDetailPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/settlements" element={<SettlementPage title="정산" />} />
-          <Route path="/cart" element={<CartPage />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/deposit/charge" element={<ChargePage />} />
           <Route path="/deposit/charge/success" element={<ChargeSuccessPage />} />
@@ -64,17 +62,23 @@ function App() {
           <Route path="/products/new" element={<ProductCreatePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/products/:productId/edit" element={<ProductCreatePage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/checkout/fail" element={<OrderFailPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-          <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
-          <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
 
           {/* 정책 페이지 */}
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+        </Route>
+
+        {/* 시안 03 구매 · 주문 (장바구니 · 주문서 · 주문 결과 · 주문 목록) */}
+        <Route element={<Layout designed />}>
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/fail" element={<OrderFailPage />} />
+          <Route path="/orders" element={<OrderListPage />} />
+          <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
+          <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
         </Route>
 
         {/* 404: 시안 01-1-5 오류 화면 (헤더 · 푸터 모두 보임) */}
