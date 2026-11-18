@@ -1,7 +1,7 @@
 import { ActionErrorBar, ActionErrorLine } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
-import { PageBackLink } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
 import { SALES_SHIPMENT_STEPS } from '../../constants/seller';
 
 const BANNER_BADGE =

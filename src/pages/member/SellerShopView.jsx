@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import ProductCard from '../../components/product/ProductCard';
 import Stars, { StarIcon } from '../../components/review/Stars';
+import PageBackLink from '../../components/common/PageBackLink';
 
 // 판매자 상점 B안 · 상품 중심 (시안 02-4-4, 판매 중 상품 없음 02-4-5)
 // seller = { nickname, ratingText, reviewCountText, soldCountText }
@@ -11,12 +12,7 @@ function SellerShopView({ seller, products, productCountText, reviews, backTo, r
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
-        <Link to={backTo} className="h-11 inline-flex items-center gap-1.5 text-sm font-medium text-[#4b5563]">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          상품 상세
-        </Link>
+        <PageBackLink to={backTo} label="상품 상세" />
         <section
           aria-label="판매자 정보"
           className="bg-white border border-[#e5e7eb] px-5 py-3 flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[15px]"

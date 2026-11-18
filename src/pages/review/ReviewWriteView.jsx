@@ -1,5 +1,5 @@
 import { ActionErrorLine } from '../../components/common/ActionError';
-import DesignBackLink from '../../components/mypage/DesignBackLink';
+import PageBackLink from '../../components/common/PageBackLink';
 import { Star } from '../../components/review/Stars';
 import { REVIEW_CONTENT_MAX, REVIEW_TAGS, formatRating, starFill } from '../../constants/review';
 
@@ -108,7 +108,7 @@ function ReviewWriteView({
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[720px] mx-auto space-y-6">
-        <DesignBackLink to={backTo} label="주문 상세" />
+        <PageBackLink to={backTo} label="주문 상세" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">리뷰 작성</h1>
         <section className="bg-white border border-[#e5e7eb] p-8 space-y-7">
           <div className="space-y-2">

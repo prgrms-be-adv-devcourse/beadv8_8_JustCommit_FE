@@ -1,4 +1,4 @@
-import { PageBackLink } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
 import { SettlementProductName, SummaryCard } from './SettlementView';
 
 const PERIODS = [

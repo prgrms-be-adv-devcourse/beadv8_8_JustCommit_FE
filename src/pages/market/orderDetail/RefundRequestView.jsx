@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom';
 import { ActionErrorLine } from '../../../components/common/ActionError';
-import { BackIcon } from './icons';
+import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 04-3-1 · 04-3-2 반품 신청 화면 (데이터는 props로만 받음)
 // product = { name, imageUrl, meta, deadline, price }
@@ -56,10 +55,7 @@ function RefundRequestView({
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[720px] mx-auto space-y-6">
-        <Link to={backTo} className="h-11 inline-flex items-center gap-1.5 text-sm font-medium text-[#4b5563]">
-          <BackIcon />
-          주문 상세
-        </Link>
+        <PageBackLink to={backTo} label="주문 상세" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">반품 신청</h1>
         <section className="bg-white border border-[#e5e7eb] p-8 space-y-7">
           <div className="p-4 bg-[#f9fafb] border border-[#e5e7eb] flex items-center gap-4">

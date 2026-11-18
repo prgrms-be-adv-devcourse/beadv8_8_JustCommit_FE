@@ -63,6 +63,10 @@ export default ProductListPage;
 | `ActionErrorBar` · `ActionErrorLine` | 01-1-5 동작 실패 안내 | 토스트 대신 쓰는 빨간 안내 바 · 버튼 아래 한 줄 (문구는 `constants/actionError.js`) |
 | `ErrorPage` | 01-1-5 전체 오류 화면 5종 | `NOT_FOUND` · `PRODUCT_NOT_FOUND` · `PRODUCT_HIDDEN` · `FORBIDDEN` · `SERVER_ERROR` |
 | `CountBadge` | 01-2-1 헤더 | 장바구니 · 알림 숫자 배지 (0이면 안 보임, 100 이상은 99+) |
+| `PageBackLink` | 02 ~ 09 화면 맨 위 | 「‹ 이전 화면」 뒤로 가기 링크 (`to`, `label`) |
+| `InfoNote` | 07 · 08 · 09 아래쪽 안내 | ⓘ 아이콘 + 회색 안내 한 줄 |
+| `UnderlineTab` | 05-3 · 06-6 · 08 탭 | 밑줄 탭 + 숫자 칩. 탭이 많은 화면은 `compact` |
+| `TermsModal` | 01-1-4 이용약관 | 푸터 · 회원가입에서 여는 이용약관 모달 |
 
 ### 시안 이전 화면 (CSS Modules)
 

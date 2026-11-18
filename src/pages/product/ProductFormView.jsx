@@ -1,5 +1,7 @@
 import { ActionErrorLine } from '../../components/common/ActionError';
-import { PageBackLink, InfoNote, QuotaBar } from '../../components/seller/SellerParts';
+import { QuotaBar } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
+import InfoNote from '../../components/common/InfoNote';
 import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
 
 export const MAX_PHOTOS = 10;

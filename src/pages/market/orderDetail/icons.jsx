@@ -1,13 +1,5 @@
 // 주문 상세 · 반품 신청 시안의 인라인 SVG 아이콘
 
-export function BackIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-    </svg>
-  );
-}
-
 export function ChevronIcon({ direction }) {
   const path = { up: 'M5 15l7-7 7 7', down: 'M19 9l-7 7-7-7', right: 'M9 5l7 7-7 7' }[direction];
   const size = direction === 'right' ? 'w-4 h-4' : 'w-5 h-5 text-[#4b5563]';

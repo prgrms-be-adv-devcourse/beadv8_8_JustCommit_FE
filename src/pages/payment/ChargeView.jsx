@@ -1,5 +1,5 @@
 import { ActionErrorLine } from '../../components/common/ActionError';
-import InfoNote from '../../components/wallet/InfoNote';
+import InfoNote from '../../components/common/InfoNote';
 import { won } from './chargeUtils';
 
 const QUICK_AMOUNTS = [

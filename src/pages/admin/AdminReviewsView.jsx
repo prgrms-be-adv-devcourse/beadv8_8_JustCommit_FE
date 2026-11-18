@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import ReviewBadge from '../../components/admin/ReviewBadge';
-import InfoNote from '../../components/admin/InfoNote';
+import InfoNote from '../../components/common/InfoNote';
 import { REVIEW_OVERDUE_MINUTES } from '../../constants/imageReview';
 import { formatDuration } from '../../utils/adminFormat';
 import { formatPrice } from '../../utils/format';

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import DesignBackLink from '../../components/mypage/DesignBackLink';
-import TabButton from '../../components/mypage/TabButton';
+import PageBackLink from '../../components/common/PageBackLink';
+import UnderlineTab from '../../components/common/UnderlineTab';
 
 // 시안 06-6-1 알림 · 06-6-2 알림 없음
 // props
@@ -95,13 +95,13 @@ function NotificationView({
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[880px] mx-auto space-y-6">
-        <DesignBackLink to="/mypage" label="마이페이지" />
+        <PageBackLink to="/mypage" label="마이페이지" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">알림</h1>
         <div className="flex items-end justify-between border-b border-[#e5e7eb]">
           <div className="flex">
-            <TabButton active={tab === 'all'} onClick={() => onTabChange('all')}>
+            <UnderlineTab active={tab === 'all'} onClick={() => onTabChange('all')}>
               전체
-            </TabButton>
+            </UnderlineTab>
             <UnreadTab active={tab === 'unread'} count={unreadCount} onClick={() => onTabChange('unread')} />
           </div>
           <div className="pb-2">

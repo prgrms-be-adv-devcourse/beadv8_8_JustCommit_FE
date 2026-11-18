@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import InfoNote from '../../components/wallet/InfoNote';
-import WalletBackLink from '../../components/wallet/WalletBackLink';
+import InfoNote from '../../components/common/InfoNote';
+import PageBackLink from '../../components/common/PageBackLink';
 import { won } from './chargeUtils';
 
 const BADGE_REQUESTED = 'h-7 px-2.5 inline-flex items-center text-xs font-semibold bg-white border border-[#0f4c3a] text-[#0f4c3a]';
@@ -19,7 +19,7 @@ function WithdrawHistoryView({ cashOuts }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[960px] mx-auto space-y-6">
-        <WalletBackLink />
+        <PageBackLink to="/wallet" label="예치금" />
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-bold text-[#111827] tracking-tight">인출 내역</h1>
           <Link

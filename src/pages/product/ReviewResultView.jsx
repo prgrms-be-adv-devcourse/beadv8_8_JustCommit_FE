@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { ActionErrorBar } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
-import { InfoNote, PageBackLink } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
+import InfoNote from '../../components/common/InfoNote';
 import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
 
 export const APPEAL_MEMO_MAX = 200;

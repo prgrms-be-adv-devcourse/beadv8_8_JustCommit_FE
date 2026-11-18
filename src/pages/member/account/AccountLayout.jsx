@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import DesignBackLink from '../../../components/mypage/DesignBackLink';
+import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 06-5 회원 정보 수정 공통 틀: 왼쪽 메뉴 + 오른쪽 카드
 // active: 메뉴 key / wide: 카드 안 너비 제한 없음 (배송지 관리)
@@ -15,7 +15,7 @@ function AccountLayout({ active, wide = false, children }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[1040px] mx-auto space-y-6">
-        <DesignBackLink to="/mypage" label="마이페이지" />
+        <PageBackLink to="/mypage" label="마이페이지" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">회원 정보 수정</h1>
         <div className="flex items-start gap-6">
           <ul className="w-[220px] shrink-0 bg-white border border-[#e5e7eb] py-2">

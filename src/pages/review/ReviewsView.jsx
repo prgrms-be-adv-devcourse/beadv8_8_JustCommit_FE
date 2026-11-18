@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { ActionErrorBar } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
-import DesignBackLink from '../../components/mypage/DesignBackLink';
-import TabButton from '../../components/mypage/TabButton';
+import PageBackLink from '../../components/common/PageBackLink';
+import UnderlineTab from '../../components/common/UnderlineTab';
 import ReviewCard from '../../components/review/ReviewCard';
 import Stars, { StarIcon } from '../../components/review/Stars';
 import { getTagLabel } from '../../constants/review';
@@ -178,19 +178,19 @@ function ReviewsView({
     <>
       <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
         <div className="max-w-[960px] mx-auto space-y-6">
-          <DesignBackLink to="/mypage" label="마이페이지" />
+          <PageBackLink to="/mypage" label="마이페이지" />
           <h1 className="text-2xl font-bold text-[#111827] tracking-tight">리뷰 관리</h1>
           <div className="flex border-b border-[#e5e7eb]">
-            <TabButton active={tab === 'written'} count={counts.written} onClick={() => onTabChange('written')}>
+            <UnderlineTab active={tab === 'written'} count={counts.written} onClick={() => onTabChange('written')}>
               내가 쓴 리뷰
-            </TabButton>
-            <TabButton active={tab === 'writable'} count={counts.writable} onClick={() => onTabChange('writable')}>
+            </UnderlineTab>
+            <UnderlineTab active={tab === 'writable'} count={counts.writable} onClick={() => onTabChange('writable')}>
               쓸 수 있는 리뷰
-            </TabButton>
+            </UnderlineTab>
             {isSeller && (
-              <TabButton active={tab === 'received'} count={counts.received} onClick={() => onTabChange('received')}>
+              <UnderlineTab active={tab === 'received'} count={counts.received} onClick={() => onTabChange('received')}>
                 받은 리뷰
-              </TabButton>
+              </UnderlineTab>
             )}
           </div>
           {renderBody()}

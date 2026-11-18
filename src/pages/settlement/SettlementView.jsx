@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { InfoNote, PageBackLink } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
+import InfoNote from '../../components/common/InfoNote';
 
 // 상품 이름 (반품 · 취소 배지가 있으면 앞에 붙음)
 export function SettlementProductName({ row }) {

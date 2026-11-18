@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import { CountTabs, InfoNote, PageBackLink } from '../../components/seller/SellerParts';
+import { CountTabs } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
+import InfoNote from '../../components/common/InfoNote';
 import { SALES_ORDER_STATUS } from '../../constants/seller';
 
 const ACTION = {

@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import authInputClass from './authInputClass';
+import PageBackLink from '../common/PageBackLink';
 
 // 06 회원 (로그인 · 아이디 찾기 · 비밀번호 재설정 · 회원가입) 시안의 입력칸 · 안내 문구 · 버튼 모음
 // 여러 화면에서 같은 class로 반복되므로 여기 한 곳에 둡니다.
@@ -115,12 +115,7 @@ export function AuthCardPage({ backTo, backLabel = '로그인', children }) {
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-14 flex justify-center">
       <div className="w-full max-w-[440px] space-y-4">
         {backTo && (
-          <Link to={backTo} className="h-11 inline-flex items-center gap-1.5 text-sm font-medium text-[#4b5563]">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            {backLabel}
-          </Link>
+          <PageBackLink to={backTo} label={backLabel} />
         )}
         <section className="bg-white border border-[#e5e7eb] p-9 space-y-6">{children}</section>
       </div>

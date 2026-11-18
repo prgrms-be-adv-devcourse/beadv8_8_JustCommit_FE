@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ActionErrorLine } from '../../components/common/ActionError';
-import InfoNote from '../../components/wallet/InfoNote';
+import InfoNote from '../../components/common/InfoNote';
 import { won } from './chargeUtils';
 
 // 시안 07-4-1 인출 · 07-4-2 인출 금액 초과

@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import { ActionErrorBar } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
-import { CountTabs, InfoNote, PageBackLink, QuotaBar } from '../../components/seller/SellerParts';
+import { CountTabs, QuotaBar } from '../../components/seller/SellerParts';
+import PageBackLink from '../../components/common/PageBackLink';
+import InfoNote from '../../components/common/InfoNote';
 import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
 
 const btnOn = 'h-9 w-[88px] text-sm font-semibold bg-white border border-[#d1d5db] text-[#111827]';

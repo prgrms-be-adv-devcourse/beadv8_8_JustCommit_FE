@@ -1,4 +1,4 @@
-// 회색 ⓘ 안내 한 줄 (시안 07 충전 · 충전 내역 · 인출 · 인출 내역 아래쪽 안내)
+// ⓘ 아이콘 + 회색 안내 한 줄 (07 예치금 · 08 판매자 · 09 관리자 시안 공통 모양)
 function InfoNote({ children }) {
   return (
     <p className="flex gap-1.5 text-[13px] text-[#4b5563] leading-relaxed">

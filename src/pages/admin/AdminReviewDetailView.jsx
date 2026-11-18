@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import ReviewBadge from '../../components/admin/ReviewBadge';
-import InfoNote from '../../components/admin/InfoNote';
+import InfoNote from '../../components/common/InfoNote';
 import { ActionErrorLine } from '../../components/common/ActionError';
 import { formatDuration } from '../../utils/adminFormat';
 import { formatDateTime, formatPrice } from '../../utils/format';
+import PageBackLink from '../../components/common/PageBackLink';
 
 // 자리 문구: "{넣을값}"
 const P = (text) => `{${text}}`;
@@ -27,20 +27,7 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
-        <Link
-          to="/admin/reviews"
-          className="h-11 inline-flex items-center gap-1.5 text-sm font-medium text-[#4b5563]"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          검수 대기 목록
-        </Link>
+        <PageBackLink to="/admin/reviews" label="검수 대기 목록" />
         <div className="flex items-start justify-between gap-6">
           <div className="space-y-2">
             <div className="flex gap-1.5">

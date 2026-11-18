@@ -1,5 +1,5 @@
 import DailyRevenueChart from '../../components/admin/DailyRevenueChart';
-import InfoNote from '../../components/admin/InfoNote';
+import InfoNote from '../../components/common/InfoNote';
 import { formatMinus, formatNumber, formatReportDate } from '../../utils/adminFormat';
 import { FEE_RATE_PERCENT, REPORT_PERIODS } from '../../constants/adminReport';
 

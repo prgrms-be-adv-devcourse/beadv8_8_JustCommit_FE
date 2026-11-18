@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import StepBar from '../../../components/market/StepBar';
 import { ActionErrorLine } from '../../../components/common/ActionError';
-import { BackIcon, ChevronIcon, PinIcon, RefreshIcon, SmallCheckIcon } from './icons';
+import { ChevronIcon, PinIcon, RefreshIcon, SmallCheckIcon } from './icons';
 import ReviewSection from './ReviewSection';
+import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 03-5 · 04-1 · 04-4 · 05-1 구매자 주문 상세 화면 (데이터는 props로만 받음)
 // 데이터 모양은 orderDetailModel.js의 buildOrderDetailView 참고
@@ -258,10 +259,7 @@ function OrderDetailView({
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="max-w-[960px] mx-auto space-y-6">
-        <Link to="/orders" className="h-11 inline-flex items-center gap-1.5 text-sm font-medium text-[#4b5563]">
-          <BackIcon />
-          주문 목록
-        </Link>
+        <PageBackLink to="/orders" label="주문 목록" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">주문 상세</h1>
         <section className="bg-white border border-[#e5e7eb] p-6">
           <h2 className="text-lg font-bold text-[#111827] mb-4">주문 정보</h2>
