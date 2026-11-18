@@ -1,27 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
-import BackLink from '../../components/common/BackLink';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { changeProductHidden, deleteProduct, getMyProducts } from '../../api/productApi';
-import ConfirmModal from '../../components/common/ConfirmModal';
-import ProductThumbnail from '../../components/product/ProductThumbnail';
-import { PRODUCT_STATUS } from '../../constants/product';
+import {
+  EDITABLE_PRODUCT_STATUSES,
+  QUOTA_PLACEHOLDER,
+  REVIEW_REJECT_REASON,
+} from '../../constants/seller';
+import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatPrice } from '../../utils/format';
-import styles from './MyProductsPage.module.css';
+import MyListingsView from './MyListingsView';
 
 const TABS = [
   { value: '', label: '전체' },
-  { value: 'ACTIVE', label: '판매중' },
-  { value: 'PAYMENT_PENDING', label: '결제 대기' },
-  { value: 'SOLD_OUT', label: '판매완료' },
+  { value: 'ACTIVE', label: '판매 중' },
+  { value: 'PAYMENT_PENDING', label: '거래 중' },
+  { value: 'SOLD_OUT', label: '판매 완료' },
+  { value: 'REVIEW_PENDING', label: '검수 중' },
+  { value: 'REJECTED', label: '반려' },
+  { value: 'HIDDEN', label: '숨김' },
 ];
 
 const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
 const MAX_PAGES = 10; // 안전장치: 최대 500개까지
 
-// TODO: 백엔드에 hidden 조회 조건·탭별 개수 API가 생기면 페이지 단위 조회로 교체
-// 지금은 내 상품을 전부 받아서 탭·숨김 필터와 개수를 프론트에서 계산 (삭제된 상품은 백엔드가 제외)
+// TODO: 상태별 개수 API(getMyProductCounts) · 상태 조회 조건이 생기면 페이지 단위 조회로 교체
+// 지금은 내 상품을 전부 받아서 탭과 개수를 프론트에서 계산 (삭제된 상품은 백엔드가 제외)
 async function fetchAllMyProducts() {
   const all = [];
   for (let page = 0; page < MAX_PAGES; page += 1) {
@@ -33,35 +38,77 @@ async function fetchAllMyProducts() {
   return all;
 }
 
-// 수정·삭제는 판매중일 때만 가능 (백엔드 Product.update·delete 규칙)
-function isLocked(product) {
-  return product.status !== 'ACTIVE';
+function matchesTab(product, tab) {
+  if (!tab) return true;
+  if (tab === 'HIDDEN') return product.hidden;
+  return product.status === tab;
 }
 
-// 행 아래 안내 문구
-function getRowHint(product) {
-  if (product.status === 'PAYMENT_PENDING') return '결제 대기 중이라 수정·삭제할 수 없어요';
-  if (product.status === 'SOLD_OUT') return '판매가 끝난 상품은 수정·삭제할 수 없어요';
-  if (product.hidden) return '숨긴 상품은 구매자에게 보이지 않아요';
-  return null;
-}
+// 상품 응답 → 목록 한 줄
+// TODO: 검수 단계(reviewStage: MANUAL · DELAYED) · 반려 사유(rejectReason) · 판정 주체(decidedBy) ·
+//       주문 취소로 돌아온 상품 여부(returnedFromOrder)가 응답에 생기면 그대로 쓰임. 지금은 없으면 자리 문구
+function toRow(product) {
+  const { status } = product;
+  const row = {
+    productId: product.productId,
+    title: product.title,
+    priceText: formatPrice(product.price),
+    thumbnailUrl: product.thumbnailUrl ?? null,
+    badges: [status],
+    note: null,
+    link: null,
+    // 시안 08-4-1: 거래 중 · 판매 완료 줄은 「숨기기」만, 나머지는 수정 · 숨기기 · 삭제
+    hasEditDelete: EDITABLE_PRODUCT_STATUSES.includes(status),
+    canEdit: EDITABLE_PRODUCT_STATUSES.includes(status),
+    canDelete: EDITABLE_PRODUCT_STATUSES.includes(status),
+    // 숨김은 상태와 별개라 모든 상태에서 숨기거나 풀 수 있음 (BE docs services/product.md 「숨김」)
+    hideAction: product.hidden ? 'unhide' : 'hide',
+  };
+  const reviewLink = { label: '결과 보기', to: `/products/${product.productId}/review` };
 
-function getErrorMessage(error, fallback) {
-  return error.response?.data?.message ?? fallback;
+  if (status === 'REVIEW_PENDING') {
+    if (product.reviewStage === 'MANUAL') {
+      row.badges = ['MANUAL'];
+      row.note = '관리자가 확인하고 있어요. 결과는 알림으로 알려 드려요';
+    } else if (product.reviewStage === 'DELAYED') {
+      row.badges = ['DELAYED'];
+      row.note = '확인에 시간이 걸리고 있어요';
+      // 시안 08-4-1: 확인 지연 상품은 수정 · 삭제 버튼을 막아 둠
+      row.canEdit = false;
+      row.canDelete = false;
+    } else {
+      row.note = '사진을 확인하고 있어요. 보통 몇 초면 끝나요';
+    }
+    row.link = reviewLink;
+  } else if (status === 'REJECTED') {
+    const reason = REVIEW_REJECT_REASON[product.rejectReason] ?? '{반려 사유}';
+    const decidedBy = { AUTO: '자동 판정', ADMIN: '관리자 판정' }[product.decidedBy] ?? '{판정 주체}';
+    row.note = `${reason} · ${decidedBy}`;
+    row.link = {
+      label: product.decidedBy === 'ADMIN' ? '사유 보기' : '사유 보기 · 이의 신청',
+      to: reviewLink.to,
+    };
+  } else if (product.hidden) {
+    row.badges = [status, 'HIDDEN'];
+    if (product.returnedFromOrder) {
+      row.note = '주문이 취소돼 돌아온 상품이에요. 상태를 확인하고 숨김을 풀면 바로 판매돼요';
+    }
+  }
+  return row;
 }
 
 function MyProductsPage() {
-  usePageTitle('판매 상품 목록');
+  usePageTitle('내 판매 목록');
+  const navigate = useNavigate();
   const { user, isLoggedIn, isInitializing } = useAuth();
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
   const [products, setProducts] = useState([]);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
   const [tab, setTab] = useState('');
-  const [hiddenOnly, setHiddenOnly] = useState(false);
-  const [busyId, setBusyId] = useState(null); // 숨기기·삭제 요청 중인 상품
+  const [busyId, setBusyId] = useState(null); // 숨기기 · 삭제 요청 중인 상품
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [notice, setNotice] = useState(null); // 실패 안내 팝업 문구
+  const [notice, setNotice] = useState(null); // 실패 안내 문구
 
   useEffect(() => {
     if (!canSell) return undefined;
@@ -82,38 +129,27 @@ function MyProductsPage() {
     };
   }, [canSell]);
 
-  // ConfirmModal의 useEffect가 onClose에 의존하므로 함수 고정
+  // Modal의 useEffect가 onClose에 의존하므로 함수 고정
   const closeDelete = useCallback(() => setDeleteTarget(null), []);
   const closeNotice = useCallback(() => setNotice(null), []);
 
-  if (isInitializing) {
-    return <p className={styles.message}>불러오는 중...</p>;
-  }
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace state={{ from: '/mypage/products' }} />;
-  }
-  if (!canSell) {
-    return <Navigate to="/seller/register" replace />;
-  }
+  if (isInitializing) return null;
+  if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/mypage/products' }} />;
+  if (!canSell) return <Navigate to="/seller/register" replace />;
+  if (loadState === 'loading') return <main className="flex-1" />;
+  if (loadState === 'error') return <ErrorPage type="SERVER_ERROR" />;
 
-  // 토글을 켜면 탭 개수도 숨긴 상품 기준
-  const baseProducts = hiddenOnly ? products.filter((product) => product.hidden) : products;
-  const countOf = (status) =>
-    status ? baseProducts.filter((product) => product.status === status).length : baseProducts.length;
-  const visibleProducts = tab ? baseProducts.filter((product) => product.status === tab) : baseProducts;
-
-  const toggleHidden = async (product) => {
-    setBusyId(product.productId);
+  const toggleHidden = async (row) => {
+    const hidden = row.hideAction === 'hide';
+    setBusyId(row.productId);
     try {
-      await changeProductHidden(product.productId, !product.hidden);
-      // 성공하면 그 상품만 바꿔서 배지·개수가 바로 반영되게
+      await changeProductHidden(row.productId, hidden);
+      // 성공하면 그 상품만 바꿔서 배지 · 개수가 바로 반영되게
       setProducts((prev) =>
-        prev.map((item) =>
-          item.productId === product.productId ? { ...item, hidden: !product.hidden } : item,
-        ),
+        prev.map((item) => (item.productId === row.productId ? { ...item, hidden } : item)),
       );
     } catch (error) {
-      setNotice(getErrorMessage(error, '숨김 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.'));
+      setNotice(error.response?.data?.message ?? '숨김 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setBusyId(null);
     }
@@ -127,164 +163,36 @@ function MyProductsPage() {
       await deleteProduct(target.productId);
       setProducts((prev) => prev.filter((item) => item.productId !== target.productId));
     } catch (error) {
-      setNotice(getErrorMessage(error, '상품을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.'));
+      setNotice(error.response?.data?.message ?? '상품을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setBusyId(null);
     }
   };
 
-  const renderBody = () => {
-    if (loadState === 'loading') {
-      return <p className={styles.message}>내 상품을 불러오는 중...</p>;
-    }
-    if (loadState === 'error') {
-      return <p className={styles.message}>판매 상품 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>;
-    }
-    if (visibleProducts.length === 0) {
-      return (
-        <div className={styles.empty}>
-          <p>
-            {hiddenOnly
-              ? '숨긴 상품이 없어요'
-              : tab
-                ? '이 상태의 상품이 없어요'
-                : '아직 등록한 상품이 없어요'}
-          </p>
-          {products.length === 0 && (
-            <Link to="/products/new" className={styles.createLink}>
-              첫 상품 등록하기
-            </Link>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <ul className={styles.list}>
-        {visibleProducts.map((product) => {
-          const status = PRODUCT_STATUS[product.status] ?? { label: product.status, tone: 'pending' };
-          const locked = isLocked(product);
-          const isBusy = busyId === product.productId;
-          const hint = getRowHint(product);
-
-          return (
-            <li key={product.productId} className={styles.row}>
-              <Link to={`/products/${product.productId}`} className={styles.thumb} aria-hidden="true" tabIndex={-1}>
-                <ProductThumbnail src={product.thumbnailUrl} alt="" size="small" />
-              </Link>
-
-              <div className={styles.info}>
-                <div className={styles.badges}>
-                  <span className={`${styles.badge} ${styles[status.tone]}`}>{status.label}</span>
-                  {product.hidden && <span className={`${styles.badge} ${styles.hiddenBadge}`}>숨김</span>}
-                </div>
-                <Link to={`/products/${product.productId}`} className={styles.title}>
-                  {product.title}
-                </Link>
-                <strong className={styles.price}>{formatPrice(Number(product.price))}</strong>
-                {hint && <p className={styles.hint}>{hint}</p>}
-              </div>
-
-              <div className={styles.actions}>
-                {locked ? (
-                  <button type="button" className={styles.actionButton} disabled>
-                    수정
-                  </button>
-                ) : (
-                  <Link to={`/products/${product.productId}/edit`} className={styles.actionButton}>
-                    수정
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  disabled={isBusy}
-                  onClick={() => toggleHidden(product)}
-                >
-                  {product.hidden ? '숨김 해제' : '숨기기'}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.actionButton} ${styles.danger}`}
-                  disabled={locked || isBusy}
-                  onClick={() => setDeleteTarget(product)}
-                >
-                  삭제
-                </button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
+  const tabs = TABS.map((item) => ({
+    ...item,
+    count: products.filter((product) => matchesTab(product, item.value)).length,
+  }));
+  const rows = products.filter((product) => matchesTab(product, tab)).map(toRow);
 
   return (
-    <div className={styles.page}>
-      <BackLink to="/mypage" label="마이페이지" />
-      <div className={styles.header}>
-        <h1 className={styles.heading}>판매 상품 목록</h1>
-        <Link to="/products/new" className={styles.createLink}>
-          + 상품 등록
-        </Link>
-      </div>
-
-      <div className={styles.toolbar}>
-        <div role="tablist" aria-label="판매 상태" className={styles.tabs}>
-          {TABS.map((item) => {
-            const isSelected = tab === item.value;
-            return (
-              <button
-                key={item.value || 'all'}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                className={`${styles.tab} ${isSelected ? styles.tabSelected : ''}`}
-                onClick={() => setTab(item.value)}
-              >
-                {item.label}
-                {loadState === 'done' && <span className={styles.tabCount}>{countOf(item.value)}</span>}
-              </button>
-            );
-          })}
-        </div>
-        <label className={styles.hiddenToggle}>
-          <input
-            type="checkbox"
-            role="switch"
-            checked={hiddenOnly}
-            onChange={(event) => setHiddenOnly(event.target.checked)}
-          />
-          숨긴 상품만 보기
-        </label>
-      </div>
-
-      {renderBody()}
-
-      {deleteTarget && (
-        <ConfirmModal
-          icon="delete"
-          title="상품을 삭제할까요?"
-          message={`"${deleteTarget.title}"이(가) 목록과 검색에서 사라지고 되돌릴 수 없어요.`}
-          confirmText="삭제"
-          cancelText="취소"
-          onConfirm={confirmDelete}
-          onClose={closeDelete}
-        />
-      )}
-
-      {notice && (
-        <ConfirmModal
-          icon="info"
-          title="처리하지 못했어요"
-          message={notice}
-          confirmText="확인"
-          cancelText={null}
-          onConfirm={closeNotice}
-          onClose={closeNotice}
-        />
-      )}
-    </div>
+    <MyListingsView
+      quota={QUOTA_PLACEHOLDER}
+      tabs={tabs}
+      tab={tab}
+      onTabChange={setTab}
+      rows={rows}
+      isEmptyAll={products.length === 0}
+      busyId={busyId}
+      onEdit={(row) => navigate(`/products/${row.productId}/edit`)}
+      onToggleHidden={toggleHidden}
+      onDelete={setDeleteTarget}
+      deleteTarget={deleteTarget}
+      onDeleteCancel={closeDelete}
+      onDeleteConfirm={confirmDelete}
+      notice={notice}
+      onNoticeClose={closeNotice}
+    />
   );
 }
 

@@ -1,49 +1,179 @@
-import { useEffect, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
-import ProductThumbnail from '../../components/product/ProductThumbnail';
-import { SETTLEMENT_FEE_RATE, getSalesStatus } from '../../constants/order';
+import { useCallback, useEffect, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { getAddresses } from '../../api/memberApi';
+import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
+import ErrorPage from '../../components/common/ErrorPage';
+import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
+import {
+  ACCEPT_HOURS,
+  RETURN_RESPONSE_HOURS,
+  SALES_CANCEL_LABEL,
+  SETTLEMENT_FEE_RATE,
+  getSalesOrderStatus,
+  getSalesShipmentStep,
+} from '../../constants/seller';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import {
-  formatDate,
-  formatDateTime,
-  formatPrice,
-  formatStepTime,
-  maskPhone,
-} from '../../utils/format';
+import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
+import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
-import styles from './SalesOrderDetailPage.module.css';
+import SalesOrderDetailView from './SalesOrderDetailView';
 
-// timeField: 판매 주문 상세 응답에서 그 단계가 일어난 시각 (아직 안 된 단계는 null → 시각을 안 보여 줌)
-const STEPS = [
-  { label: '택배 예약', icon: 'event_available', timeField: 'bookedAt' },
-  { label: '접수 완료', icon: 'inventory_2', timeField: 'pickedUpAt' },
-  { label: '배송 중', icon: 'local_shipping', timeField: 'inTransitAt' },
-  { label: '배송 완료', icon: 'home', timeField: 'deliveredAt' },
-];
+const SHIPPING_FEE_NOTE = '배송비는 플랫폼 매출로 들어가 정산에 포함되지 않아요';
+const GRAY_BADGE = 'bg-[#f3f4f6] border-[#f3f4f6] text-[#6b7280]';
 
-// 지금 진행 중인 단계 (STEPS 인덱스, 4면 모든 단계 완료)
-function getCurrentStep(order, salesStatus) {
-  if (salesStatus === 'CONFIRMED') return 4;
-  switch (order.shipmentStatus) {
-    case 'BOOKED':
-      return 1;
-    case 'PICKED_UP':
-    case 'IN_TRANSIT':
-      return 2;
-    case 'DELIVERED':
-      return 3;
-    default:
-      return 0;
-  }
+const itemIdOf = (item) => item.orderItemId ?? item.id;
+
+// 응답 필드 이름이 isDefault / default 중 어느 쪽이어도 동작하도록
+const isDefaultAddress = (address) => address.isDefault ?? address.default ?? false;
+
+// 보내는 주소 한 줄: 「김개식 · 집 · (04700) 서울특별시 … , 302호」 (시안 08-5-2)
+function toSenderOption(address) {
+  const line = `(${address.zipcode}) ${[address.address1, address.address2].filter(Boolean).join(', ')}`;
+  return {
+    addressId: address.addressId,
+    isDefault: isDefaultAddress(address),
+    text: [address.recipientName, address.addressName, line].filter(Boolean).join(' · '),
+  };
 }
 
-const ITEM_STATUS_LABEL = {
-  CANCELLED: '취소됨',
-  REFUND_REQUESTED: '환불 요청',
-  REFUNDED: '환불 완료',
-  CONFIRMED: '구매 확정',
-};
+// 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 자리 문구
+function deadlineText(deadline, startedAt, hours, placeholder) {
+  if (deadline) return formatMonthDayTime(deadline);
+  if (startedAt) return formatMonthDayTime(addHours(startedAt, hours));
+  return placeholder;
+}
+
+// 수락 대기: 체크한 상품 수에 따라 안내 · 버튼 문구
+function acceptTexts(items, rejectIds) {
+  const total = items.length;
+  const rejected = items.filter((item) => rejectIds.includes(itemIdOf(item)));
+  const n = rejected.length;
+  if (n === 0) {
+    return {
+      summary: `체크한 상품이 없어요. ${total}개 모두 수락되고 택배 예약이 진행돼요.`,
+      submitLabel: `${total}개 수락`,
+    };
+  }
+  if (n === total) {
+    return {
+      summary: `${total}개 모두 거절되고 배송비를 포함한 결제 금액이 구매자에게 환불돼요.`,
+      submitLabel: `${total}개 거절`,
+    };
+  }
+  const amount = rejected.reduce((sum, item) => sum + Number(item.price), 0);
+  return {
+    summary: `체크한 ${n}개 상품(${formatPrice(amount)})만 거절되고 구매자에게 환불돼요. 나머지 ${total - n}개는 수락되고 택배 예약이 진행돼요.`,
+    submitLabel: `${n}개 거절 · ${total - n}개 수락`,
+  };
+}
+
+// 판매 주문 상세 응답 → 화면 값
+// TODO: 구매자 닉네임(buyerNickname) · 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) ·
+//       배송 조회 주소(trackingUrl) · 반품 사유(returnReason · returnDetail) · 반품 신청 시각(returnRequestedAt) ·
+//       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 자리 문구
+function toViewOrder(order) {
+  const salesStatus = getSalesOrderStatus(order);
+  const items = order.items ?? [];
+  const cancelLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? '{취소 주체}';
+
+  let mode = 'NORMAL';
+  if (salesStatus === 'ACCEPT_PENDING') mode = 'ACCEPT';
+  else if (salesStatus === 'RETURN_REQUESTED') mode = 'RETURN_REQUESTED';
+  else if (salesStatus === 'CANCELLED' && order.returnShipping) mode = 'CANCEL_RETURN';
+
+  const viewItems = items.map((item) => {
+    let statusText = null;
+    let statusTone = 'text-[#6b7280]';
+    if (item.status === 'CANCELLED') statusText = SALES_CANCEL_LABEL[item.cancelledBy ?? order.cancelledBy] ?? cancelLabel;
+    if (item.status === 'RETURN_REQUESTED') {
+      statusText = '반품 신청';
+      statusTone = 'text-[#92400e]';
+    }
+    if (item.status === 'REFUNDED') statusText = '반품 완료';
+    return {
+      orderItemId: itemIdOf(item),
+      name: item.productName,
+      thumbnailUrl: item.thumbnailUrl,
+      priceText: formatPrice(Number(item.price)),
+      statusText,
+      statusTone,
+    };
+  });
+
+  const shippingFee = Number(order.shippingFee ?? SHIPPING_FEE_PER_SELLER);
+  const liveItems = items.filter((item) => item.status !== 'CANCELLED');
+  const sale = liveItems.reduce((sum, item) => sum + Number(item.price), 0);
+  const fee = Math.floor(sale * SETTLEMENT_FEE_RATE);
+  const burden = Number(order.sellerBurden ?? 0);
+
+  let settlement;
+  if (salesStatus === 'CANCELLED') {
+    settlement = {
+      badgeText: cancelLabel,
+      badgeTone: GRAY_BADGE,
+      amounts: null,
+      note: order.cancelledBy === 'BUYER' ? '구매자가 취소한 주문이라 정산하지 않아요.' : '거절한 주문이라 정산하지 않아요.',
+    };
+  } else {
+    const settled = order.settlementStatus === 'COMPLETED';
+    const pending = order.settlementStatus === 'PENDING' || order.settlementStatus === 'FAILED';
+    let note = `구매 확정 후 정산돼요 · ${SHIPPING_FEE_NOTE}`;
+    if (mode === 'ACCEPT') note = `수락하면 배송이 시작되고, 구매 확정 후 정산돼요 · ${SHIPPING_FEE_NOTE}`;
+    if (mode === 'RETURN_REQUESTED') note = `반품 처리가 끝난 뒤 정산돼요 · ${SHIPPING_FEE_NOTE}`;
+    if (pending) note = `곧 예치금의 인출 가능 금액으로 들어가요 · ${SHIPPING_FEE_NOTE}`;
+    if (settled) note = `${order.settledAt ? `${formatDate(order.settledAt)}에 ` : ''}정산됐어요 · ${SHIPPING_FEE_NOTE}`;
+    let badgeText = '정산 전';
+    if (pending) badgeText = '지급 대기';
+    if (settled) badgeText = '지급 완료';
+    settlement = {
+      badgeText,
+      badgeTone: GRAY_BADGE,
+      amounts: {
+        saleText: formatPrice(sale),
+        feeText: `− ${formatPrice(fee)}`,
+        burdenText: burden > 0 ? `− ${formatPrice(burden)}` : null,
+        payoutLabel: settled || pending ? '정산 금액' : '정산 예정 금액',
+        payoutText: formatPrice(sale - fee - burden),
+      },
+      note,
+    };
+  }
+
+  const step = getSalesShipmentStep(order, salesStatus);
+  const shipment =
+    mode === 'ACCEPT'
+      ? null
+      : {
+          trackingNo: order.trackingNo ?? '{송장번호}',
+          note: step === 0 && mode === 'NORMAL' ? '수락하면 택배사가 자동으로 예약돼요. 상품을 포장해 두면 택배사가 가지러 가요.' : null,
+          step: mode === 'CANCEL_RETURN' ? null : step,
+          // 시안: 배송 완료 시각만 단계 아래에 보여 줌
+          stepTimes: [null, null, null, order.deliveredAt ? formatShortDateTime(order.deliveredAt) : null, null],
+          location: order.currentLocation ?? '{현재 위치} · {배송 상태} · {시각}',
+          trackingUrl: order.trackingUrl ?? '#',
+        };
+
+  return {
+    sellerOrderId: order.sellerOrderId,
+    mode,
+    headerText: `주문 번호 ${order.orderNo} · ${formatDateTime(order.createdAt)} · 구매자 ${order.buyerNickname ?? '{구매자 닉네임}'}`,
+    items: viewItems,
+    saleFooter:
+      mode === 'CANCEL_RETURN'
+        ? null
+        : { label: `판매액 (배송비 ${formatPrice(shippingFee)}은 구매자가 냄)`, amountText: formatPrice(sale) },
+    recipient: {
+      name: order.recipientName,
+      phone: maskPhone(order.recipientPhone),
+      address: `(${order.zipcode}) ${order.address1}${order.address2 ? `, ${order.address2}` : ''}`,
+    },
+    shipment,
+    settlement,
+    returnItem: items.find((item) => item.status === 'RETURN_REQUESTED') ?? null,
+    shippingFee,
+  };
+}
 
 function SalesOrderDetailPage() {
   usePageTitle('판매 주문 상세');
@@ -54,226 +184,130 @@ function SalesOrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
 
-  useEffect(() => {
-    if (!canSell) return undefined;
+  const [rejectIds, setRejectIds] = useState([]);
+  const [senderOptions, setSenderOptions] = useState([]); // 판매자 배송지 (보내는 주소)
+  const [senderId, setSenderId] = useState(null);
+  const [modal, setModal] = useState(null); // 반품 'APPROVE' | 'REJECT'
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    let ignore = false;
-    fetchSalesOrder(sellerOrderId)
-      .then((data) => {
-        if (ignore) return;
+  const load = useCallback(
+    () =>
+      fetchSalesOrder(sellerOrderId).then((data) => {
         setOrder(data);
         setLoadState('done');
-      })
-      .catch(() => {
-        if (!ignore) setLoadState('error');
-      });
+      }),
+    [sellerOrderId],
+  );
 
+  useEffect(() => {
+    if (!canSell) return undefined;
+    let ignore = false;
+    load().catch(() => {
+      if (!ignore) setLoadState('error');
+    });
     return () => {
       ignore = true;
     };
-  }, [canSell, sellerOrderId]);
+  }, [canSell, load]);
 
-  if (isInitializing) {
-    return <p className={styles.message}>불러오는 중...</p>;
-  }
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace state={{ from: `/orders/seller/${sellerOrderId}` }} />;
-  }
-  if (!canSell) {
-    return <Navigate to="/seller/register" replace />;
-  }
+  // 보내는 주소 후보 = 내 배송지 (GET /api/v1/users/me/addresses, 최대 4개). 처음엔 기본 배송지
+  useEffect(() => {
+    if (!canSell) return undefined;
+    let ignore = false;
+    getAddresses()
+      .then((response) => {
+        if (ignore) return;
+        const list = response.data.data ?? [];
+        setSenderOptions(list.map(toSenderOption));
+        setSenderId((list.find(isDefaultAddress) ?? list[0])?.addressId ?? null);
+      })
+      .catch(() => {
+        // 못 불러오면 「등록된 배송지가 없어요」로 보이고 수락 버튼이 막힘
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [canSell]);
 
-  const backLink = (
-    <Link to="/orders/seller" className={styles.backLink}>
-      <span className="material-symbols-outlined" aria-hidden="true">
-        arrow_back
-      </span>
-      판매 주문 목록
-    </Link>
-  );
+  const closeModal = useCallback(() => {
+    if (!isSubmitting) setModal(null);
+  }, [isSubmitting]);
 
-  if (loadState !== 'done') {
-    return (
-      <div className={styles.page}>
-        {backLink}
-        <p className={styles.message}>
-          {loadState === 'loading'
-            ? '주문을 불러오는 중...'
-            : '주문을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'}
-        </p>
-      </div>
-    );
-  }
+  if (isInitializing) return null;
+  if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: `/orders/seller/${sellerOrderId}` }} />;
+  if (!canSell) return <Navigate to="/seller/register" replace />;
+  if (loadState === 'loading') return <main className="flex-1" />;
+  if (loadState === 'error') return <ErrorPage type="NOT_FOUND" />;
 
-  const salesStatus = getSalesStatus(order);
-  const currentStep = getCurrentStep(order, salesStatus);
-  const items = order.items ?? [];
-  // totalAmount: 배송비를 뺀 판매자 상품 금액
-  const saleAmount = Number(order.totalAmount);
+  const view = toViewOrder(order);
 
-  // 정산 기준: 구매 확정된 상품 금액 (백엔드 SellerOrder.settlementBaseAmount와 같은 기준)
-  const isConfirmed = salesStatus === 'CONFIRMED';
-  // 백엔드는 정산 행이 있으면 COMPLETED, 없으면 NOT_SETTLED
-  const isSettled = order.settlementStatus === 'COMPLETED';
-  const settleBase = items
-    .filter((item) => item.status === 'CONFIRMED')
-    .reduce((sum, item) => sum + Number(item.price), 0);
-  const fee = Math.floor(settleBase * SETTLEMENT_FEE_RATE);
+  // 버튼 동작 공통: 요청 → 성공하면 다시 불러오기, 실패하면 안내
+  const run = async (request, fallback, onDone) => {
+    setIsSubmitting(true);
+    setErrorMessage('');
+    try {
+      await request();
+      onDone?.();
+      await load();
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message ?? fallback);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  return (
-    <div className={styles.page}>
-      {backLink}
+  const { summary, submitLabel } = acceptTexts(order.items ?? [], rejectIds);
+  const accept = {
+    deadlineText: deadlineText(order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
+    rejectIds,
+    sender: { options: senderOptions, selectedId: senderId, onChange: setSenderId },
+    onToggle: (id) => setRejectIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])),
+    summary,
+    submitLabel,
+    isSubmitting,
+    errorMessage: view.mode === 'ACCEPT' ? errorMessage : '',
+    onSubmit: () =>
+      run(() => respondSellerOrder(sellerOrderId, rejectIds, senderId), '주문에 응답하지 못했어요. 잠시 후 다시 시도해 주세요.', () =>
+        setRejectIds([]),
+      ),
+  };
 
-      <div className={styles.titleBlock}>
-        <h1 className={styles.heading}>판매 주문 상세</h1>
-        <p className={styles.meta}>
-          주문 번호 {order.orderNo} · {formatDateTime(order.createdAt)} · 구매자{' '}
-          {order.recipientName}
-        </p>
-      </div>
+  const { returnItem } = view;
+  const returnRequest = returnItem && {
+    deadlineText: deadlineText(
+      returnItem.returnDeadlineAt,
+      returnItem.returnRequestedAt,
+      RETURN_RESPONSE_HOURS,
+      '{응답 마감}',
+    ),
+    requestedAtText: returnItem.returnRequestedAt ? formatShortDateTime(returnItem.returnRequestedAt) : '{신청 시각}',
+    item: {
+      name: returnItem.productName,
+      shortName: returnItem.productName,
+      thumbnailUrl: returnItem.thumbnailUrl,
+      priceText: formatPrice(Number(returnItem.price)),
+    },
+    reason: returnItem.returnReason ?? '{반품 사유}',
+    detail: returnItem.returnDetail ?? '{반품 설명}',
+    shippingFeeText: formatPrice(view.shippingFee),
+    modal,
+    isSubmitting,
+    errorMessage: modal ? errorMessage : '',
+    onOpen: (kind) => {
+      setErrorMessage('');
+      setModal(kind);
+    },
+    onClose: closeModal,
+    onConfirm: () =>
+      run(
+        () => (modal === 'APPROVE' ? approveReturn(itemIdOf(returnItem)) : rejectReturn(itemIdOf(returnItem))),
+        '반품을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.',
+        () => setModal(null),
+      ),
+  };
 
-      <div className={styles.grid}>
-        <section aria-labelledby="sod-addr" className={styles.card}>
-          <h2 id="sod-addr" className={styles.cardTitle}>
-            구매자 배송지
-          </h2>
-          <strong className={styles.recipient}>{order.recipientName}</strong>
-          <span className={styles.subText}>{maskPhone(order.recipientPhone)}</span>
-          <span className={styles.address}>
-            ({order.zipcode}) {order.address1}
-            {order.address2 ? `, ${order.address2}` : ''}
-          </span>
-        </section>
-
-        <section aria-labelledby="sod-item" className={styles.card}>
-          <h2 id="sod-item" className={styles.cardTitle}>
-            주문 상품
-          </h2>
-          <ul className={styles.items}>
-            {items.map((item) => (
-              <li key={item.id} className={styles.item}>
-                <Link to={`/products/${item.productId}`} className={styles.itemThumb} tabIndex={-1}>
-                  <ProductThumbnail
-                    src={item.thumbnailUrl}
-                    alt={`${item.productName} 사진`}
-                    size="small"
-                  />
-                </Link>
-                <span className={styles.itemInfo}>
-                  {ITEM_STATUS_LABEL[item.status] && (
-                    <span className={styles.itemStatus}>{ITEM_STATUS_LABEL[item.status]}</span>
-                  )}
-                  <span className={styles.itemName}>{item.productName}</span>
-                  <span className={styles.subText}>{formatPrice(Number(item.price))}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className={styles.totalRow}>
-            <span className={styles.subText}>판매 금액</span>
-            <strong className={styles.total}>{formatPrice(saleAmount)}</strong>
-          </div>
-        </section>
-      </div>
-
-      <section aria-labelledby="sod-ship" className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 id="sod-ship" className={styles.cardTitle}>
-            배송
-          </h2>
-          {order.trackingNo && (
-            <span className={styles.subText}>
-              송장번호 <strong className={styles.trackingNo}>{order.trackingNo}</strong>
-              <span className={styles.autoBadge}>자동 발급</span>
-            </span>
-          )}
-        </div>
-        <ol aria-label="배송 단계" className={styles.steps}>
-          {STEPS.map((step, index) => {
-            const done = index < currentStep;
-            const now = index === currentStep;
-            const stateClass = done ? styles.stepDone : now ? styles.stepNow : '';
-            const time = order[step.timeField];
-            return (
-              <li
-                key={step.label}
-                aria-current={now ? 'step' : undefined}
-                className={`${styles.step} ${stateClass}`}
-              >
-                {index > 0 && (
-                  <span
-                    aria-hidden="true"
-                    className={`${styles.stepLine} ${index <= currentStep ? styles.stepLineDone : ''}`}
-                  />
-                )}
-                <span aria-hidden="true" className={styles.stepDot}>
-                  <span className="material-symbols-outlined">
-                    {done ? 'check' : now ? step.icon : ''}
-                  </span>
-                </span>
-                <span className={styles.stepLabel}>{step.label}</span>
-                {time && (
-                  <time className={styles.stepTime} dateTime={time}>
-                    {formatStepTime(time)}
-                  </time>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section aria-labelledby="sod-settle" className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 id="sod-settle" className={styles.cardTitle}>
-            정산
-          </h2>
-          {isSettled ? (
-            <span className={`${styles.settleBadge} ${styles.settleDone}`}>정산 완료</span>
-          ) : (
-            <span className={`${styles.settleBadge} ${isConfirmed ? styles.settleScheduled : ''}`}>
-              {isConfirmed ? '정산 예정' : '정산 전'}
-            </span>
-          )}
-        </div>
-        {isConfirmed || isSettled ? (
-          <>
-            <dl className={styles.settleList}>
-              <div>
-                <dt>판매 금액</dt>
-                <dd>{formatPrice(settleBase)}</dd>
-              </div>
-              <div>
-                <dt>수수료</dt>
-                <dd className={styles.fee}>
-                  {/* 금액이 작아 수수료가 0원이면 "−0원" 대신 "0원" */}
-                  {fee > 0 ? '−' : ''}
-                  {formatPrice(fee)}
-                </dd>
-              </div>
-              <div className={styles.divider} />
-              <div className={styles.settleTotal}>
-                <dt>정산 금액</dt>
-                <dd>{formatPrice(settleBase - fee)}</dd>
-              </div>
-            </dl>
-            <p className={styles.subText}>
-              {isSettled
-                ? `${order.settledAt ? `${formatDate(order.settledAt)}에 ` : ''}정산됐어요.`
-                : '구매가 확정돼 정산을 기다리고 있어요.'}
-            </p>
-          </>
-        ) : (
-          <p className={styles.settleNotice}>
-            <span className="material-symbols-outlined" aria-hidden="true">
-              schedule
-            </span>
-            구매 확정 후 정산돼요
-          </p>
-        )}
-      </section>
-    </div>
-  );
+  return <SalesOrderDetailView order={view} accept={accept} returnRequest={returnRequest} />;
 }
 
 export default SalesOrderDetailPage;

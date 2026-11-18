@@ -1,3 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 시안 공통 규칙 (캔버스 「replant 웹 시안」 head의 style과 같음) =====
+   모든 요소: Pretendard 글꼴, 모서리 0px (원형 배지는 style로 9999px !important를 직접 줌) */
+* {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  border-radius: 0px !important;
+}
+
 /* ===== 디자인 토큰 (Stitch 디자인 기준) ===== */
 :root {
   /* Primary */
@@ -116,12 +127,13 @@ body {
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-on-surface);
-  font-family: var(--font-body);
-  font-size: var(--text-body-md);
-  line-height: var(--leading-body-md);
+  /* 시안 <body class="bg-white text-[#111827] antialiased"> */
+  background-color: #ffffff;
+  color: #111827;
   -webkit-font-smoothing: antialiased;
+  /* 시안 공통: 한글 단어 중간에서 줄이 바뀌지 않게 (캔버스 모든 보드와 같은 규칙) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 button,

@@ -7,15 +7,14 @@ src/
 ├─ api/                  axios 공통 설정, 토큰 보관, 도메인별 API 함수
 │  ├─ client.js
 │  └─ tokenStore.js
-├─ assets/               이미지 등 정적 파일
+├─ assets/               이미지 등 정적 파일 (logo.png: 시안 로고)
 ├─ components/
-│  ├─ common/            공통 컴포넌트 (Button, Input …)
-│  └─ layout/            Header, Footer, Layout
+│  ├─ common/            공통 컴포넌트 (Modal, ErrorPage, CountBadge …)
+│  └─ layout/            Header, AdminHeader, Footer, Layout, AdminLayout
 ├─ hooks/                커스텀 훅
 │  └─ usePageTitle.js
 ├─ pages/                페이지 (백엔드 모듈과 같은 이름)
 │  ├─ HomePage.jsx
-│  ├─ NotFoundPage.jsx
 │  ├─ member/
 │  ├─ product/
 │  ├─ market/
@@ -25,7 +24,7 @@ src/
 ├─ utils/                도우미 함수
 ├─ App.jsx               라우트 설정
 ├─ main.jsx              시작점
-└─ index.css             디자인 토큰(CSS 변수) + 기본 스타일
+└─ index.css             Tailwind + 시안 전역 규칙(Pretendard · 모서리 0px) + 시안 이전 화면용 CSS 변수
 ```
 
 - `pages/` 아래 폴더는 백엔드 모듈(`member`, `product`, `market`, `payment`, `settlement`, `notification`)과 이름을 맞춥니다.
@@ -42,7 +41,7 @@ src/
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<ErrorPage type="NOT_FOUND" />} />
     </Route>
   </Routes>
 </BrowserRouter>
@@ -56,11 +55,11 @@ src/
 
 | 영역 | 설명 |
 |---|---|
-| Header | 화면 위 고정(`position: fixed`), 높이 80px |
-| main | Header 높이만큼 `padding-top: 80px`, 본문 최대 너비 1200px |
-| Footer | 내용이 짧아도 화면 맨 아래에 붙음 |
+| Header | 화면 위에 붙음(`sticky top-0`), 높이 84px. 비로그인 · 일반 회원 · 판매자에 따라 오른쪽이 바뀜 |
+| 화면 | 새 시안 화면은 `<main className="flex-1 max-w-[1240px] w-full mx-auto px-5 ...">`을 직접 그림 |
+| Footer | 내용이 짧아도 화면 맨 아래에 붙음. 새 시안 화면은 모두 푸터가 있음 |
 
-Header 높이를 바꾸면 `Header.module.css`의 `height`와 `Layout.module.css`의 `padding-top`을 함께 바꿔야 합니다.
+새 화면과 시안 이전 화면의 차이는 [개발 규칙 「레이아웃」](convention.md#레이아웃)을 봅니다.
 
 ## API 호출 · 토큰 처리
 

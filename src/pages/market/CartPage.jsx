@@ -1,58 +1,52 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { removeCartItem } from '../../api/cartApi';
-import ConfirmModal from '../../components/common/ConfirmModal';
-import ProductThumbnail from '../../components/product/ProductThumbnail';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { confirmCartItemPrice, getCartRecommendations, removeCartItem } from '../../api/cartApi';
+import { getProducts } from '../../api/productApi';
+import { ACTION_ERROR } from '../../constants/actionError';
+import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
-import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
-import { formatPrice } from '../../utils/format';
-import styles from './CartPage.module.css';
+import CartView from './CartView';
 
 // 탈퇴 등으로 판매자 회원이 없으면 sellerName이 null로 옴
 const UNKNOWN_SELLER = '알 수 없는 판매자';
+const RECOMMEND_SIZE = 4;
 
-// 구매할 수 없는 상품(판매완료·숨김 등)은 상세로 이동하지 않고 삭제만 가능
-function CartItemBody({ item, children }) {
+// 장바구니 항목 → 화면 상태 (판정 근거: CartItemResponse의 status · hidden · isPurchasable, 상품 정보 없음)
+// normal: 주문 가능 / priceChanged: 담을 때와 가격이 달라 확인 필요 / reserved: 다른 회원이 결제 중(거래 중)
+// deleted: 판매자가 삭제했거나 상품 정보가 없음 / hidden: 판매자가 숨김 / soldOut: 판매 완료
+// reviewing: 검수 중 · 반려 (다시 검수 중인 상품, 제목 · 사진을 가림) / unavailable: 그 밖의 구매 불가 (내 상품 등)
+// TODO: 삭제된 상품이 응답에 어떻게 오는지(status DELETED · 상품 필드 null · 항목 제외) BE docs에 없어 둘 다 처리
+const REVIEW_STATUSES = ['REVIEW_PENDING', 'REJECTED'];
+
+function getItemState(item, memberId, confirmedIds) {
   if (item.isPurchasable) {
-    return (
-      <Link to={`/products/${item.productId}`} className={styles.itemLink}>
-        {children}
-      </Link>
-    );
+    return item.isChangedPrice && !confirmedIds.has(item.cartItemId) ? { state: 'priceChanged' } : { state: 'normal' };
   }
-  return <div className={`${styles.itemLink} ${styles.unavailable}`}>{children}</div>;
+  if (item.status === 'DELETED' || item.status == null || item.title == null) return { state: 'deleted' };
+  if (item.hidden) return { state: 'hidden' };
+  if (item.status === 'PAYMENT_PENDING') return { state: 'reserved' };
+  if (item.status === 'SOLD_OUT') return { state: 'soldOut' };
+  if (REVIEW_STATUSES.includes(item.status)) return { state: 'reviewing' };
+  if (memberId != null && item.sellerId === memberId) {
+    return { state: 'unavailable', badge: '내 상품', reason: '내가 판매하는 상품은 구매할 수 없어요.' };
+  }
+  return { state: 'unavailable', badge: '구매 불가', reason: '지금은 구매할 수 없는 상품이에요.' };
 }
 
-// 구매할 수 없는 이유별 배지·안내 (구매자 화면이라 삭제를 숨김보다 먼저 표시)
-// 본인 상품은 status·hidden이 정상이라 sellerId로 구분 (백엔드가 isPurchasable=false로 내려줌)
-function getUnavailableInfo(item, memberId) {
-  if (item.status === 'DELETED') {
-    return { label: '구매 불가', tone: 'unavailable', reason: '판매자가 삭제한 상품이에요' };
-  }
-  if (item.hidden) {
-    return { label: '숨긴 상품', tone: 'hidden', reason: '판매자가 상품을 숨겼어요' };
-  }
-  if (item.status === 'SOLD_OUT') {
-    return { label: '판매완료', tone: 'soldOut', reason: '이미 판매된 상품이에요' };
-  }
-  if (item.status === 'PAYMENT_PENDING') {
-    return {
-      label: '결제 대기',
-      tone: 'pending',
-      reason: '다른 분이 결제 중이에요. 결제가 취소되면 다시 살 수 있어요',
-    };
-  }
-  if (memberId != null && item.sellerId === memberId) {
-    return {
-      label: '내 상품',
-      tone: 'unavailable',
-      reason: '내가 판매하는 상품은 구매할 수 없어요',
-    };
-  }
-  return { label: '구매 불가', tone: 'unavailable', reason: '지금은 구매할 수 없는 상품이에요' };
+function toProductList(data) {
+  const list = Array.isArray(data) ? data : (data?.content ?? []);
+  return list.slice(0, RECOMMEND_SIZE);
 }
+
+// 새로 올라온 식물 (기본 정렬 = 최신순)
+async function fetchLatestProducts() {
+  const response = await getProducts({ page: 0, size: RECOMMEND_SIZE });
+  return toProductList(response.data.data);
+}
+
+const MESSAGE_CLASS = 'flex-1 max-w-[1240px] w-full mx-auto px-5 py-8 text-[14px] text-[#6b7280]';
 
 function CartPage() {
   usePageTitle('장바구니');
@@ -61,10 +55,14 @@ function CartPage() {
   const { cart, refreshCart, removeFromCart } = useCart();
 
   const [loadError, setLoadError] = useState(false);
-  // 기본은 전체 선택 → "선택 해제한 항목"만 기억 (불러온 뒤 초기값을 넣을 필요가 없음)
+  // 기본은 전체 선택 → "선택 해제한 항목"만 기억
   const [unselectedIds, setUnselectedIds] = useState(() => new Set());
   const [removingIds, setRemovingIds] = useState(() => new Set());
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // 바뀐 가격을 확인한 항목 (TODO: 확인 API가 생기면 서버 값으로)
+  const [confirmedIds, setConfirmedIds] = useState(() => new Set());
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [recommend, setRecommend] = useState(null);
 
   // 페이지에 들어올 때마다 최신 상태로 (그사이 다른 사람이 구매했을 수 있음)
   useEffect(() => {
@@ -72,54 +70,95 @@ function CartPage() {
     refreshCart().catch(() => setLoadError(true));
   }, [isLoggedIn, refreshCart]);
 
-  // ConfirmModal의 useEffect가 onClose에 의존하므로 함수 고정
-  const closeConfirm = useCallback(() => setConfirmOpen(false), []);
+  // 장바구니가 비었으면 새로 올라온 식물, 아니면 AI 추천 (추천이 없거나 실패하면 새로 올라온 식물)
+  const isCartEmpty = cart ? cart.items.length === 0 : null;
+  useEffect(() => {
+    if (isCartEmpty === null) return undefined;
+    let ignore = false;
+
+    async function load() {
+      if (!isCartEmpty) {
+        try {
+          const response = await getCartRecommendations();
+          const products = toProductList(response.data.data ?? response.data);
+          if (products.length > 0) return { isAi: true, products };
+        } catch {
+          // 추천 실패 → 새로 올라온 식물로
+        }
+      }
+      return { isAi: false, products: await fetchLatestProducts() };
+    }
+
+    load()
+      .then((result) => {
+        if (!ignore) setRecommend(result);
+      })
+      .catch(() => {
+        if (!ignore) setRecommend(null);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [isCartEmpty]);
+
+  const closeRemoveConfirm = useCallback(() => setRemoveConfirmOpen(false), []);
 
   if (isInitializing) {
-    return <p className={styles.message}>불러오는 중...</p>;
+    return <main className={MESSAGE_CLASS}>불러오는 중...</main>;
   }
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: '/cart' }} />;
   }
   if (!cart) {
     return (
-      <p className={styles.message}>
+      <main className={MESSAGE_CLASS}>
         {loadError ? '장바구니를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.' : '불러오는 중...'}
-      </p>
+      </main>
     );
   }
 
   // 최근에 담은 상품이 위로 (원본은 공유 상태라 복사본을 정렬)
-  const items = [...cart.items].sort(
-    (a, b) => b.createdAt.localeCompare(a.createdAt) || b.cartItemId - a.cartItemId,
+  const sorted = [...cart.items].sort(
+    (a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.cartItemId - a.cartItemId,
   );
-  const purchasableItems = items.filter((item) => item.isPurchasable);
-  const selectedItems = purchasableItems.filter((item) => !unselectedIds.has(item.cartItemId));
-  const allChecked =
-    purchasableItems.length > 0 && selectedItems.length === purchasableItems.length;
-  const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.nowPrice), 0);
-  // 판매자별 배송비: 응답에 sellerId가 있을 때만 계산 (없으면 "주문 시 계산")
-  const canCalcShipping =
-    selectedItems.length > 0 && selectedItems.every((item) => item.sellerId != null);
-  const sellerCount = canCalcShipping
-    ? new Set(selectedItems.map((item) => item.sellerId)).size
-    : 0;
-  const shippingFee = sellerCount * SHIPPING_FEE_PER_SELLER;
-  const total = subtotal + shippingFee;
+  const items = sorted.map((item) => ({
+    ...getItemState(item, user?.memberId, confirmedIds),
+    key: item.cartItemId,
+    cartItemId: item.cartItemId,
+    productId: item.productId,
+    sellerId: item.sellerId,
+    title: item.title,
+    sellerName: item.sellerName ?? UNKNOWN_SELLER,
+    thumbnailUrl: item.thumbnailUrl,
+    price: Number(item.nowPrice),
+    prevPrice: Number(item.price),
+    checked: !unselectedIds.has(item.cartItemId),
+    removing: removingIds.has(item.cartItemId),
+  }));
 
-  const toggleItem = (cartItemId) => {
+  const selectableItems = items.filter((item) => item.state === 'normal');
+  const selectedItems = selectableItems.filter((item) => item.checked);
+  const allChecked = selectableItems.length > 0 && selectedItems.length === selectableItems.length;
+  const subtotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
+  // 예상 배송비: 판매자별 기본 요금 (기본 배송지 기준, 제주 · 도서산간 추가 요금은 주문서에서 계산)
+  // TODO: 배송비 계산 API가 생기면 기본 배송지 기준 금액으로 교체
+  const sellerCount = new Set(selectedItems.map((item) => item.sellerId ?? `p${item.productId}`)).size;
+  const shippingFee = sellerCount * SHIPPING_FEE_PER_SELLER;
+
+  const toggleItem = (item) => {
+    setErrorMessage('');
     setUnselectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(cartItemId)) next.delete(cartItemId);
-      else next.add(cartItemId);
+      if (next.has(item.cartItemId)) next.delete(item.cartItemId);
+      else next.add(item.cartItemId);
       return next;
     });
   };
 
   const toggleAll = () => {
-    setUnselectedIds(
-      allChecked ? new Set(purchasableItems.map((item) => item.cartItemId)) : new Set(),
-    );
+    setErrorMessage('');
+    setUnselectedIds(allChecked ? new Set(selectableItems.map((item) => item.cartItemId)) : new Set());
   };
 
   const markRemoving = (cartItemId, removing) => {
@@ -132,11 +171,12 @@ function CartPage() {
   };
 
   const removeOne = async (item) => {
+    setErrorMessage('');
     markRemoving(item.cartItemId, true);
     try {
       await removeFromCart(item.productId);
     } catch (error) {
-      alert(error.response?.data?.message ?? '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      setErrorMessage(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
     } finally {
       markRemoving(item.cartItemId, false);
     }
@@ -144,14 +184,28 @@ function CartPage() {
 
   // 선택 삭제: 삭제 API가 상품 하나씩이라 동시에 보내고, 끝난 뒤 한 번만 다시 불러옴
   const removeSelected = async () => {
-    setConfirmOpen(false);
-    const results = await Promise.allSettled(
-      selectedItems.map((item) => removeCartItem(item.productId)),
-    );
+    setRemoveConfirmOpen(false);
+    setErrorMessage('');
+    const results = await Promise.allSettled(selectedItems.map((item) => removeCartItem(item.productId)));
     await refreshCart().catch(() => {});
-    const failedCount = results.filter((result) => result.status === 'rejected').length;
-    if (failedCount > 0) {
-      alert(`${failedCount}개 상품을 삭제하지 못했어요. 다시 시도해 주세요.`);
+    if (results.some((result) => result.status === 'rejected')) {
+      setErrorMessage(ACTION_ERROR.DEFAULT);
+    }
+  };
+
+  // 바뀐 가격 확인 → 선택할 수 있게 되고, 기본처럼 선택된 상태로
+  const confirmPrice = async (item) => {
+    setErrorMessage('');
+    try {
+      await confirmCartItemPrice(item.productId);
+      setConfirmedIds((prev) => new Set(prev).add(item.cartItemId));
+      setUnselectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.cartItemId);
+        return next;
+      });
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
     }
   };
 
@@ -160,167 +214,28 @@ function CartPage() {
     navigate(`/checkout?items=${ids}`);
   };
 
-  if (items.length === 0) {
-    return (
-      <div className={styles.page}>
-        <h1 className={styles.heading}>
-          장바구니 <span className={styles.headingCount}>0개</span>
-        </h1>
-        <div className={styles.empty}>
-          <span className={`material-symbols-outlined ${styles.emptyIcon}`} aria-hidden="true">
-            shopping_cart
-          </span>
-          <h2 className={styles.emptyTitle}>장바구니가 비어 있어요</h2>
-          <p className={styles.emptyText}>마음에 드는 식물을 담아 보세요.</p>
-          <Link to="/" className={styles.primaryLink}>
-            식물 둘러보기
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.page}>
-      <h1 className={styles.heading}>
-        장바구니 <span className={styles.headingCount}>{items.length}개</span>
-      </h1>
-
-      <div className={styles.layout}>
-        <section aria-label="담은 상품" className={styles.listCard}>
-          <div className={styles.listHeader}>
-            <label className={styles.selectAll}>
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={allChecked}
-                disabled={purchasableItems.length === 0}
-                onChange={toggleAll}
-              />
-              전체 선택
-              <span className={styles.selectCount}>
-                {selectedItems.length}/{purchasableItems.length}
-              </span>
-            </label>
-            <button
-              type="button"
-              className={styles.ghostButton}
-              disabled={selectedItems.length === 0}
-              onClick={() => setConfirmOpen(true)}
-            >
-              선택 삭제
-            </button>
-          </div>
-
-          <ul className={styles.list}>
-            {items.map((item) => {
-              const unavailable = item.isPurchasable
-                ? null
-                : getUnavailableInfo(item, user?.memberId);
-              return (
-                <li key={item.cartItemId} className={styles.item}>
-                  <input
-                    type="checkbox"
-                    className={styles.checkbox}
-                    aria-label={`${item.title} 선택`}
-                    checked={item.isPurchasable && !unselectedIds.has(item.cartItemId)}
-                    disabled={!item.isPurchasable}
-                    onChange={() => toggleItem(item.cartItemId)}
-                  />
-                  <CartItemBody item={item}>
-                    <span className={styles.thumb}>
-                      <ProductThumbnail src={item.thumbnailUrl} alt="" size="small" />
-                    </span>
-                    <span className={styles.info}>
-                      {unavailable && (
-                        <span className={`${styles.badge} ${styles[unavailable.tone]}`}>
-                          {unavailable.label}
-                        </span>
-                      )}
-                      <span className={styles.title}>{item.title}</span>
-                      {item.sellerId != null && (
-                        <span className={styles.seller}>
-                          <span className="material-symbols-outlined" aria-hidden="true">
-                            storefront
-                          </span>
-                          {item.sellerName ?? UNKNOWN_SELLER}
-                        </span>
-                      )}
-                      {unavailable && <span className={styles.reason}>{unavailable.reason}</span>}
-                      {item.isChangedPrice && (
-                        <span className={styles.priceChanged}>
-                          담을 때 {formatPrice(Number(item.price))}에서 가격이 바뀌었어요
-                        </span>
-                      )}
-                    </span>
-                    <strong className={styles.price}>{formatPrice(Number(item.nowPrice))}</strong>
-                  </CartItemBody>
-                  <button
-                    type="button"
-                    className={styles.removeButton}
-                    aria-label={`${item.title} 삭제`}
-                    disabled={removingIds.has(item.cartItemId)}
-                    onClick={() => removeOne(item)}
-                  >
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      close
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        <aside aria-labelledby="cart-summary-title" className={styles.summary}>
-          <h2 id="cart-summary-title" className={styles.summaryTitle}>
-            선택 상품 금액
-          </h2>
-          <dl className={styles.summaryList}>
-            <div className={styles.summaryRow}>
-              <dt>상품 금액 ({selectedItems.length}개)</dt>
-              <dd>{formatPrice(subtotal)}</dd>
-            </div>
-            <div className={styles.summaryRow}>
-              <dt>{canCalcShipping ? `배송비 (판매자 ${sellerCount}명)` : '배송비'}</dt>
-              <dd>{canCalcShipping ? formatPrice(shippingFee) : '주문 시 계산'}</dd>
-            </div>
-          </dl>
-          <div className={styles.divider} />
-          <div className={styles.totalRow}>
-            <span className={styles.totalLabel}>{canCalcShipping ? '합계' : '상품 합계'}</span>
-            <strong className={styles.totalPrice}>{formatPrice(total)}</strong>
-          </div>
-          <button
-            type="button"
-            className={styles.orderButton}
-            disabled={selectedItems.length === 0}
-            onClick={goToOrder}
-          >
-            선택 상품 주문하기{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
-          </button>
-          {selectedItems.length === 0 && (
-            <p className={styles.hint}>주문할 상품을 선택해 주세요.</p>
-          )}
-          <p className={styles.hint}>
-            배송비는 판매자별로 3,000원씩 주문 단계에서 더해져요. 구매할 수 없는 상품은 선택할 수
-            없어요.
-          </p>
-        </aside>
-      </div>
-
-      {confirmOpen && (
-        <ConfirmModal
-          icon="delete"
-          title="선택한 상품을 삭제할까요?"
-          message={`${selectedItems.length}개 상품이 장바구니에서 빠져요.`}
-          confirmText="삭제"
-          cancelText="취소"
-          onConfirm={removeSelected}
-          onClose={closeConfirm}
-        />
-      )}
-    </div>
+    <CartView
+      items={items}
+      selectedCount={selectedItems.length}
+      selectableCount={selectableItems.length}
+      allChecked={allChecked}
+      subtotal={subtotal}
+      sellerCount={sellerCount}
+      shippingFee={shippingFee}
+      total={subtotal + shippingFee}
+      recommend={recommend}
+      errorMessage={errorMessage}
+      removeConfirmOpen={removeConfirmOpen}
+      onToggle={toggleItem}
+      onToggleAll={toggleAll}
+      onRemove={removeOne}
+      onAskRemoveSelected={() => setRemoveConfirmOpen(true)}
+      onCloseRemoveSelected={closeRemoveConfirm}
+      onRemoveSelected={removeSelected}
+      onConfirmPrice={confirmPrice}
+      onOrder={goToOrder}
+    />
   );
 }
 
