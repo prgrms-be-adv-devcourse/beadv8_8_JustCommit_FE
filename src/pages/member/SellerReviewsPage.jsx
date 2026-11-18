@@ -14,7 +14,7 @@ function getErrorMessage(error) {
   return error.response?.data?.message ?? '리뷰를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
-// 판매자 상점 · 리뷰 전체 (시안 02-4-6). 누구나 봄 (로그인 필요 없음)
+// 판매자 상점 · 리뷰 전체 (시안 02-4-3). 누구나 봄 (로그인 필요 없음)
 function SellerReviews({ sellerId }) {
   const location = useLocation();
   const [seller, setSeller] = useState(null);

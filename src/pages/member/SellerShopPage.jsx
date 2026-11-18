@@ -29,7 +29,7 @@ function toRecentReview(review) {
   };
 }
 
-// 판매자 상점 B안 (시안 02-4-4 · 02-4-5 · 02-4-7). 누구나 봄 (로그인 필요 없음)
+// 판매자 상점 B안 (시안 02-4-1 · 02-4-2 · 02-4-4). 누구나 봄 (로그인 필요 없음)
 function SellerShop({ sellerId }) {
   const location = useLocation();
   const [data, setData] = useState(null); // { seller, products, productTotal, reviews }

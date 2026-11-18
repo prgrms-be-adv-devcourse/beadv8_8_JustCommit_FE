@@ -1,6 +1,6 @@
 import { StarIcon } from '../review/Stars';
 
-// 판매자 상점 맨 위 판매자 한 줄 (시안 02-4-4 상점 · 02-4-6 리뷰 전체 · 02-4-7 리뷰 없음 공통)
+// 판매자 상점 맨 위 판매자 한 줄 (시안 02-4-1 상점 · 02-4-3 리뷰 전체 · 02-4-4 리뷰 없음 공통)
 // seller = { nickname, ratingText, reviewCountText, soldCountText, noReviews(true면 별점 자리에 「아직 리뷰 없음」) }
 function SellerShopBar({ seller }) {
   return (

@@ -3,7 +3,7 @@ import { ActionErrorLine } from '../../components/common/ActionError';
 import ReviewCard from '../../components/review/ReviewCard';
 import SellerShopBar from '../../components/seller/SellerShopBar';
 
-// 판매자 상점 · 리뷰 전체 (시안 02-4-6)
+// 판매자 상점 · 리뷰 전체 (시안 02-4-3)
 // seller = SellerShopBar의 seller, reviewCountText = "23개"
 // reviews = [ ReviewCard의 review ], backTo = 「< 상점」 이동할 곳
 // hasMore · isLoadingMore · onLoadMore = 「더 불러오기」, errorMessage = 더 불러오기 실패 안내

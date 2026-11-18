@@ -43,7 +43,7 @@ export function deleteReview(reviewId) {
   return client.delete(`/api/v1/reviews/${reviewId}`);
 }
 
-// 판매자 상점의 리뷰 요약 + 리뷰 목록 (시안 02-4-4 상점은 최근 3개, 02-4-6 리뷰 전체는 페이지로, 누구나 봄)
+// 판매자 상점의 리뷰 요약 + 리뷰 목록 (시안 02-4-1 상점은 최근 3개, 02-4-3 리뷰 전체는 페이지로, 누구나 봄)
 // params = { page, size } → { averageRating, totalCount, totalElements,
 //   content: [{ reviewId, reviewerNickname(null = 탈퇴), rating, createdAt, content, tags[], productNames[] }] }
 // TODO: GET /api/v1/sellers/{sellerId}/reviews?page=0&size=10 (임시 이름). 지금은 서버를 부르지 않고 null 요약을 돌려줍니다

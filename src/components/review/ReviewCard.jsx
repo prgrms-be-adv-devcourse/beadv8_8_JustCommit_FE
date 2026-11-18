@@ -2,9 +2,9 @@ import { Fragment } from 'react';
 import { formatRating, getTagLabel } from '../../constants/review';
 import Stars from './Stars';
 
-// 리뷰 카드 (시안 05-3 리뷰 관리 · 받은 리뷰, 02-4-6 판매자 상점 리뷰 전체)
+// 리뷰 카드 (시안 05-3 리뷰 관리 · 받은 리뷰, 02-4-3 판매자 상점 리뷰 전체)
 // review = { reviewerNickname(null = 탈퇴한 회원), rating, dateText, tags[], content, productNames[] }
-// tabularRating: 별점 문구에 tabular-nums (시안 02-4-6은 있고, 05-3은 없음)
+// tabularRating: 별점 문구에 tabular-nums (시안 02-4-3은 있고, 05-3은 없음)
 // 리뷰 글의 줄바꿈(\n)은 시안처럼 <br>로 그림
 function ReviewCard({ review, tabularRating = false }) {
   const withdrawn = !review.reviewerNickname;

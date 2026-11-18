@@ -4,7 +4,7 @@
 export function toShopSeller(seller, reviews) {
   return {
     nickname: seller.nickname,
-    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」 (시안 02-4-7)
+    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」 (시안 02-4-4)
     noReviews: reviews.totalCount === 0,
     // TODO: 평균 별점 · 리뷰 수 API 없음 (리뷰 API docs ⬜)
     ratingText: reviews.averageRating == null ? '{평균 별점}' : reviews.averageRating.toFixed(1),

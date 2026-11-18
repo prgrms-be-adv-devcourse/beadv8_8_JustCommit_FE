@@ -5,7 +5,7 @@ import Stars, { StarIcon } from '../../components/review/Stars';
 import PageBackLink from '../../components/common/PageBackLink';
 import SellerShopBar from '../../components/seller/SellerShopBar';
 
-// 판매자 상점 B안 · 상품 중심 (시안 02-4-4, 판매 중 상품 없음 02-4-5, 리뷰 없음 02-4-7)
+// 판매자 상점 B안 · 상품 중심 (시안 02-4-1, 판매 중 상품 없음 02-4-2, 리뷰 없음 02-4-4)
 // seller = SellerShopBar의 seller (noReviews면 「최근 리뷰」에 빈 상태 문구, 「리뷰 전체 보기」 없음)
 // products = [ ProductCard의 product ], productCountText = "8개"
 // reviews = [{ key, nickname(null = 탈퇴한 회원), rating, dateText, productText, content }]

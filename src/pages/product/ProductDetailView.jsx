@@ -250,7 +250,7 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
                 <span className="text-base font-semibold text-[#111827]">{product.sellerName}</span>
               </div>
             </div>
-            {/* 판매자 상점 B안 (02-4-4). 상점의 「< 상품 상세」가 이 상품으로 돌아오도록 상품 번호를 넘김 */}
+            {/* 판매자 상점 B안 (02-4-1). 상점의 「< 상품 상세」가 이 상품으로 돌아오도록 상품 번호를 넘김 */}
             <Link
               to={`/sellers/${product.sellerId}`}
               state={{ fromProductId: product.productId }}

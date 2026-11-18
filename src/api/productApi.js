@@ -89,7 +89,7 @@ export function appealProductReview(productId, memo) {
   return client.post(`/api/v1/products/${productId}/review/appeal`, { memo });
 }
 
-// ===== 판매자 상점 (시안 02-4-4 B안) =====
+// ===== 판매자 상점 (시안 02-4-1 B안) =====
 // TODO: 판매자별 판매 중 상품 목록 API가 없음. GET products(ProductSearchRequest)에 sellerId 필터가 없고,
 //  BE docs/reference/external-apis.md 「추가할 API」의 market 「확장 화면은 판매자 상점(리뷰 · 판매 상품)」에 해당.
 //  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId= 또는 /api/v1/sellers/{sellerId}/products).
@@ -100,7 +100,7 @@ export function getSellerProducts(sellerId, params = {}) {
   return Promise.resolve({ data: { content: [], totalElements: 0 } });
 }
 
-// TODO: 판매자별 판매 완료 상품 목록 API가 없음 (판매자 상점 B안 「판매 완료」 줄, 시안 02-4-4).
+// TODO: 판매자별 판매 완료 상품 목록 API가 없음 (판매자 상점 B안 「판매 완료」 줄, 시안 02-4-1).
 //  필요한 조건: sellerId 필터 + status=SOLD_OUT 필터 + 숨긴 상품(hidden) 제외, 최신순, page · size(6개씩).
 //  근거: BE docs/services/product.md 「상태」 SOLD_OUT · 「숨김」(판매자 본인만 봄).
 //  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId=&status=SOLD_OUT&page=&size=).
