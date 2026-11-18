@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ActionErrorLine } from '../../components/common/ActionError';
 import ProductCard from '../../components/product/ProductCard';
 import Stars, { StarIcon } from '../../components/review/Stars';
 import PageBackLink from '../../components/common/PageBackLink';
@@ -9,7 +10,9 @@ import SellerShopBar from '../../components/seller/SellerShopBar';
 // products = [ ProductCard의 product ], productCountText = "8개"
 // reviews = [{ key, nickname(null = 탈퇴한 회원), rating, dateText, productText, content }]
 // backTo = 「< 상품 상세」 이동할 곳, reviewsTo = 「리뷰 전체 보기」 이동할 곳
-function SellerShopView({ seller, products, productCountText, reviews, backTo, reviewsTo, reviewsState }) {
+// sold = 판매 완료 줄 (null이면 줄을 통째로 숨김 = 판매 완료 0개, 시안에 없는 상태)
+//   { products: [ ProductCard의 product(status SOLD_OUT) ], countText: "41개", hasMore, isLoadingMore, onLoadMore, errorMessage }
+function SellerShopView({ seller, products, productCountText, sold, reviews, backTo, reviewsTo, reviewsState }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
@@ -40,7 +43,41 @@ function SellerShopView({ seller, products, productCountText, reviews, backTo, r
                   </svg>
                 </div>
                 <h3 className="mt-2 text-xl font-bold text-[#111827]">지금 판매 중인 식물이 없어요</h3>
-                <p className="text-[15px] text-[#4b5563]">오른쪽에서 이 판매자의 리뷰를 확인해 보세요.</p>
+                <p className="text-[15px] text-[#4b5563]">
+                  {/* 판매 완료 줄이 있으면 그쪽으로 안내 (판매 완료도 없으면 옛 문구, 시안에 없는 상태) */}
+                  {sold ? '아래에서 이 판매자가 판 식물을 볼 수 있어요.' : '오른쪽에서 이 판매자의 리뷰를 확인해 보세요.'}
+                </p>
+              </div>
+            )}
+            {sold && (
+              <div className="pt-6 space-y-4">
+                <h2 id="b-sold" className="text-xl font-bold text-[#111827]">
+                  {'판매 완료 '}
+                  <span className="text-[15px] font-medium text-[#6b7280] tabular-nums">{sold.countText}</span>
+                </h2>
+                {sold.products.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-7">
+                    {sold.products.map((product) => (
+                      <ProductCard key={product.productId} product={product} tabularPrice />
+                    ))}
+                  </div>
+                )}
+                {sold.hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 shadow-xs transition-all active:scale-95"
+                      onClick={sold.onLoadMore}
+                      disabled={sold.isLoadingMore}
+                    >
+                      <span>{sold.isLoadingMore ? '불러오는 중...' : '더 불러오기'}</span>
+                      <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {sold.errorMessage && <ActionErrorLine message={sold.errorMessage} className="mt-3 text-center" />}
               </div>
             )}
           </section>

@@ -99,3 +99,14 @@ export function appealProductReview(productId, memo) {
 export function getSellerProducts(sellerId, params = {}) {
   return Promise.resolve({ data: { content: [], totalElements: 0 } });
 }
+
+// TODO: 판매자별 판매 완료 상품 목록 API가 없음 (판매자 상점 B안 「판매 완료」 줄, 시안 02-4-4).
+//  필요한 조건: sellerId 필터 + status=SOLD_OUT 필터 + 숨긴 상품(hidden) 제외, 최신순, page · size(6개씩).
+//  근거: BE docs/services/product.md 「상태」 SOLD_OUT · 「숨김」(판매자 본인만 봄).
+//  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId=&status=SOLD_OUT&page=&size=).
+//  지금은 서버를 부르지 않고 빈 목록을 돌려줍니다. totalElements = null(모름) → 화면은 개수에 {판매 완료 수} 자리 문구.
+// 응답 → { content: [{ productId, title, price, thumbnailUrl, status: 'SOLD_OUT', createdAt }], totalElements }
+// eslint-disable-next-line no-unused-vars
+export function getSellerSoldOutProducts(sellerId, params = {}) {
+  return Promise.resolve({ data: { content: [], totalElements: null } });
+}
