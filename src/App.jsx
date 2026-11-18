@@ -8,6 +8,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/product/ProductDetailPage';
 import SellerShopPage from './pages/member/SellerShopPage';
+import SellerReviewsPage from './pages/member/SellerReviewsPage';
 // 03 구매 · 주문
 import CartPage from './pages/market/CartPage';
 import CheckoutPage from './pages/market/CheckoutPage';
@@ -79,6 +80,7 @@ function App() {
           <Route path="/search" element={<HomePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/sellers/:sellerId" element={<SellerShopPage />} />
+          <Route path="/sellers/:sellerId/reviews" element={<SellerReviewsPage />} />
 
           {/* 03 구매 · 주문 */}
           <Route path="/cart" element={<CartPage />} />

@@ -1,9 +1,12 @@
+import { Fragment } from 'react';
 import { formatRating, getTagLabel } from '../../constants/review';
 import Stars from './Stars';
 
-// 리뷰 카드 (시안 05-3 리뷰 관리 · 받은 리뷰)
+// 리뷰 카드 (시안 05-3 리뷰 관리 · 받은 리뷰, 02-4-6 판매자 상점 리뷰 전체)
 // review = { reviewerNickname(null = 탈퇴한 회원), rating, dateText, tags[], content, productNames[] }
-function ReviewCard({ review }) {
+// tabularRating: 별점 문구에 tabular-nums (시안 02-4-6은 있고, 05-3은 없음)
+// 리뷰 글의 줄바꿈(\n)은 시안처럼 <br>로 그림
+function ReviewCard({ review, tabularRating = false }) {
   const withdrawn = !review.reviewerNickname;
   return (
     <div className="bg-white border border-[#e5e7eb] p-5 space-y-3">
@@ -21,7 +24,9 @@ function ReviewCard({ review }) {
           </p>
           <div className="flex items-center gap-2">
             <Stars rating={review.rating} />
-            <span className="text-[13px] font-semibold text-[#111827]">{formatRating(review.rating)}</span>
+            <span className={`text-[13px] font-semibold text-[#111827]${tabularRating ? ' tabular-nums' : ''}`}>
+              {formatRating(review.rating)}
+            </span>
           </div>
         </div>
         <span className="text-[13px] text-[#6b7280] tabular-nums">{review.dateText}</span>
@@ -35,7 +40,14 @@ function ReviewCard({ review }) {
           ))}
         </div>
       )}
-      <p className="text-sm text-[#111827] leading-relaxed">{review.content}</p>
+      <p className="text-sm text-[#111827] leading-relaxed">
+        {review.content.split('\n').map((line, index) => (
+          <Fragment key={index}>
+            {index > 0 && <br />}
+            {line}
+          </Fragment>
+        ))}
+      </p>
       <p className="text-[13px] text-[#6b7280]">{`구매 상품 · ${review.productNames.join(', ')}`}</p>
     </div>
   );
