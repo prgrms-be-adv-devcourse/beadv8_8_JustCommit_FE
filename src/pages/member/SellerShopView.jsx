@@ -4,15 +4,17 @@ import ProductCard from '../../components/product/ProductCard';
 import Stars, { StarIcon } from '../../components/review/Stars';
 import PageBackLink from '../../components/common/PageBackLink';
 import SellerShopBar from '../../components/seller/SellerShopBar';
+import SellerTagChips from '../../components/seller/SellerTagChips';
 
-// 판매자 상점 B안 · 상품 중심 (시안 02-4-1, 판매 중 상품 없음 02-4-2, 리뷰 없음 02-4-4)
+// 판매자 상점 B안 · 상품 중심 (시안 02-3-1, 판매 중 상품 없음 02-3-2, 리뷰 없음 02-3-4)
 // seller = SellerShopBar의 seller (noReviews면 「최근 리뷰」에 빈 상태 문구, 「리뷰 전체 보기」 없음)
 // products = [ ProductCard의 product ], productCountText = "8개"
+// tags = 받은 태그 칩 [{ label, count }] (「최근 리뷰」 칸 맨 위)
 // reviews = [{ key, nickname(null = 탈퇴한 회원), rating, dateText, productText, content }]
 // backTo = 「< 상품 상세」 이동할 곳, reviewsTo = 「리뷰 전체 보기」 이동할 곳
 // sold = 판매 완료 줄 (null이면 줄을 통째로 숨김 = 판매 완료 0개, 시안에 없는 상태)
 //   { products: [ ProductCard의 product(status SOLD_OUT) ], countText: "41개", hasMore, isLoadingMore, onLoadMore, errorMessage }
-function SellerShopView({ seller, products, productCountText, sold, reviews, backTo, reviewsTo, reviewsState }) {
+function SellerShopView({ seller, products, productCountText, sold, tags, reviews, backTo, reviewsTo, reviewsState }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
@@ -103,6 +105,7 @@ function SellerShopView({ seller, products, productCountText, sold, reviews, bac
               </div>
             ) : (
               <>
+                <SellerTagChips tags={tags} className="pb-3" />
                 <ul>
                   {reviews.map((review) => (
                     <li key={review.key} className="py-3.5 border-t border-[#e5e7eb] flex flex-col gap-1.5">

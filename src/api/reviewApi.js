@@ -43,12 +43,14 @@ export function deleteReview(reviewId) {
   return client.delete(`/api/v1/reviews/${reviewId}`);
 }
 
-// 판매자 상점의 리뷰 요약 + 리뷰 목록 (시안 02-4-1 상점은 최근 3개, 02-4-3 리뷰 전체는 페이지로, 누구나 봄)
+// 판매자 상점의 리뷰 요약 + 리뷰 목록 (시안 02-3-1 상점은 최근 3개, 02-3-3 리뷰 전체는 페이지로, 누구나 봄)
 // params = { page, size } → { averageRating, totalCount, totalElements,
+//   tagCounts: [{ tag, count }] (받은 태그별 개수, 태그 칩용 · 임시 필드),
 //   content: [{ reviewId, reviewerNickname(null = 탈퇴), rating, createdAt, content, tags[], productNames[] }] }
 // TODO: GET /api/v1/sellers/{sellerId}/reviews?page=0&size=10 (임시 이름). 지금은 서버를 부르지 않고 null 요약을 돌려줍니다
-//  (화면은 평균 별점 · 리뷰 수에 자리 문구를 쓰고, 최근 리뷰는 비어 보임)
+//  (화면은 평균 별점 · 리뷰 수에 자리 문구를 쓰고, 최근 리뷰 · 태그 칩은 비어 보임)
+// TODO: tagCounts가 응답에 들어오는지 백엔드와 맞추기 (태그 code는 constants/review.js REVIEW_TAGS)
 // eslint-disable-next-line no-unused-vars
 export function getSellerReviews(sellerId, params = {}) {
-  return Promise.resolve({ data: { averageRating: null, totalCount: null, ...EMPTY_PAGE } });
+  return Promise.resolve({ data: { averageRating: null, totalCount: null, tagCounts: [], ...EMPTY_PAGE } });
 }

@@ -3,7 +3,7 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { ActionErrorLine } from '../../components/common/ActionError';
 import { formatPrice } from '../../utils/format';
 
-// 상품 상세 화면 (시안 02-3-1 판매 중 · 02-3-2 거래 중 · 02-3-3 판매 완료)
+// 상품 상세 화면 (시안 02-2-1 판매 중 · 02-2-2 거래 중 · 02-2-3 판매 완료 · 02-2-4 내 상품)
 // 데이터와 동작은 ProductDetailPage가 props로 넘김
 
 // 상태 배지 (용어: docs glossary 「판매 중」 · 「거래 중」 · 「판매 완료」)
@@ -116,33 +116,38 @@ function Gallery({ product, images, selected, onSelectImage }) {
   );
 }
 
-// 구매 버튼 줄. 판매자 본인 상품은 시안이 없어 같은 버튼 모양으로 수정 · 숨기기를 보여 줌
+// 구매 버튼 줄. 내 상품은 구매 · 장바구니 대신 수정 · 숨기기 (시안 02-2-4, 서버도 OWN_PRODUCT로 주문을 막음)
+// 숨긴 뒤는 시안이 없어 「숨기기」 문구만 「숨김 해제」로 바꿈. 판매 중이 아니면 수정할 수 없어 「수정」을 막음
 function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, onToggleHidden }) {
   const { status } = product;
 
   if (isOwner) {
-    const isSoldOut = status === 'SOLD_OUT';
     return (
       <>
-        <div className="grid grid-cols-1 gap-3 mb-2">
-          {isSoldOut ? (
-            <button type="button" className={SECONDARY_BUTTON} onClick={onToggleHidden} disabled={isBusy}>
-              {product.hidden ? '숨김 해제' : '숨기기'}
-            </button>
-          ) : (
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {status === 'ACTIVE' ? (
             <Link to={`/products/${product.productId}/edit`} className={PRIMARY_BUTTON}>
-              상품 수정
+              수정
             </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="h-12 px-6 bg-[#e5e7eb] text-[#9ca3af] text-base font-bold flex items-center justify-center cursor-not-allowed"
+            >
+              수정
+            </button>
           )}
+          <button
+            type="button"
+            className="h-12 px-6 bg-white hover:bg-[#f9fafb] text-[#111827] border border-[#d1d5db] text-base font-bold flex items-center justify-center transition-colors"
+            onClick={onToggleHidden}
+            disabled={isBusy}
+          >
+            {product.hidden ? '숨김 해제' : '숨기기'}
+          </button>
         </div>
-        <ActionErrorLine message={actionError} className="mb-2" />
-        <p className="text-sm text-[#4b5563] mb-6">
-          {product.hidden
-            ? '숨긴 상품은 구매자에게 보이지 않아요.'
-            : isSoldOut
-              ? '판매가 끝난 상품은 수정할 수 없어요.'
-              : '내가 올린 상품이에요.'}
-        </p>
+        <ActionErrorLine message={actionError} className="-mt-4 mb-6" />
       </>
     );
   }
@@ -220,12 +225,6 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
               </span>
             )}
             {badge && <span className={badge.className}>{badge.label}</span>}
-            {/* hidden은 판매자 본인만 true로 받을 수 있음 (남이 보면 403). 시안에 없는 배지 */}
-            {product.hidden && (
-              <span className="inline-flex items-center px-2.5 py-0.5 bg-white border border-[#d1d5db] text-xs text-[#6b7280] font-bold">
-                숨김
-              </span>
-            )}
           </div>
 
           <h1 className="text-[28px] leading-[1.3] font-bold text-[#111827] mb-3">{product.title}</h1>
@@ -250,7 +249,7 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
                 <span className="text-base font-semibold text-[#111827]">{product.sellerName}</span>
               </div>
             </div>
-            {/* 판매자 상점 B안 (02-4-1). 상점의 「< 상품 상세」가 이 상품으로 돌아오도록 상품 번호를 넘김 */}
+            {/* 판매자 상점 B안 (02-3-1). 상점의 「< 상품 상세」가 이 상품으로 돌아오도록 상품 번호를 넘김 */}
             <Link
               to={`/sellers/${product.sellerId}`}
               state={{ fromProductId: product.productId }}
@@ -294,9 +293,13 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[15px] font-bold text-[#111827] leading-snug">
-                예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요
+                {isOwner ? '내가 올린 상품이에요' : '예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요'}
               </span>
-              <span className="text-[13px] text-[#4b5563] leading-normal">배송 완료 3일 뒤에는 자동으로 구매 확정돼요.</span>
+              <span className="text-[13px] text-[#4b5563] leading-normal">
+                {isOwner
+                  ? '내 상품은 구매하거나 장바구니에 담을 수 없어요. 숨기면 다른 회원에게 보이지 않아요.'
+                  : '배송 완료 3일 뒤에는 자동으로 구매 확정돼요.'}
+              </span>
             </div>
           </div>
         </div>

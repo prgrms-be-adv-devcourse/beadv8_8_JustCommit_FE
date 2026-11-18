@@ -7,7 +7,7 @@ import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDate } from '../../utils/format';
 import SellerShopView from './SellerShopView';
-import { toShopSeller } from './sellerShopFormat';
+import { toShopSeller, toTagChips } from './sellerShopFormat';
 
 const RECENT_REVIEW_SIZE = 3;
 const SOLD_PAGE_SIZE = 6;
@@ -29,7 +29,7 @@ function toRecentReview(review) {
   };
 }
 
-// 판매자 상점 B안 (시안 02-4-1 · 02-4-2 · 02-4-4). 누구나 봄 (로그인 필요 없음)
+// 판매자 상점 B안 (시안 02-3-1 · 02-3-2 · 02-3-4). 누구나 봄 (로그인 필요 없음)
 function SellerShop({ sellerId }) {
   const location = useLocation();
   const [data, setData] = useState(null); // { seller, products, productTotal, reviews }
@@ -113,6 +113,7 @@ function SellerShop({ sellerId }) {
               errorMessage: soldErrorMessage,
             }
       }
+      tags={toTagChips(reviews.tagCounts)}
       reviews={reviews.content.slice(0, RECENT_REVIEW_SIZE).map(toRecentReview)}
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
       reviewsTo={`/sellers/${sellerId}/reviews`}

@@ -67,7 +67,7 @@ function MyPage() {
         // TODO: 수락 대기 판매 주문 수 API 없음
         salesOrders: '{수락 대기 수}',
       }}
-      // 판매자 상점 B안 (02-4-1). sellerId = memberId (BE SellerProfileService)
+      // 판매자 상점 B안 (02-3-1). sellerId = memberId (BE SellerProfileService)
       links={{ shop: `/sellers/${user.memberId}` }}
     />
   );

@@ -6,7 +6,7 @@ import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
 import { toReviewCard } from '../review/reviewFormat';
 import SellerReviewsView from './SellerReviewsView';
-import { toShopSeller } from './sellerShopFormat';
+import { toShopSeller, toTagChips } from './sellerShopFormat';
 
 const PAGE_SIZE = 10;
 
@@ -14,11 +14,11 @@ function getErrorMessage(error) {
   return error.response?.data?.message ?? '리뷰를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
-// 판매자 상점 · 리뷰 전체 (시안 02-4-3). 누구나 봄 (로그인 필요 없음)
+// 판매자 상점 · 리뷰 전체 (시안 02-3-3). 누구나 봄 (로그인 필요 없음)
 function SellerReviews({ sellerId }) {
   const location = useLocation();
   const [seller, setSeller] = useState(null);
-  const [summary, setSummary] = useState(null); // { averageRating, totalCount }
+  const [summary, setSummary] = useState(null); // { averageRating, totalCount, tagCounts }
   const [reviews, setReviews] = useState([]);
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -34,7 +34,7 @@ function SellerReviews({ sellerId }) {
         if (ignore) return;
         const data = reviewResponse.data;
         setSeller(sellerResponse.data.data);
-        setSummary({ averageRating: data.averageRating, totalCount: data.totalCount });
+        setSummary({ averageRating: data.averageRating, totalCount: data.totalCount, tagCounts: data.tagCounts });
         setReviews(data.content);
         setTotalElements(data.totalElements);
         setLoadState('done');
@@ -74,6 +74,7 @@ function SellerReviews({ sellerId }) {
       seller={toShopSeller(seller, summary)}
       // TODO: 리뷰 수는 리뷰 API가 생기면 totalCount로 (지금은 자리 문구)
       reviewCountText={summary.totalCount == null ? '{리뷰 수}개' : `${summary.totalCount.toLocaleString('ko-KR')}개`}
+      tags={toTagChips(summary.tagCounts)}
       reviews={reviews.map(toReviewCard)}
       backTo={`/sellers/${sellerId}`}
       backState={location.state?.fromProductId ? { fromProductId: location.state.fromProductId } : undefined}
