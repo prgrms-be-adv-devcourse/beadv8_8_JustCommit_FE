@@ -4,7 +4,7 @@ import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
 import { formatPrice, formatRelativeTime } from '../../utils/format';
 
-// 시안 03-1 장바구니 (Cart · CartEmpty · CartPriceConfirmed)
+// 시안 03-1 장바구니 (Cart · CartEmpty · CartPriceConfirmed), 03-1-1에 선택 불가 줄(숨김 · 검수 중 · 삭제) · AI 추천 이유
 // 데이터는 모두 props로 받음 → 페이지(CartPage)가 API를 부르고, 비교 하네스는 가짜 데이터를 넣음
 
 // 시안 head의 체크박스 style(네모 · 초록 체크)을 Tailwind로 옮김
@@ -28,8 +28,20 @@ function RemoveButton({ item, onRemove, disabled }) {
   );
 }
 
-// 썸네일 위 상태 표시 (RESERVED: 30% 어둡게 · SOLD OUT: 60% 어둡게 + 흑백)
+// 사진을 보여 주지 않는 상품(검수 중 · 삭제)의 회색 자리 이미지
+function PlaceholderThumbnail() {
+  return (
+    <div className="relative w-[96px] h-[96px] bg-[#f3f4f6] shrink-0 border border-[#e5e7eb] flex items-center justify-center">
+      <svg className="w-8 h-8 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14zm0 0l7-7" />
+      </svg>
+    </div>
+  );
+}
+
+// 썸네일 위 상태 표시 (RESERVED: 30% 어둡게 · SOLD OUT: 60% 어둡게 + 흑백 · 숨김: 30% 어둡게만)
 function Thumbnail({ item }) {
+  if (item.state === 'reviewing' || item.state === 'deleted') return <PlaceholderThumbnail />;
   const grayscale = item.state === 'soldOut' || item.state === 'unavailable';
   return (
     <div className="relative w-[96px] h-[96px] bg-[#f4f4f5] shrink-0 overflow-hidden border border-[#e5e7eb]">
@@ -47,6 +59,7 @@ function Thumbnail({ item }) {
           </span>
         </div>
       )}
+      {item.state === 'hidden' && <div className="absolute inset-0 bg-black/30 pointer-events-none" />}
       {item.state === 'soldOut' && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-1 pointer-events-none">
           <span className="px-1.5 py-0.5 bg-black text-white text-[10px] leading-none font-bold border-2 border-white tracking-normal whitespace-nowrap flex items-center justify-center shadow-sm">
@@ -124,35 +137,56 @@ function ActiveRow({ item, onToggle, onRemove, onConfirmPrice }) {
   );
 }
 
-// 지금은 주문할 수 없는 상품: 거래 중(다른 회원이 결제 중) · 판매 완료 · 그 밖의 구매 불가(삭제 · 숨김 · 내 상품)
+function InfoIcon() {
+  return (
+    <svg className="w-3.5 h-3.5 text-[#6b7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+// 안내 줄 상품: 제목 · 판매자 · 안내 · 가격 (시안 03-1-1 거래 중 · 숨김 · 검수 중 · 삭제)
+// 검수 중은 제목 · 사진을 가리고 가격 없음, 삭제는 상품 정보가 없어 판매자 · 가격도 없음
+const INFO_ROW = {
+  reserved: { text: '다른 회원이 결제 중인 상품이라 지금은 주문할 수 없어요.', showPrice: true },
+  hidden: { text: '판매자가 숨긴 상품이에요', showPrice: true },
+  reviewing: { title: '검수 중인 상품', text: '판매자가 숨긴 상품이에요', showPrice: false },
+  deleted: { title: '판매가 끝난 상품이에요', text: '장바구니에서 삭제해 주세요', showPrice: false, hideSeller: true },
+};
+
+// 지금은 주문할 수 없는 상품: 안내 줄(INFO_ROW) · 판매 완료 · 그 밖의 구매 불가(내 상품 등)
 function DisabledRow({ item, onRemove }) {
-  if (item.state === 'reserved') {
+  const info = INFO_ROW[item.state];
+  if (info) {
+    const title = info.title ?? item.title;
     return (
       <div className="p-5 flex items-start gap-4 bg-[#fcfcfc] text-[#6b7280]">
         <div className="pt-1">
-          <input type="checkbox" disabled aria-label={`${item.title} 선택`} className={CHECKBOX_CLASS} />
+          <input type="checkbox" disabled aria-label={`${title} 선택`} className={CHECKBOX_CLASS} />
         </div>
         <Thumbnail item={item} />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-[15px] font-semibold text-[#6b7280]">{item.title}</h3>
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold bg-white text-[#0f4c3a] border border-[#0f4c3a]">
-                  거래 중
-                </span>
-              </div>
-              <p className="text-[13px] text-[#6b7280] mt-1">{`판매자 · ${item.sellerName}`}</p>
+              {item.state === 'reserved' ? (
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold text-[#6b7280]">{title}</h3>
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold bg-white text-[#0f4c3a] border border-[#0f4c3a]">
+                    거래 중
+                  </span>
+                </div>
+              ) : (
+                <h3 className="text-[15px] font-semibold text-[#6b7280]">{title}</h3>
+              )}
+              {!info.hideSeller && <p className="text-[13px] text-[#6b7280] mt-1">{`판매자 · ${item.sellerName}`}</p>}
               <p className="text-[12px] text-[#6b7280] mt-2 flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-[#6b7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>다른 회원이 결제 중인 상품이라 지금은 주문할 수 없어요.</span>
+                <InfoIcon />
+                <span>{info.text}</span>
               </p>
             </div>
             <div className="flex items-start gap-5 shrink-0">
-              <span className="text-[17px] font-medium text-[#6b7280]">{formatPrice(item.price)}</span>
-              <RemoveButton item={item} onRemove={onRemove} disabled={item.removing} />
+              {info.showPrice && <span className="text-[17px] font-medium text-[#6b7280]">{formatPrice(item.price)}</span>}
+              <RemoveButton item={{ ...item, title }} onRemove={onRemove} disabled={item.removing} />
             </div>
           </div>
         </div>
@@ -195,7 +229,8 @@ function DisabledRow({ item, onRemove }) {
 }
 
 // 메인 화면과 같은 상품 카드 (추천 · 새로 올라온 식물)
-function ProductCard({ product }) {
+// AI 추천 카드는 올린 시각 대신 가격 아래에 추천 이유(reason)
+function ProductCard({ product, isAi }) {
   return (
     <Link to={`/products/${product.productId}`} className="block">
       <article className="group bg-white flex flex-col cursor-pointer">
@@ -214,10 +249,13 @@ function ProductCard({ product }) {
           </h3>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-[18px] font-bold text-[#111827]">{formatPrice(Number(product.price))}</span>
-            <span className="text-[12px] text-[#888888]">
-              {product.timeText ?? formatRelativeTime(product.createdAt)}
-            </span>
+            {!isAi && (
+              <span className="text-[12px] text-[#888888]">
+                {product.timeText ?? formatRelativeTime(product.createdAt)}
+              </span>
+            )}
           </div>
+          {isAi && product.reason && <p className="mt-1 text-[12px] text-[#0f4c3a] leading-snug">{product.reason}</p>}
         </div>
       </article>
     </Link>
@@ -248,7 +286,7 @@ function ProductSection({ recommend }) {
         )}
         <div className="grid grid-cols-4 gap-5">
           {recommend.products.map((product) => (
-            <ProductCard key={product.productId} product={product} />
+            <ProductCard key={product.productId} product={product} isAi={recommend.isAi} />
           ))}
         </div>
       </section>

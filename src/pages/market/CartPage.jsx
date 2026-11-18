@@ -13,19 +13,22 @@ import CartView from './CartView';
 const UNKNOWN_SELLER = '알 수 없는 판매자';
 const RECOMMEND_SIZE = 4;
 
-// 장바구니 항목 → 화면 상태
+// 장바구니 항목 → 화면 상태 (판정 근거: CartItemResponse의 status · hidden · isPurchasable, 상품 정보 없음)
 // normal: 주문 가능 / priceChanged: 담을 때와 가격이 달라 확인 필요 / reserved: 다른 회원이 결제 중(거래 중)
-// soldOut: 판매 완료 / unavailable: 그 밖의 구매 불가 (삭제 · 숨김 · 내 상품)
+// deleted: 판매자가 삭제했거나 상품 정보가 없음 / hidden: 판매자가 숨김 / soldOut: 판매 완료
+// reviewing: 검수 중 · 반려 (다시 검수 중인 상품, 제목 · 사진을 가림) / unavailable: 그 밖의 구매 불가 (내 상품 등)
+// TODO: 삭제된 상품이 응답에 어떻게 오는지(status DELETED · 상품 필드 null · 항목 제외) BE docs에 없어 둘 다 처리
+const REVIEW_STATUSES = ['REVIEW_PENDING', 'REJECTED'];
+
 function getItemState(item, memberId, confirmedIds) {
   if (item.isPurchasable) {
     return item.isChangedPrice && !confirmedIds.has(item.cartItemId) ? { state: 'priceChanged' } : { state: 'normal' };
   }
+  if (item.status === 'DELETED' || item.status == null || item.title == null) return { state: 'deleted' };
+  if (item.hidden) return { state: 'hidden' };
   if (item.status === 'PAYMENT_PENDING') return { state: 'reserved' };
   if (item.status === 'SOLD_OUT') return { state: 'soldOut' };
-  if (item.status === 'DELETED') {
-    return { state: 'unavailable', badge: '구매 불가', reason: '판매자가 삭제한 상품이에요.' };
-  }
-  if (item.hidden) return { state: 'unavailable', badge: '숨긴 상품', reason: '판매자가 상품을 숨겼어요.' };
+  if (REVIEW_STATUSES.includes(item.status)) return { state: 'reviewing' };
   if (memberId != null && item.sellerId === memberId) {
     return { state: 'unavailable', badge: '내 상품', reason: '내가 판매하는 상품은 구매할 수 없어요.' };
   }
@@ -117,7 +120,7 @@ function CartPage() {
 
   // 최근에 담은 상품이 위로 (원본은 공유 상태라 복사본을 정렬)
   const sorted = [...cart.items].sort(
-    (a, b) => b.createdAt.localeCompare(a.createdAt) || b.cartItemId - a.cartItemId,
+    (a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.cartItemId - a.cartItemId,
   );
   const items = sorted.map((item) => ({
     ...getItemState(item, user?.memberId, confirmedIds),

@@ -3,7 +3,7 @@ import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { ActionErrorLine } from '../../components/common/ActionError';
 import { formatPrice } from '../../utils/format';
 
-// 상품 상세 화면 (시안 02-2-1 판매 중 · 02-2-2 거래 중 · 02-2-3 판매 완료 · 02-2-4 내 상품)
+// 상품 상세 화면 (시안 02-2-1 판매 중 · 02-2-2 거래 중 · 02-2-3 판매 완료 · 02-2-4 내 상품 · 02-2-5 내 상품 숨김 · 02-2-6 내 상품 거래 중)
 // 데이터와 동작은 ProductDetailPage가 props로 넘김
 
 // 상태 배지 (용어: docs glossary 「판매 중」 · 「거래 중」 · 「판매 완료」)
@@ -116,37 +116,44 @@ function Gallery({ product, images, selected, onSelectImage }) {
   );
 }
 
-// 구매 버튼 줄. 내 상품은 구매 · 장바구니 대신 수정 · 숨기기 (시안 02-2-4, 서버도 OWN_PRODUCT로 주문을 막음)
-// 숨긴 뒤는 시안이 없어 「숨기기」 문구만 「숨김 해제」로 바꿈. 판매 중이 아니면 수정할 수 없어 「수정」을 막음
-function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, onToggleHidden }) {
+// 구매 버튼 줄. 내 상품은 구매 · 장바구니 대신 수정 · 숨기기 · 삭제 (시안 02-2-4, 서버도 OWN_PRODUCT로 주문을 막음)
+// 숨긴 상품은 「숨김 해제」 (02-2-5), 거래 중 · 판매 완료는 수정 · 삭제 없이 숨기기만 (02-2-6)
+const OWNER_LOCKED = ['PAYMENT_PENDING', 'SOLD_OUT'];
+
+function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, onToggleHidden, onDelete }) {
   const { status } = product;
 
   if (isOwner) {
+    const hideButton = (
+      <button
+        type="button"
+        className="h-12 px-6 bg-white hover:bg-[#f9fafb] text-[#111827] border border-[#d1d5db] text-base font-bold flex items-center justify-center transition-colors"
+        onClick={onToggleHidden}
+        disabled={isBusy}
+      >
+        {product.hidden ? '숨김 해제' : '숨기기'}
+      </button>
+    );
     return (
       <>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {status === 'ACTIVE' ? (
+        {OWNER_LOCKED.includes(status) ? (
+          <div className="grid grid-cols-1 gap-3 mb-6">{hideButton}</div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <Link to={`/products/${product.productId}/edit`} className={PRIMARY_BUTTON}>
               수정
             </Link>
-          ) : (
+            {hideButton}
             <button
               type="button"
-              disabled
-              className="h-12 px-6 bg-[#e5e7eb] text-[#9ca3af] text-base font-bold flex items-center justify-center cursor-not-allowed"
+              className="h-12 px-6 bg-white hover:bg-[#f9fafb] text-[#b91c1c] border border-[#d1d5db] text-base font-bold flex items-center justify-center transition-colors"
+              onClick={onDelete}
+              disabled={isBusy}
             >
-              수정
+              삭제
             </button>
-          )}
-          <button
-            type="button"
-            className="h-12 px-6 bg-white hover:bg-[#f9fafb] text-[#111827] border border-[#d1d5db] text-base font-bold flex items-center justify-center transition-colors"
-            onClick={onToggleHidden}
-            disabled={isBusy}
-          >
-            {product.hidden ? '숨김 해제' : '숨기기'}
-          </button>
-        </div>
+          </div>
+        )}
         <ActionErrorLine message={actionError} className="-mt-4 mb-6" />
       </>
     );
@@ -193,9 +200,40 @@ function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, on
   );
 }
 
-function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, isBusy, actionError, onBuy, onAddToCart, onToggleHidden }) {
+// 안내 박스 문구: [제목, 설명]
+function getNotice(product, isOwner) {
+  if (!isOwner) return ['예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요', '배송 완료 3일 뒤에는 자동으로 구매 확정돼요.'];
+  if (OWNER_LOCKED.includes(product.status)) {
+    return [
+      '내가 올린 상품이에요',
+      '거래 중이거나 판매 완료된 상품은 수정하거나 삭제할 수 없어요. 숨기면 다른 회원에게 보이지 않아요.',
+    ];
+  }
+  if (product.hidden) {
+    return [
+      '숨긴 상품이라 다른 회원에게 보이지 않아요',
+      '판매자가 거절하거나 반품으로 돌아온 상품은 자동으로 숨겨져요. 상태를 확인하고 숨김을 풀면 바로 판매돼요.',
+    ];
+  }
+  return ['내가 올린 상품이에요', '내 상품은 구매하거나 장바구니에 담을 수 없어요. 숨기면 다른 회원에게 보이지 않아요.'];
+}
+
+function ProductDetailView({
+  product,
+  isOwner,
+  selected,
+  onSelectImage,
+  onBack,
+  isBusy,
+  actionError,
+  onBuy,
+  onAddToCart,
+  onToggleHidden,
+  onDelete,
+}) {
   const images = product.imageUrls ?? [];
   const badge = STATUS_BADGE[product.status];
+  const [noticeTitle, noticeText] = getNotice(product, isOwner);
   const isSoldOut = product.status === 'SOLD_OUT';
   const descriptionLines = (product.description ?? '').split('\n').filter((line) => line.trim() !== '');
 
@@ -225,6 +263,11 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
               </span>
             )}
             {badge && <span className={badge.className}>{badge.label}</span>}
+            {isOwner && product.hidden && (
+              <span className="inline-flex items-center px-2.5 py-0.5 bg-white border border-[#9ca3af] text-[#4b5563] text-xs font-bold">
+                숨김
+              </span>
+            )}
           </div>
 
           <h1 className="text-[28px] leading-[1.3] font-bold text-[#111827] mb-3">{product.title}</h1>
@@ -278,6 +321,7 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
             onBuy={onBuy}
             onAddToCart={onAddToCart}
             onToggleHidden={onToggleHidden}
+            onDelete={onDelete}
           />
 
           <div className="bg-[#f4f8f6] border border-[#e5e7eb] px-5 py-4 flex items-start gap-3.5">
@@ -292,14 +336,8 @@ function ProductDetailView({ product, isOwner, selected, onSelectImage, onBack, 
               </svg>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[15px] font-bold text-[#111827] leading-snug">
-                {isOwner ? '내가 올린 상품이에요' : '예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요'}
-              </span>
-              <span className="text-[13px] text-[#4b5563] leading-normal">
-                {isOwner
-                  ? '내 상품은 구매하거나 장바구니에 담을 수 없어요. 숨기면 다른 회원에게 보이지 않아요.'
-                  : '배송 완료 3일 뒤에는 자동으로 구매 확정돼요.'}
-              </span>
+              <span className="text-[15px] font-bold text-[#111827] leading-snug">{noticeTitle}</span>
+              <span className="text-[13px] text-[#4b5563] leading-normal">{noticeText}</span>
             </div>
           </div>
         </div>

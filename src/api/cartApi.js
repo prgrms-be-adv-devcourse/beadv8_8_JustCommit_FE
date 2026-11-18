@@ -19,7 +19,8 @@ export function removeCartItem(productId) {
 }
 
 // 장바구니 추천 (market이 ai-service를 불러 줌, 실패하면 서버가 최신 상품으로 대신)
-// TODO: 응답 모양이 정해지면 확인. 지금은 상품 목록과 같은 [{ productId, title, price, thumbnailUrl, createdAt }]로 가정
+// TODO: 응답 모양이 정해지면 확인. 지금은 상품 목록과 같은 [{ productId, title, price, thumbnailUrl, createdAt, reason }]로 가정
+//  reason = 추천 이유 (BE docs flows/search-recommend.md 「추천 상품 ID + 이유」, 필드 이름은 docs에 없어 reason으로 가정)
 export function getCartRecommendations() {
   return client.get('/api/v1/cart/recommendations');
 }

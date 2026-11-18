@@ -60,7 +60,7 @@ function SellerShopView({ seller, products, productCountText, sold, tags, review
                 {sold.products.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-7">
                     {sold.products.map((product) => (
-                      <ProductCard key={product.productId} product={product} tabularPrice />
+                      <ProductCard key={product.productId} product={product} tabularPrice showTime={false} />
                     ))}
                   </div>
                 )}

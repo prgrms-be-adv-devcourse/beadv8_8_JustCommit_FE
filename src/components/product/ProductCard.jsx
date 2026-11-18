@@ -22,7 +22,8 @@ const OVERLAY = {
 };
 
 // tabularPrice: 가격에 tabular-nums (시안 02-3-1 판매자 상점 카드는 있고, 02-1-1 메인 카드는 없음)
-function ProductCard({ product, tabularPrice = false }) {
+// showTime: 올린 시각 표시 (시안 02-3-1 판매자 상점의 판매 완료 카드는 시각 없음)
+function ProductCard({ product, tabularPrice = false, showTime = true }) {
   const isSoldOut = product.status === 'SOLD_OUT';
   const overlay = OVERLAY[product.status];
 
@@ -66,7 +67,7 @@ function ProductCard({ product, tabularPrice = false }) {
           >
             {formatPrice(product.price)}
           </span>
-          <span className="text-xs text-gray-400">{formatRelativeTime(product.createdAt)}</span>
+          {showTime && <span className="text-xs text-gray-400">{formatRelativeTime(product.createdAt)}</span>}
         </div>
       </div>
     </Link>

@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useCart from '../../hooks/useCart';
 import usePageTitle from '../../hooks/usePageTitle';
-import { changeProductHidden, getProduct } from '../../api/productApi';
+import { changeProductHidden, deleteProduct, getProduct } from '../../api/productApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
@@ -28,6 +28,7 @@ function ProductDetail({ productId }) {
   const [actionError, setActionError] = useState('');
   const [cartAddedOpen, setCartAddedOpen] = useState(false);
   const [loginPrompt, setLoginPrompt] = useState(null); // 로그인 안내 문구, null이면 닫힘
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ function ProductDetail({ productId }) {
   // Modal의 useEffect가 onClose에 의존하므로 고정
   const closeCartAdded = useCallback(() => setCartAddedOpen(false), []);
   const closeLoginPrompt = useCallback(() => setLoginPrompt(null), []);
+  const closeDelete = useCallback(() => setDeleteOpen(false), []);
 
   // 등록·수정 후엔 메인(backTo), 목록에서 왔으면 뒤로가기(필터 유지), 직접 접속이면 홈
   const backTo = location.state?.backTo?.startsWith('/') ? location.state.backTo : null;
@@ -114,7 +116,22 @@ function ProductDetail({ productId }) {
     }
   };
 
-  // 내 상품 숨기기 · 숨김 해제 (시안 02-2-4 「숨기기」)
+  // 내 상품 삭제 (시안 02-2-4 「삭제」). 확인 모달은 시안에 없어 내 상품 목록(MyListingsView)과 같은 모달을 씀
+  const handleDelete = async () => {
+    setDeleteOpen(false);
+    if (isBusy) return;
+    setIsBusy(true);
+    setActionError('');
+    try {
+      await deleteProduct(product.productId);
+      navigate('/mypage/products', { replace: true });
+    } catch (error) {
+      setActionError(getActionError(error));
+      setIsBusy(false);
+    }
+  };
+
+  // 내 상품 숨기기 · 숨김 해제 (시안 02-2-4 「숨기기」 · 02-2-5 「숨김 해제」)
   const handleToggleHidden = async () => {
     if (isBusy) return;
     setIsBusy(true);
@@ -162,7 +179,28 @@ function ProductDetail({ productId }) {
         onBuy={handleBuy}
         onAddToCart={handleAddToCart}
         onToggleHidden={handleToggleHidden}
+        onDelete={() => setDeleteOpen(true)}
       />
+
+      {deleteOpen && (
+        <Modal
+          title="상품을 삭제할까요?"
+          onClose={closeDelete}
+          footer={
+            <>
+              <ModalButton onClick={closeDelete}>취소</ModalButton>
+              <ModalButton variant="danger" onClick={handleDelete}>
+                삭제
+              </ModalButton>
+            </>
+          }
+        >
+          <p className="text-[#4b5563] leading-relaxed">
+            <span className="font-semibold text-[#111827]">{product.title}</span>을(를) 삭제하면 목록에서 사라지고 되돌릴 수
+            없어요.
+          </p>
+        </Modal>
+      )}
 
       {cartAddedOpen && (
         <Modal
