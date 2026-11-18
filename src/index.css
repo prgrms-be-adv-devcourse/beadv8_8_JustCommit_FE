@@ -131,6 +131,9 @@ body {
   background-color: #ffffff;
   color: #111827;
   -webkit-font-smoothing: antialiased;
+  /* 시안 공통: 한글 단어 중간에서 줄이 바뀌지 않게 (캔버스 모든 보드와 같은 규칙) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 button,
