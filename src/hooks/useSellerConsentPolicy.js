@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { getSellerConsentPolicy } from '../api/memberApi';
 
 // 판매자 등록 동의 문구 (GET /api/v1/sellers/consent-policy → { version, title, content })
-// 로그인해야 받을 수 있어서 가입 중에는 실패함 → 그때는 시안 문구를 기본값으로 보여 줌
-// TODO(member): 시안 본문이 「…고정되어 있지」에서 끊겨 있음. 실제 문구는 응답 content를 씀
+// 로그인해야 받을 수 있어서 가입 중에는 실패함 → 그때는 시안 문구(08-1-1 판매자 등록 펼친 본문)를 기본값으로 보여 줌
 export const SELLER_CONSENT_FALLBACK = {
   version: null,
   title: '상품 검수를 위한 외부 AI 서비스 이용 및 국외 이전 동의',
@@ -16,7 +15,12 @@ export const SELLER_CONSENT_FALLBACK = {
 
 2. 국외 이전
 - 이전받는 업체: OpenAI, Anthropic
-- 이전 국가: 미국 등 해외 처리 시설 (현재 확인된 설정상 처리 지역이 특정 국가로 고정되어 있지`,
+- 이전 국가: 미국 등 해외 처리 시설 (현재 확인된 설정상 처리 지역이 특정 국가로 고정되어 있지 않을 수 있어요)
+- 이전 시점 · 방법: 상품 등록 · 수정으로 검수를 요청할 때 네트워크로 전송
+- 보관 기간: 검수가 끝나면 각 업체 정책에 따라 삭제
+
+3. 동의를 거부할 권리
+동의하지 않을 수 있지만, 동의하지 않으면 판매자로 등록할 수 없어요.`,
 };
 
 // 응답을 시안 기본값 위에 덮어씀 (빈 값은 기본값 유지)

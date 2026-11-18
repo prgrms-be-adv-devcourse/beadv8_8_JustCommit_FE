@@ -17,9 +17,9 @@ export function getBankName(bankCode) {
   return BANKS.find((bank) => bank.code === bankCode)?.name ?? bankCode;
 }
 
-// 등록 계좌 한 줄: 「KB국민은행 ***4567 · 예금주 김개식」
+// 등록 계좌 한 줄: 「KB국민은행 ***4567 · 예금주 김*식」
 // - 계좌번호는 뒤 4자리만 (응답 maskedAccountNo가 「****4567」이어도 끝 4자리만 떼어 ***를 붙임)
-// - 예금주는 가리지 않고 응답 값 그대로 (BE MyInfoService가 아직 「김*식」으로 가려서 줌 → 백엔드 변경 필요)
+// - 예금주는 FE가 가리거나 풀지 않고 응답 값 그대로 (BE가 「김*식」으로 가려서 줌, 시안 06-5-5 · 06-5-6 · 07-4-1 · 07-4-2도 김*식)
 // account = { bankCode, maskedAccountNo, accountHolder } (GET /api/v1/users/me 의 account)
 export function formatBankAccount(account) {
   const last4 = String(account.maskedAccountNo ?? '').slice(-4);

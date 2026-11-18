@@ -10,18 +10,11 @@ import ReviewResultView from './ReviewResultView';
 // 검수 중일 때 결과를 다시 확인하는 간격
 const POLL_MS = 5000;
 
-// TODO: 검수 결과 API(getProductReview)가 생기면 단계 · 사유 · 판정 주체 · 기한 · 남은 재검수 횟수를 받아 교체
+// TODO: 검수 결과 API(getProductReview)가 생기면 사유 · 판정 주체 · 기한 · 남은 재검수 횟수를 받아 교체
 // 지금은 상품 상태만 보고 화면을 고르고, 나머지 값은 자리 문구로 둠
 function toReview(product) {
   if (product.status === 'REVIEW_PENDING') {
-    return {
-      stage: 'CHECKING',
-      steps: [
-        { label: '유해한 내용 확인', state: 'wait', statusText: '{진행 상태}' },
-        { label: '식물 · 판매 형태 확인', state: 'wait', statusText: '{진행 상태}' },
-        { label: '품종 · 판매 금지 품종 대조', state: 'wait', statusText: '{진행 상태}' },
-      ],
-    };
+    return { stage: 'CHECKING' };
   }
   if (product.status === 'REJECTED') {
     return {

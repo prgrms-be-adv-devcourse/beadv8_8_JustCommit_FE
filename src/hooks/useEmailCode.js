@@ -13,7 +13,7 @@ const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 export const SENT_TEXT = '인증번호를 보냈어요. 메일함을 확인해 주세요.';
 const EXPIRED_TEXT = '인증 시간이 지났어요. 인증번호를 다시 받아 주세요';
 const MISMATCH_TEXT = '인증번호가 맞지 않아요 · 5번 틀리면 인증번호가 폐기돼 다시 받아야 해요';
-// 시안에 없는 문구 (5번 틀려 폐기됨)
+// 5번 틀려 폐기됨 (시안 06-3-10)
 const ATTEMPTS_EXCEEDED_TEXT = '인증번호를 5번 틀려서 폐기됐어요. 인증번호를 다시 받아 주세요';
 
 function getMessage(error, fallback) {
@@ -57,7 +57,7 @@ export function toVerifyErrorText(error) {
 
 function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT_TEXT }) {
   const [email, setEmailValue] = useState(initialEmail);
-  // idle: 아직 안 보냄 · sent: 보냄 · duplicate · limit · error: 보내기 실패
+  // idle: 아직 안 보냄 · sent: 보냄 · discarded: 5번 틀려 폐기됨(06-3-10) · duplicate · limit · error: 보내기 실패
   const [status, setStatus] = useState('idle');
   const [sendMessage, setSendMessage] = useState(null);
   const [code, setCodeValue] = useState('');
@@ -135,6 +135,14 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
       resendTimer.stop();
       await onVerified?.(response);
     } catch (error) {
+      // 5번 틀려 폐기됨 (06-3-10): 인증번호 칸을 비워 막고, 「다시 받기」만 바로 누를 수 있게
+      if (error.response?.data?.code === 'EMAIL_CODE_ATTEMPTS_EXCEEDED') {
+        setStatus('discarded');
+        setSendMessage(null);
+        setCodeValue('');
+        codeTimer.stop();
+        resendTimer.stop();
+      }
       setCodeMessage({ type: 'error', text: toVerifyErrorText(error) });
     } finally {
       setIsVerifying(false);
@@ -143,6 +151,7 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
 
   // 옆 버튼 모양 · 글자
   let sendButton = { variant: 'outline', label: status === 'sent' ? '다시 받기' : '인증번호 받기' };
+  if (status === 'discarded') sendButton = { variant: 'primary', label: '다시 받기' };
   if (status === 'limit') sendButton = { variant: 'disabled', label: '인증번호 받기' };
   else if (isSending) sendButton = { variant: 'disabled', label: '보내는 중' };
   else if (resendTimer.isRunning) sendButton = { variant: 'disabled', label: `다시 받기 (${resendTimer.remaining}초)` };
@@ -156,7 +165,8 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
     setCode,
     codeMessage,
     remaining: codeTimer.remaining,
-    isCodeVisible: status === 'sent',
+    isCodeVisible: status === 'sent' || status === 'discarded',
+    isCodeDiscarded: status === 'discarded',
     isVerifying,
     sendButton,
     send,

@@ -34,6 +34,8 @@ function BankAccountPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState('');
   const [verifyError, setVerifyError] = useState('');
+  // 계좌 변경 토큰이 만료돼 ①로 돌아옴 (06-5-14)
+  const [isTokenExpired, setIsTokenExpired] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   // 인증번호 확인으로 받은 일회용 계좌 변경 토큰 (10분)
   const [changeToken, setChangeToken] = useState('');
@@ -43,6 +45,7 @@ function BankAccountPage() {
 
   const handleSend = async () => {
     setVerifyError('');
+    setIsTokenExpired(false);
     try {
       const response = await sendAccountEmailCode();
       const { expiresIn = CODE_SECONDS, resendAvailableIn = RESEND_SECONDS } = response?.data?.data ?? {};
@@ -100,9 +103,9 @@ function BankAccountPage() {
       setForm({ bankCode: '', accountNo: '', accountHolder: '' });
     } catch (error) {
       if (error.response?.data?.code === 'INVALID_ACCOUNT_CHANGE_TOKEN') {
-        // 토큰 만료(10분) · 이미 사용 → ① 이메일 인증부터 다시 (입력한 계좌는 그대로 둠)
+        // 토큰 만료(10분) · 이미 사용 → ① 이메일 인증부터 다시 (06-5-14, 입력한 계좌는 그대로 둠)
         backToVerify();
-        setVerifyError('인증 시간이 지났어요. 이메일 인증을 다시 해 주세요');
+        setIsTokenExpired(true);
       } else {
         setSubmitError(errorMessage(error));
       }
@@ -125,6 +128,7 @@ function BankAccountPage() {
         onSend={handleSend}
         onVerify={handleVerify}
         verifyError={verifyError}
+        isTokenExpired={isTokenExpired}
         form={form}
         onFormChange={handleFormChange}
         canSubmit={canSubmit}

@@ -49,7 +49,7 @@ export function getMyProducts(params = {}) {
   return client.get('/api/v1/products/me', { params: compactParams(params) });
 }
 
-// 숨기기·숨김 해제 (판매중·판매완료만 가능)
+// 숨기기·숨김 해제 (삭제된 상품 말고는 모든 상태에서 가능, 시안 08-4-1)
 export function changeProductHidden(productId, hidden) {
   return client.patch(`/api/v1/products/${productId}/hidden`, { hidden });
 }
@@ -78,7 +78,7 @@ export function getMyProductCounts() {
   return client.get('/api/v1/products/me/counts');
 }
 
-// 검수 결과 → { stage: CHECKING|MANUAL|DELAYED|PASSED|REJECTED, steps[], rejectReason, decidedBy: AUTO|ADMIN,
+// 검수 결과 → { stage: CHECKING|MANUAL|DELAYED|PASSED|REJECTED, rejectReason, decidedBy: AUTO|ADMIN,
 //              decidedAt, expiresAt, reReviewLeft, appealable }
 export function getProductReview(productId) {
   return client.get(`/api/v1/products/${productId}/review`);

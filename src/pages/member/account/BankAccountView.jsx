@@ -1,14 +1,16 @@
 import { ActionErrorLine } from '../../../components/common/ActionError';
+import { AlertIcon } from '../../../components/member/AuthField';
 import { BANKS } from '../../../constants/banks';
 import AccountLayout from './AccountLayout';
 import { CardTitle, CheckLine, InfoNote, SideButton, SubmitButton } from './AccountUi';
 import { inputClass } from './accountStyle';
 
-// 시안 06-5-5 계좌 변경 ① 이메일 재인증 · 06-5-6 ② 새 계좌 입력 (변경 토큰 10분)
+// 시안 06-5-5 계좌 변경 ① 이메일 재인증 · 06-5-6 ② 새 계좌 입력 (변경 토큰 10분) · 06-5-14 변경 토큰 만료로 ①에 돌아옴
 // props
-//   currentAccount: 'KB국민은행 ***4567 · 예금주 김개식'
+//   currentAccount: 'KB국민은행 ***4567 · 예금주 김*식'
 //   isVerified: 인증을 마쳤으면 계좌 입력 화면
-//   인증: email, codeSent, resendSeconds, codeSecondsText('4:18'), code, onCodeChange, onSend, onVerify, verifyError
+//   인증: email, codeSent, resendSeconds, codeSecondsText('4:18'), code, onCodeChange, onSend, onVerify, verifyError,
+//         isTokenExpired(06-5-14: 초록 「인증번호 받기」 + 빨간 줄 + 10분 안내)
 //   입력: form{bankCode(은행 코드 3자리, 화면엔 은행 이름),accountNo,accountHolder}, onFormChange(name, value), canSubmit, isSubmitting, onSubmit, submitError
 
 function CurrentAccount({ text }) {
@@ -22,7 +24,20 @@ function CurrentAccount({ text }) {
   );
 }
 
-function VerifyStep({ currentAccount, email, codeSent, resendSeconds, codeSecondsText, code, onCodeChange, onSend, onVerify, verifyError }) {
+function VerifyStep({
+  currentAccount,
+  email,
+  codeSent,
+  resendSeconds,
+  codeSecondsText,
+  code,
+  onCodeChange,
+  onSend,
+  onVerify,
+  verifyError,
+  isTokenExpired,
+}) {
+  const showExpired = isTokenExpired && !codeSent;
   return (
     <>
       <CardTitle
@@ -35,7 +50,9 @@ function VerifyStep({ currentAccount, email, codeSent, resendSeconds, codeSecond
         <div className="flex gap-2">
           <input type="text" value={email} readOnly placeholder="" aria-label="이메일" className={inputClass('flex-1')} />
           {!codeSent ? (
-            <SideButton onClick={onSend}>인증번호 받기</SideButton>
+            <SideButton variant={showExpired ? 'primary' : 'outline'} onClick={onSend}>
+              인증번호 받기
+            </SideButton>
           ) : resendSeconds > 0 ? (
             <SideButton variant="disabled">{`다시 받기 (${resendSeconds}초)`}</SideButton>
           ) : (
@@ -43,7 +60,18 @@ function VerifyStep({ currentAccount, email, codeSent, resendSeconds, codeSecond
           )}
         </div>
         {codeSent && <CheckLine>인증번호를 보냈어요. 메일함을 확인해 주세요.</CheckLine>}
+        {showExpired && (
+          <p role="alert" className="flex items-center gap-1.5 text-[13px] font-medium text-[#b91c1c]">
+            <AlertIcon />
+            인증 시간이 지났어요. 이메일 인증을 다시 해 주세요
+          </p>
+        )}
       </div>
+      {showExpired && (
+        <p className="text-[13px] text-[#6b7280]">
+          이메일 인증을 마치면 10분 안에 계좌를 바꿔 주세요. 시간이 지나면 이메일 인증부터 다시 해야 해요.
+        </p>
+      )}
       {codeSent && (
         <div className="space-y-2">
           <span className="text-sm font-bold text-[#111827]">인증번호</span>

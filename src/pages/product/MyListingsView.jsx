@@ -21,7 +21,7 @@ function LeafIcon({ className }) {
 
 // 상품 한 줄
 // row = { productId, title, priceText, thumbnailUrl, badges: [키], note, link: { label, to },
-//         canEdit, hideAction: 'hide' | 'unhide' | null, canDelete }
+//         hasEditDelete(수정 · 삭제 버튼을 그릴지), canEdit, hideAction: 'hide' | 'unhide', canDelete }
 function ListingRow({ row, busy, onEdit, onToggleHidden, onDelete }) {
   return (
     <li className="p-5 bg-white border border-[#e5e7eb] flex items-center gap-5">
@@ -58,27 +58,29 @@ function ListingRow({ row, busy, onEdit, onToggleHidden, onDelete }) {
         )}
       </div>
       <div className="flex gap-2 shrink-0">
-        <button
-          type="button"
-          className={row.canEdit ? btnOn : btnOff}
-          disabled={!row.canEdit || busy}
-          onClick={() => onEdit(row)}
-        >
-          수정
-        </button>
-        {row.hideAction && (
-          <button type="button" className={btnOn} disabled={busy} onClick={() => onToggleHidden(row)}>
-            {row.hideAction === 'unhide' ? '숨김 해제' : '숨기기'}
+        {row.hasEditDelete && (
+          <button
+            type="button"
+            className={row.canEdit ? btnOn : btnOff}
+            disabled={!row.canEdit || busy}
+            onClick={() => onEdit(row)}
+          >
+            수정
           </button>
         )}
-        <button
-          type="button"
-          className={row.canDelete ? btnDanger : btnOff}
-          disabled={!row.canDelete || busy}
-          onClick={() => onDelete(row)}
-        >
-          삭제
+        <button type="button" className={btnOn} disabled={busy} onClick={() => onToggleHidden(row)}>
+          {row.hideAction === 'unhide' ? '숨김 해제' : '숨기기'}
         </button>
+        {row.hasEditDelete && (
+          <button
+            type="button"
+            className={row.canDelete ? btnDanger : btnOff}
+            disabled={!row.canDelete || busy}
+            onClick={() => onDelete(row)}
+          >
+            삭제
+          </button>
+        )}
       </div>
     </li>
   );
@@ -151,10 +153,7 @@ function MyListingsView({
             )}
           </div>
         )}
-        <InfoNote>
-          수정과 삭제는 판매 중 · 검수 중 · 반려 상품만 할 수 있어요. 검수 중이거나 반려된 상품은 원래 다른 사람에게 보이지
-          않아서 숨길 수 없어요.
-        </InfoNote>
+        <InfoNote>수정과 삭제는 판매 중 · 검수 중 · 반려 상품만 할 수 있어요.</InfoNote>
       </div>
 
       {deleteTarget && (

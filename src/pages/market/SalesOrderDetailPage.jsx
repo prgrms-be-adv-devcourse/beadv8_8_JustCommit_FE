@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import { getAddresses } from '../../api/memberApi';
 import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
@@ -22,6 +23,19 @@ const SHIPPING_FEE_NOTE = '배송비는 플랫폼 매출로 들어가 정산에 
 const GRAY_BADGE = 'bg-[#f3f4f6] border-[#f3f4f6] text-[#6b7280]';
 
 const itemIdOf = (item) => item.orderItemId ?? item.id;
+
+// 응답 필드 이름이 isDefault / default 중 어느 쪽이어도 동작하도록
+const isDefaultAddress = (address) => address.isDefault ?? address.default ?? false;
+
+// 보내는 주소 한 줄: 「김개식 · 집 · (04700) 서울특별시 … , 302호」 (시안 08-5-2)
+function toSenderOption(address) {
+  const line = `(${address.zipcode}) ${[address.address1, address.address2].filter(Boolean).join(', ')}`;
+  return {
+    addressId: address.addressId,
+    isDefault: isDefaultAddress(address),
+    text: [address.recipientName, address.addressName, line].filter(Boolean).join(' · '),
+  };
+}
 
 // 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 자리 문구
 function deadlineText(deadline, startedAt, hours, placeholder) {
@@ -171,6 +185,8 @@ function SalesOrderDetailPage() {
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
 
   const [rejectIds, setRejectIds] = useState([]);
+  const [senderOptions, setSenderOptions] = useState([]); // 판매자 배송지 (보내는 주소)
+  const [senderId, setSenderId] = useState(null);
   const [modal, setModal] = useState(null); // 반품 'APPROVE' | 'REJECT'
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -194,6 +210,25 @@ function SalesOrderDetailPage() {
       ignore = true;
     };
   }, [canSell, load]);
+
+  // 보내는 주소 후보 = 내 배송지 (GET /api/v1/users/me/addresses, 최대 4개). 처음엔 기본 배송지
+  useEffect(() => {
+    if (!canSell) return undefined;
+    let ignore = false;
+    getAddresses()
+      .then((response) => {
+        if (ignore) return;
+        const list = response.data.data ?? [];
+        setSenderOptions(list.map(toSenderOption));
+        setSenderId((list.find(isDefaultAddress) ?? list[0])?.addressId ?? null);
+      })
+      .catch(() => {
+        // 못 불러오면 「등록된 배송지가 없어요」로 보이고 수락 버튼이 막힘
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [canSell]);
 
   const closeModal = useCallback(() => {
     if (!isSubmitting) setModal(null);
@@ -226,13 +261,14 @@ function SalesOrderDetailPage() {
   const accept = {
     deadlineText: deadlineText(order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
     rejectIds,
+    sender: { options: senderOptions, selectedId: senderId, onChange: setSenderId },
     onToggle: (id) => setRejectIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])),
     summary,
     submitLabel,
     isSubmitting,
     errorMessage: view.mode === 'ACCEPT' ? errorMessage : '',
     onSubmit: () =>
-      run(() => respondSellerOrder(sellerOrderId, rejectIds), '주문에 응답하지 못했어요. 잠시 후 다시 시도해 주세요.', () =>
+      run(() => respondSellerOrder(sellerOrderId, rejectIds, senderId), '주문에 응답하지 못했어요. 잠시 후 다시 시도해 주세요.', () =>
         setRejectIds([]),
       ),
   };

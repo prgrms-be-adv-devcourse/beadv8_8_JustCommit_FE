@@ -51,7 +51,7 @@ function PasswordPage() {
         // 429: 5번 틀려 24시간 잠김 (06-5-3)
         setIsLocked(true);
       } else if (code === 'INVALID_CURRENT_PASSWORD') {
-        // 400: 현재 비밀번호 틀림. 시안에 문구가 없어 잠김과 같은 빨간 줄 모양으로 보여 줌
+        // 400: 현재 비밀번호 틀림 (06-5-13)
         setCurrentPasswordError('현재 비밀번호가 맞지 않아요');
       } else {
         setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
