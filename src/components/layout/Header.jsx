@@ -5,7 +5,7 @@ import useCart from '../../hooks/useCart';
 import useNotification from '../../hooks/useNotification';
 import useWallet from '../../hooks/useWallet';
 import CountBadge from '../common/CountBadge';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.webp';
 
 // 시안: 캔버스 「replant 웹 시안」 01-2-1 공통 헤더 (비로그인 · 일반 회원 · 판매자)
 
@@ -78,7 +78,7 @@ function Header() {
   };
 
   return (
-    <header className="w-full sticky top-0 z-50 bg-transparent">
+    <header className="w-full sticky top-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-[1240px] mx-auto px-5 h-[84px] flex items-center justify-between gap-6">
         {/* 로고 */}
         <div className="flex items-center shrink-0">
@@ -87,7 +87,7 @@ function Header() {
               src={logo}
               alt="replant 로고"
               className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-              style={{ height: '120px', maxWidth: 'none', margin: '-42px -16px' }}
+              style={{ height: '30px', maxWidth: 'none' }}
             />
           </Link>
         </div>

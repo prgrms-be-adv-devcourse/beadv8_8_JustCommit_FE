@@ -2,7 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import CountBadge from '../common/CountBadge';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.webp';
 
 // 시안: 캔버스 「replant 웹 시안」 09 관리자 헤더 (AdminHeader)
 // 알림 종 · 안 읽은 수 배지는 일반 Header와 같은 알림 컨텍스트 · 경로(/notifications)를 씀
@@ -32,7 +32,7 @@ function AdminHeader({ pendingReviewCount = '{검수 대기 수}' }) {
             src={logo}
             alt="replant 로고"
             className="w-auto object-contain"
-            style={{ height: '110px', maxWidth: 'none', margin: '-38px -16px' }}
+            style={{ height: '27.5px', maxWidth: 'none' }}
           />
           <span className="h-6 px-2 flex items-center bg-[#0f4c3a] text-white text-xs font-bold">관리자</span>
         </Link>
