@@ -1,0 +1,75 @@
+# develop에 머지되면 프론트를 빌드해 앱 서버 Nginx 폴더(/var/www/replant)에 올린다.
+#
+# 1. build:  GitHub 러너에서 npm ci · npm run build → dist/ 를 실행 결과물(artifact)로 보관
+# 2. deploy: 앱 서버의 self-hosted 러너(라벨 replant-app)가 dist/ 를 받아 /var/www/replant 에 복사
+#            레포 변수 CD_DEPLOY가 'true'일 때만 실행 (러너 설치 전에는 빌드만 확인)
+#
+# 빌드에 쓰는 레포 변수 (Settings → Secrets and variables → Actions → Variables, 브라우저에 그대로 실리는 공개 값만)
+#   VITE_TOSS_CLIENT_KEY  토스 결제위젯 클라이언트 키
+#   VITE_OAUTH_BASE_URL   비워 두면 같은 주소(/oauth2/...)로 이동 → Nginx가 Gateway로 넘김
+name: CD
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-develop
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: 빌드
+        env:
+          VITE_TOSS_CLIENT_KEY: ${{ vars.VITE_TOSS_CLIENT_KEY }}
+          VITE_OAUTH_BASE_URL: ${{ vars.VITE_OAUTH_BASE_URL }}
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    needs: build
+    if: vars.CD_DEPLOY == 'true'
+    runs-on: [self-hosted, replant-app]
+    timeout-minutes: 10
+    env:
+      TARGET: /var/www/replant
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: /var/www/replant 에 복사
+        run: |
+          set -eu
+          test -f dist/index.html || { echo "::error::dist/index.html이 없습니다"; exit 1; }
+          test -w "$TARGET" || { echo "::error::$TARGET 에 쓸 권한이 없습니다 (처음 한 번: sudo chown -R ubuntu:ubuntu $TARGET)"; exit 1; }
+          # 새 assets를 먼저 올리고 index.html은 마지막에 바꾼다 → 복사 중에 들어온 사용자도 깨진 화면을 보지 않음
+          # 지난 빌드의 assets는 지우지 않는다 (옛 index.html을 연 사용자가 다음 화면을 열 때 필요). 쌓이면 수동 정리
+          rsync -a --exclude index.html dist/ "$TARGET/"
+          rsync -a dist/index.html "$TARGET/index.html"
+          echo "배포 완료: ${GITHUB_SHA::7}"
+
+      - name: 확인
+        run: curl -fsS -o /dev/null -w "Nginx / 응답 %{http_code}\n" http://127.0.0.1/
