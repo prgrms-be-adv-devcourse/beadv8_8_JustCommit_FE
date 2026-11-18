@@ -57,14 +57,12 @@ function toRow(product) {
     badges: [status],
     note: null,
     link: null,
+    // 시안 08-4-1: 거래 중 · 판매 완료 줄은 「숨기기」만, 나머지는 수정 · 숨기기 · 삭제
+    hasEditDelete: EDITABLE_PRODUCT_STATUSES.includes(status),
     canEdit: EDITABLE_PRODUCT_STATUSES.includes(status),
     canDelete: EDITABLE_PRODUCT_STATUSES.includes(status),
-    // 검수 중 · 반려 상품은 원래 남에게 보이지 않아서 숨길 수 없음
-    hideAction: ['ACTIVE', 'PAYMENT_PENDING', 'SOLD_OUT'].includes(status)
-      ? product.hidden
-        ? 'unhide'
-        : 'hide'
-      : null,
+    // 숨김은 상태와 별개라 모든 상태에서 숨기거나 풀 수 있음 (BE docs services/product.md 「숨김」)
+    hideAction: product.hidden ? 'unhide' : 'hide',
   };
   const reviewLink = { label: '결과 보기', to: `/products/${product.productId}/review` };
 

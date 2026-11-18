@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ActionErrorBar, ActionErrorLine } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
@@ -34,6 +35,56 @@ function BannerHead({ title, desc, badge, tabular = false }) {
         <p className={`mt-1 text-sm text-[#92400e] font-medium${tabular ? ' tabular-nums' : ''}`}>{desc}</p>
       </div>
       <span className={BANNER_BADGE}>{badge}</span>
+    </div>
+  );
+}
+
+// 보내는 주소: 판매자 배송지(최대 4개) 중 하나를 고름. 처음엔 기본 배송지
+// 시안의 버튼 모양을 그리고, 그 위에 투명한 select를 겹쳐 브라우저 기본 목록으로 고르게 함
+// sender = { options: [{ addressId, isDefault, text }], selectedId, onChange(addressId) }
+function SenderAddressSelect({ sender, disabled }) {
+  const selected = sender.options.find((option) => option.addressId === sender.selectedId) ?? null;
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label htmlFor="sender-address" className="text-sm font-bold text-[#111827]">
+          보내는 주소
+        </label>
+        <Link to="/mypage/addresses" className="text-[13px] font-semibold text-[#0f4c3a] underline">
+          배송지 관리
+        </Link>
+      </div>
+      <div className="relative">
+        <div className="w-full h-12 px-4 flex items-center gap-3 bg-white border border-[#d1d5db] text-left">
+          {selected?.isDefault && (
+            <span className="h-6 px-2 inline-flex items-center text-xs font-semibold bg-[#0f4c3a] text-white shrink-0">기본</span>
+          )}
+          <span className="flex-1 min-w-0 truncate text-[15px] text-[#111827]">
+            {selected ? selected.text : '등록된 배송지가 없어요. 배송지 관리에서 먼저 추가해 주세요'}
+          </span>
+          <svg className="w-5 h-5 text-[#6b7280] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        {sender.options.length > 0 && (
+          <select
+            id="sender-address"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            value={sender.selectedId ?? ''}
+            onChange={(event) => sender.onChange(Number(event.target.value))}
+            disabled={disabled}
+          >
+            {sender.options.map((option) => (
+              <option key={option.addressId} value={option.addressId}>
+                {option.isDefault ? `[기본] ${option.text}` : option.text}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      <p className="text-[13px] text-[#6b7280]">
+        택배 기사님이 이 주소로 상품을 가지러 와요. 수락한 뒤에 배송지를 고쳐도 이 주문은 여기서 고른 주소로 보내요.
+      </p>
     </div>
   );
 }
@@ -84,12 +135,13 @@ function AcceptBanner({ accept, items }) {
         })}
       </div>
       <p className="px-4 py-3 bg-white border border-[#fde68a] text-sm text-[#92400e] leading-relaxed">{accept.summary}</p>
+      <SenderAddressSelect sender={accept.sender} disabled={accept.isSubmitting} />
       <div className="flex flex-col items-end">
         <button
           type="button"
           className="h-12 px-7 bg-[#0f4c3a] text-white text-[15px] font-bold disabled:opacity-50"
           onClick={accept.onSubmit}
-          disabled={accept.isSubmitting}
+          disabled={accept.isSubmitting || accept.sender.selectedId == null}
         >
           {accept.submitLabel}
         </button>

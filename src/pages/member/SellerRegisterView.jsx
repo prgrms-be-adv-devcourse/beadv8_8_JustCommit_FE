@@ -1,12 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ActionErrorLine } from '../../components/common/ActionError';
+import SellerConsentBox from '../../components/member/SellerConsentBox';
 
 export const INTRO_MAX_LENGTH = 500;
 
 // 시안 08-1-1 판매자 등록 (화면만, 데이터는 props)
-// account: 「KB국민은행 ***4567 · 예금주 김개식」처럼 완성된 문자열
+// account: 「KB국민은행 ***4567 · 예금주 김*식」처럼 완성된 문자열 (예금주는 백엔드가 가려 준 값 그대로)
+// consentPolicy: { title, content } (useSellerConsentPolicy). 동의 상자는 처음부터 펼쳐 둠
+// consentKey: 바뀌면 동의 상자를 새로 그려 펼침 상태를 처음으로 되돌림 (취소)
 function SellerRegisterView({
   account,
+  consentPolicy,
+  consentKey,
   intro,
   onIntroChange,
   agreed,
@@ -23,7 +28,7 @@ function SellerRegisterView({
           <p className="text-xs font-bold text-[#0f4c3a]">판매자 등록</p>
           <h1 className="text-2xl font-bold text-[#111827] tracking-tight">직접 키운 식물을 판매해 보세요</h1>
           <p className="text-sm text-[#4b5563]">
-            판매자로 등록하면 바로 식물을 올릴 수 있어요. 정산은 가입할 때 입력한 환급 계좌로 받아요.
+            판매자로 등록하면 바로 식물을 올릴 수 있어요. 정산금은 예치금으로 들어오고, 가입 때 등록한 계좌로 인출할 수 있어요.
           </p>
         </div>
         <div className="space-y-2">
@@ -55,32 +60,13 @@ function SellerRegisterView({
             </span>
           </div>
         </div>
-        <label className="p-4 bg-[#f9fafb] border border-[#e5e7eb] flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only"
-            checked={agreed}
-            onChange={(event) => onAgreedChange(event.target.checked)}
-          />
-          {agreed ? (
-            <span className="w-5 h-5 mt-0.5 flex items-center justify-center bg-[#0f4c3a] text-white shrink-0">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </span>
-          ) : (
-            <span className="w-5 h-5 mt-0.5 bg-white border-2 border-[#d1d5db] shrink-0"></span>
-          )}
-          <span className="space-y-1">
-            <span className="block text-sm font-bold text-[#111827]">
-              <span className="text-[#b91c1c]">[필수]</span> 상품 사진 외부 전송(검수) · 학습 이용에 동의해요
-            </span>
-            <span className="block text-[13px] text-[#4b5563] leading-relaxed">
-              올린 상품 사진은 검수를 위해 외부 AI 서비스로 보내고, 검수 품질을 높이는 학습에 쓰여요. 동의해야 판매자로
-              등록할 수 있어요.
-            </span>
-          </span>
-        </label>
+        <SellerConsentBox
+          key={consentKey}
+          policy={consentPolicy}
+          agreed={agreed}
+          onAgreedChange={onAgreedChange}
+          defaultOpen
+        />
         <div>
           <div className="flex gap-2">
             <button
@@ -93,7 +79,9 @@ function SellerRegisterView({
             </button>
             <button
               type="button"
-              className="flex-1 h-12 bg-[#0f4c3a] text-white text-base font-bold disabled:opacity-50"
+              className={`flex-1 h-12 text-white text-base font-bold ${
+                agreed ? 'bg-[#0f4c3a] border border-[#0f4c3a] disabled:opacity-50' : 'bg-[#d1d5db] border border-[#d1d5db] cursor-not-allowed'
+              }`}
               onClick={onSubmit}
               disabled={!agreed || isSubmitting}
             >

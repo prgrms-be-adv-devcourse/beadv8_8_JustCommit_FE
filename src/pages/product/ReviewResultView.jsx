@@ -8,41 +8,6 @@ import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
 
 export const APPEAL_MEMO_MAX = 200;
 
-// 검수 단계 표시 (CHECKING일 때만)
-function ReviewSteps({ steps }) {
-  return (
-    <ol className="p-5 bg-[#f9fafb] border border-[#e5e7eb] space-y-3">
-      {steps.map((step) => (
-        <li key={step.label} className="flex items-center gap-3">
-          {step.state === 'done' && (
-            <span className="w-6 h-6 flex items-center justify-center bg-[#0f4c3a] text-white">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </span>
-          )}
-          {step.state === 'now' && (
-            <span className="w-6 h-6 flex items-center justify-center border-2 border-[#0f4c3a]">
-              <span className="w-2 h-2 bg-[#0f4c3a]"></span>
-            </span>
-          )}
-          {step.state === 'wait' && <span className="w-6 h-6 border-2 border-[#d1d5db] block"></span>}
-          <span
-            className={
-              step.state === 'wait'
-                ? 'flex-1 text-[15px] text-[#9ca3af]'
-                : 'flex-1 text-[15px] text-[#111827] font-semibold'
-            }
-          >
-            {step.label}
-          </span>
-          <span className="text-[13px] text-[#6b7280]">{step.statusText}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 const linkWhite =
   'h-12 w-[160px] flex items-center justify-center bg-white border border-[#d1d5db] text-[15px] font-semibold text-[#111827]';
 const linkGreen = 'flex-1 h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-[15px] font-bold';
@@ -96,7 +61,12 @@ function ReviewResultView({ review, product, appeal }) {
             <p className="text-[15px] text-[#4b5563] leading-relaxed">{heading[1]}</p>
           </div>
 
-          {stage === 'CHECKING' && <ReviewSteps steps={review.steps} />}
+          {/* 검수 중은 진행 막대만 (단계 목록 없음, 진행률은 받지 않아 시안 길이 그대로) */}
+          {stage === 'CHECKING' && (
+            <div className="h-1.5 w-full bg-[#e5e7eb] overflow-hidden">
+              <div className="h-full w-2/5 bg-[#0f4c3a]"></div>
+            </div>
+          )}
 
           {stage === 'DELAYED' && (
             <div className="p-4 bg-[#fffbeb] border border-[#fde68a] text-sm text-[#92400e] leading-relaxed">

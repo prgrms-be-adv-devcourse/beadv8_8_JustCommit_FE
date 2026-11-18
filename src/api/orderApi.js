@@ -66,8 +66,10 @@ export function confirmOrderItem(orderItemId) {
 // 경로 · 요청 형식은 담당이 확정하면 맞춥니다. 버튼을 누르면 부르고, API가 없으면 실패 안내가 보입니다.
 
 // 판매자 수락 · 거절: 체크한 주문상품만 거절(사유 없음), 나머지는 수락
-export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds) {
-  return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`, { rejectedOrderItemIds });
+// senderAddressId: 보내는 주소로 고른 판매자 배송지 id (시안 08-5-2)
+// TODO(market): BE docs/reference/external-apis.md에 수락 API 요청 필드가 아직 없음. 필드 이름 `senderAddressId`는 임시
+export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds, senderAddressId) {
+  return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`, { rejectedOrderItemIds, senderAddressId });
 }
 
 // 반품 승인 · 거절 (판매자)

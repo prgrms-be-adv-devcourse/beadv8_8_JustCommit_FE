@@ -86,12 +86,13 @@ export function SubmitButton({ children, ...props }) {
 }
 
 // 인증번호 입력칸 + 오른쪽 남은 시간
-export function CodeInput({ state = 'default', remainingText, ...props }) {
+// remainingText가 없으면 남은 시간을 그리지 않음 (06-3-10 폐기), extra: 앞에 덧붙일 class
+export function CodeInput({ state = 'default', remainingText, extra = '', ...props }) {
   return (
     <div className="relative flex-1">
       <AuthInput
         state={state}
-        extra="tracking-widest"
+        extra={extra ? `${extra} tracking-widest` : 'tracking-widest'}
         type="text"
         inputMode="numeric"
         maxLength={6}
@@ -99,9 +100,11 @@ export function CodeInput({ state = 'default', remainingText, ...props }) {
         autoComplete="one-time-code"
         {...props}
       />
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#b91c1c] tabular-nums">
-        {remainingText}
-      </span>
+      {remainingText && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#b91c1c] tabular-nums">
+          {remainingText}
+        </span>
+      )}
     </div>
   );
 }

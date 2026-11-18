@@ -7,12 +7,13 @@ import AccountLayout from './AccountLayout';
 import { CardTitle, InfoNote, SubmitButton } from './AccountUi';
 import { inputClass } from './accountStyle';
 
-// 시안 06-5-2 비밀번호 변경 · 06-5-3 5번 틀려 잠김 · 06-5-4 변경 완료 모달
+// 시안 06-5-2 비밀번호 변경 · 06-5-3 5번 틀려 잠김 · 06-5-4 변경 완료 모달 · 06-5-13 현재 비밀번호 틀림
 // (카카오 가입 회원은 메뉴에서 이 탭이 빠지고, PasswordPage가 닉네임 변경으로 보냄)
 // props: form{currentPassword,newPassword,confirmPassword}, onChange(name, value),
-//        currentPasswordError(빨간 줄), isLocked(06-5-3: 빨간 줄 + 비밀번호 재설정 안내, 버튼 막힘),
+//        currentPasswordError(06-5-13: 빨간 줄 + 5번 틀리면 잠긴다는 회색 안내), isLocked(06-5-3: 빨간 줄 + 비밀번호 재설정 안내, 버튼 막힘),
 //        newPasswordError, confirmError, canSubmit, isSubmitting, onSubmit, submitError, isDone, onLogin
 const LOCKED_TEXT = '현재 비밀번호를 5번 틀려서 24시간 동안 비밀번호를 바꿀 수 없어요';
+const WRONG_HELP_TEXT = '5번 틀리면 24시간 동안 비밀번호를 바꿀 수 없어요';
 
 function PasswordField({ label, name, value, placeholder, onChange, help, error, alert }) {
   return (
@@ -68,7 +69,7 @@ function PasswordView({
           onChange={onChange}
           alert={(isLocked || currentPasswordError) && <AlertLine>{isLocked ? LOCKED_TEXT : currentPasswordError}</AlertLine>}
           help={
-            isLocked && (
+            isLocked ? (
               <p className="text-[13px] text-[#4b5563]">
                 {'비밀번호가 기억나지 않으면 '}
                 <Link to="/reset-password" className="font-semibold text-[#0f4c3a] underline">
@@ -76,6 +77,8 @@ function PasswordView({
                 </Link>
                 으로 바꿀 수 있어요.
               </p>
+            ) : (
+              currentPasswordError && <p className="text-[13px] text-[#6b7280]">{WRONG_HELP_TEXT}</p>
             )
           }
         />

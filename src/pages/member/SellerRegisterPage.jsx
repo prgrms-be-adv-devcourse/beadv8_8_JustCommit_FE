@@ -22,6 +22,7 @@ function SellerRegisterPage() {
   const [agreed, setAgreed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [consentKey, setConsentKey] = useState(0); // 취소 때 동의 상자 펼침을 처음으로
 
   // 로그인 상태 복구가 끝나기 전에는 판단하지 않음
   if (isInitializing) return null;
@@ -34,7 +35,6 @@ function SellerRegisterPage() {
     setErrorMessage('');
 
     try {
-      // TODO(08-1-1): 화면의 동의 상자는 아직 옛 문구. 판매자 등록 시안 갈래에서 SellerConsentBox로 바꿈
       await registerSeller(intro.trim(), consentPolicy.version);
       await refreshUser();
       navigate('/', { replace: true });
@@ -46,6 +46,14 @@ function SellerRegisterPage() {
     }
   };
 
+  // 취소: 체크 · 소개글 · 동의 상자 펼침을 처음 상태로 되돌림 (화면은 그대로)
+  const handleCancel = () => {
+    setIntro('');
+    setAgreed(false);
+    setErrorMessage('');
+    setConsentKey((key) => key + 1);
+  };
+
   return (
     <SellerRegisterView
       account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
@@ -55,7 +63,9 @@ function SellerRegisterPage() {
       onAgreedChange={setAgreed}
       isSubmitting={isSubmitting}
       errorMessage={errorMessage}
-      onCancel={() => navigate(-1)}
+      consentPolicy={consentPolicy}
+      consentKey={consentKey}
+      onCancel={handleCancel}
       onSubmit={handleSubmit}
     />
   );
