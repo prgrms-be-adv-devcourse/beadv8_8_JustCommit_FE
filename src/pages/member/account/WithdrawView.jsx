@@ -5,10 +5,21 @@ import ModalButton from '../../../components/common/ModalButton';
 import AccountLayout from './AccountLayout';
 import { CardTitle, CheckBox, SubmitButton } from './AccountUi';
 
-// 시안 06-5-9 회원 탈퇴 · 06-5-10 탈퇴 불가 모달
+// 시안 06-5-10 회원 탈퇴 · 06-5-11 탈퇴 불가 모달 · 06-5-12 확인 실패 모달
 // props: agreed, onAgreeChange, isSubmitting, onSubmit, submitError,
-//        blockers = [{ label, valueText, linkLabel, to }] (있으면 탈퇴 불가 모달), onCloseBlocked
-function WithdrawView({ agreed, onAgreeChange, isSubmitting, onSubmit, submitError, blockers, onCloseBlocked }) {
+//        blockers = [{ label, valueText(없으면 ''), linkLabel, to }] (있으면 탈퇴 불가 모달), onCloseBlocked,
+//        isUnavailable (탈퇴 확인 결과 UNAVAILABLE), onCloseUnavailable
+function WithdrawView({
+  agreed,
+  onAgreeChange,
+  isSubmitting,
+  onSubmit,
+  submitError,
+  blockers,
+  onCloseBlocked,
+  isUnavailable,
+  onCloseUnavailable,
+}) {
   return (
     <>
       <AccountLayout active="withdraw">
@@ -53,10 +64,14 @@ function WithdrawView({ agreed, onAgreeChange, isSubmitting, onSubmit, submitErr
           <ul className="border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
             {blockers.map((item) => (
               <li key={item.label} className="px-4 py-3 flex items-center gap-3">
-                <span className="flex-1 text-[#111827]">
-                  {`${item.label} `}
-                  <b className="tabular-nums">{item.valueText}</b>
-                </span>
+                {item.valueText ? (
+                  <span className="flex-1 text-[#111827]">
+                    {`${item.label} `}
+                    <b className="tabular-nums">{item.valueText}</b>
+                  </span>
+                ) : (
+                  <span className="flex-1 text-[#111827]">{item.label}</span>
+                )}
                 <Link to={item.to} className="text-[13px] font-semibold text-[#0f4c3a] underline whitespace-nowrap">
                   {item.linkLabel}
                 </Link>
@@ -64,6 +79,20 @@ function WithdrawView({ agreed, onAgreeChange, isSubmitting, onSubmit, submitErr
             ))}
           </ul>
           <p className="text-[13px] text-[#6b7280] leading-relaxed">예치금은 충전 취소나 계좌 인출로 정리할 수 있어요.</p>
+        </Modal>
+      )}
+      {isUnavailable && (
+        <Modal
+          title="지금은 확인할 수 없어요"
+          width={480}
+          onClose={onCloseUnavailable}
+          footer={
+            <ModalButton variant="primary" onClick={onCloseUnavailable}>
+              확인
+            </ModalButton>
+          }
+        >
+          <p className="text-[#4b5563] leading-relaxed">탈퇴할 수 있는지 확인하지 못했어요. 잠시 후 다시 시도해 주세요.</p>
         </Modal>
       )}
     </>

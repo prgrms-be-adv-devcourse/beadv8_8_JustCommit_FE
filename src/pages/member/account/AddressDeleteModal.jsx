@@ -2,7 +2,7 @@ import { ActionErrorBar } from '../../../components/common/ActionError';
 import Modal from '../../../components/common/Modal';
 import ModalButton from '../../../components/common/ModalButton';
 
-// 시안 06-5-11 배송지 삭제 확인
+// 시안 06-5-9 배송지 삭제 확인
 // address = { addressLine: '배송지 이름 · 주소' }
 function AddressDeleteModal({ address, deleting, error, onClose, onConfirm }) {
   return (

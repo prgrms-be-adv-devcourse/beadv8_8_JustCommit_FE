@@ -9,6 +9,8 @@ import AddressModal from '../mypage/AddressModal';
 import AccountLayout from './AccountLayout';
 import AddressDeleteModal from './AddressDeleteModal';
 import AddressesView from './AddressesView';
+import { AccountMenuContext } from './accountMenuContext';
+import useMyInfo from './useMyInfo';
 
 const MAX_ADDRESSES = 4; // 회원당 최대 4개 (BE docs/services/member.md 「정책」 배송지)
 
@@ -26,7 +28,7 @@ function toViewAddress(address) {
     ...address,
     isDefault: isDefaultAddress(address),
     phoneText: formatPhone(address.recipientPhone),
-    // 삭제 확인 모달(06-5-11): 「배송지 이름 · 주소」 한 줄
+    // 삭제 확인 모달(06-5-9): 「배송지 이름 · 주소」 한 줄
     addressLine: [address.addressName, [address.address1, address.address2].filter(Boolean).join(', ')]
       .filter(Boolean)
       .join(' · '),
@@ -37,6 +39,9 @@ function toViewAddress(address) {
 function AddressesPage() {
   usePageTitle('배송지 관리');
   const { isLoggedIn, isInitializing } = useAuth();
+  // 메뉴에서 카카오 회원의 「비밀번호 변경」 탭을 숨기려고 가입 방식만 봄
+  const { myInfo } = useMyInfo();
+  const menu = { isKakao: myInfo?.provider === 'KAKAO' };
 
   const [addresses, setAddresses] = useState(null); // null = 로딩 중
   const [loadError, setLoadError] = useState('');
@@ -117,11 +122,13 @@ function AddressesPage() {
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/mypage/addresses' }} />;
   if (loadError || !addresses) {
     return (
-      <AccountLayout active="addresses" wide>
-        <p className="text-sm text-[#6b7280]" role={loadError ? 'alert' : undefined}>
-          {loadError || '배송지를 불러오는 중...'}
-        </p>
-      </AccountLayout>
+      <AccountMenuContext.Provider value={menu}>
+        <AccountLayout active="addresses" wide>
+          <p className="text-sm text-[#6b7280]" role={loadError ? 'alert' : undefined}>
+            {loadError || '배송지를 불러오는 중...'}
+          </p>
+        </AccountLayout>
+      </AccountMenuContext.Provider>
     );
   }
 
@@ -130,7 +137,7 @@ function AddressesPage() {
     .sort((a, b) => Number(b.isDefault) - Number(a.isDefault));
 
   return (
-    <>
+    <AccountMenuContext.Provider value={menu}>
       <AddressesView
         addresses={viewAddresses}
         maxCount={MAX_ADDRESSES}
@@ -151,7 +158,7 @@ function AddressesPage() {
         />
       )}
       {modal && <AddressModal initial={modal.initial} onSubmit={handleSubmit} onClose={closeModal} />}
-    </>
+    </AccountMenuContext.Provider>
   );
 }
 

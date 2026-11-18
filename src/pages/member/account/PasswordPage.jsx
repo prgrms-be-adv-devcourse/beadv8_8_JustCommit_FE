@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { changePassword } from '../../../api/memberApi';
 import { ACTION_ERROR } from '../../../constants/actionError';
 import useAuth from '../../../hooks/useAuth';
@@ -21,10 +21,13 @@ function PasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isDone, setIsDone] = useState(false);
+  const [currentPasswordError, setCurrentPasswordError] = useState('');
+  const [isLocked, setIsLocked] = useState(false);
 
   const handleChange = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     setSubmitError('');
+    if (name === 'currentPassword') setCurrentPasswordError('');
   };
 
   const newPasswordError =
@@ -43,7 +46,16 @@ function PasswordPage() {
       await changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword });
       setIsDone(true);
     } catch (error) {
-      setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+      const code = error.response?.data?.code;
+      if (code === 'PASSWORD_CHANGE_LOCKED') {
+        // 429: 5번 틀려 24시간 잠김 (06-5-3)
+        setIsLocked(true);
+      } else if (code === 'INVALID_CURRENT_PASSWORD') {
+        // 400: 현재 비밀번호 틀림. 시안에 문구가 없어 잠김과 같은 빨간 줄 모양으로 보여 줌
+        setCurrentPasswordError('현재 비밀번호가 맞지 않아요');
+      } else {
+        setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -55,11 +67,15 @@ function PasswordPage() {
     navigate('/login', { replace: true });
   };
 
+  // 카카오 가입 회원은 비밀번호가 없으므로 닉네임 변경으로 보냄 (메뉴에서도 이 탭이 빠짐)
+  if (myInfo?.provider === 'KAKAO') return <Navigate to="/mypage/account" replace />;
+
   return (
     <AccountGuard active="password" myInfo={myInfo} loadError={loadError}>
       <PasswordView
-        isSocial={myInfo?.provider && myInfo.provider !== 'LOCAL'}
         form={form}
+        currentPasswordError={currentPasswordError}
+        isLocked={isLocked}
         onChange={handleChange}
         newPasswordError={newPasswordError}
         confirmError={confirmError}

@@ -3,13 +3,14 @@ import { changeAccount, sendAccountEmailCode, verifyAccountEmailCode } from '../
 import { ACTION_ERROR } from '../../../constants/actionError';
 import { formatBankAccount } from '../../../constants/banks';
 import useCountdown from '../../../hooks/useCountdown';
+import { toSendError, toVerifyErrorText } from '../../../hooks/useEmailCode';
 import usePageTitle from '../../../hooks/usePageTitle';
 import AccountGuard from './AccountGuard';
 import BankAccountView from './BankAccountView';
 import useMyInfo from './useMyInfo';
 
-const CODE_SECONDS = 5 * 60; // 인증번호 유효 5분
-const RESEND_SECONDS = 60; // 다시 받기 60초 뒤
+const CODE_SECONDS = 5 * 60; // 인증번호 유효 5분 (응답 expiresIn이 없을 때)
+const RESEND_SECONDS = 60; // 다시 받기 60초 뒤 (응답 resendAvailableIn이 없을 때)
 
 function errorMessage(error) {
   return error.response?.data?.message ?? ACTION_ERROR.DEFAULT;
@@ -34,6 +35,8 @@ function BankAccountPage() {
   const [code, setCode] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  // 인증번호 확인으로 받은 일회용 계좌 변경 토큰 (10분)
+  const [changeToken, setChangeToken] = useState('');
   const [form, setForm] = useState({ bankCode: '', accountNo: '', accountHolder: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -41,13 +44,14 @@ function BankAccountPage() {
   const handleSend = async () => {
     setVerifyError('');
     try {
-      await sendAccountEmailCode();
+      const response = await sendAccountEmailCode();
+      const { expiresIn = CODE_SECONDS, resendAvailableIn = RESEND_SECONDS } = response?.data?.data ?? {};
       setCodeSent(true);
       setCode('');
-      codeTimer.start(CODE_SECONDS);
-      resendTimer.start(RESEND_SECONDS);
+      codeTimer.start(expiresIn);
+      resendTimer.start(resendAvailableIn);
     } catch (error) {
-      setVerifyError(errorMessage(error));
+      setVerifyError(toSendError(error).text);
     }
   };
 
@@ -62,12 +66,20 @@ function BankAccountPage() {
     }
     setVerifyError('');
     try {
-      await verifyAccountEmailCode(code);
+      const response = await verifyAccountEmailCode(code);
       codeTimer.stop();
+      setChangeToken(response?.data?.data?.accountChangeToken ?? '');
       setIsVerified(true);
     } catch (error) {
-      setVerifyError(errorMessage(error));
+      setVerifyError(toVerifyErrorText(error));
     }
+  };
+
+  const backToVerify = () => {
+    setIsVerified(false);
+    setChangeToken('');
+    setCodeSent(false);
+    setCode('');
   };
 
   const handleFormChange = (name, value) => {
@@ -81,14 +93,19 @@ function BankAccountPage() {
     setIsSubmitting(true);
     setSubmitError('');
     try {
-      await changeAccount({ ...form, accountHolder: form.accountHolder.trim() });
+      await changeAccount({ ...form, accountHolder: form.accountHolder.trim(), accountChangeToken: changeToken });
       // 바뀐 계좌를 다시 보여 주고 처음 화면으로
       reload();
-      setIsVerified(false);
-      setCodeSent(false);
+      backToVerify();
       setForm({ bankCode: '', accountNo: '', accountHolder: '' });
     } catch (error) {
-      setSubmitError(errorMessage(error));
+      if (error.response?.data?.code === 'INVALID_ACCOUNT_CHANGE_TOKEN') {
+        // 토큰 만료(10분) · 이미 사용 → ① 이메일 인증부터 다시 (입력한 계좌는 그대로 둠)
+        backToVerify();
+        setVerifyError('인증 시간이 지났어요. 이메일 인증을 다시 해 주세요');
+      } else {
+        setSubmitError(errorMessage(error));
+      }
     } finally {
       setIsSubmitting(false);
     }

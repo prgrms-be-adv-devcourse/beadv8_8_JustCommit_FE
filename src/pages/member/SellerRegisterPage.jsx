@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
+import useSellerConsentPolicy from '../../hooks/useSellerConsentPolicy';
 import { registerSeller } from '../../api/memberApi';
 import { formatBankAccount } from '../../constants/banks';
 import useMyInfo from './account/useMyInfo';
@@ -15,6 +16,7 @@ function SellerRegisterPage() {
   const { user, isLoggedIn, isInitializing, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { myInfo } = useMyInfo();
+  const consentPolicy = useSellerConsentPolicy(isLoggedIn);
 
   const [intro, setIntro] = useState('');
   const [agreed, setAgreed] = useState(false);
@@ -32,8 +34,8 @@ function SellerRegisterPage() {
     setErrorMessage('');
 
     try {
-      // TODO: 사진 외부 전송 · 학습 이용 동의 값을 받는 필드가 생기면 함께 보냄
-      await registerSeller(intro.trim());
+      // TODO(08-1-1): 화면의 동의 상자는 아직 옛 문구. 판매자 등록 시안 갈래에서 SellerConsentBox로 바꿈
+      await registerSeller(intro.trim(), consentPolicy.version);
       await refreshUser();
       navigate('/', { replace: true });
     } catch (error) {

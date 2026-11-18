@@ -21,29 +21,16 @@ const INITIAL_FILTERS = {
   maxPrice: '',
 };
 
-// 정렬 (docs/flows/search-recommend.md): 검색어가 있으면 관련도순이 기본, 없으면 최신순이 기본
-// value ''은 기본 정렬. 검색 중 최신순은 'latest'로 따로 보냄
-// TODO: 백엔드 ProductSearchRequest.sort에 relevance · latest가 생기면 그대로 사용 (지금은 둘 다 최신순으로 처리됨)
+// 정렬: 검색어가 있어도 없어도 최신순 · 낮은 가격 · 높은 가격 3칸, 최신순이 기본 (시안 02-1-1 · 02-1-2)
+// value ''은 기본(최신순)
 const SORTS = [
   { value: '', label: '최신순' },
-  { value: 'priceAsc', label: '낮은 가격' },
-  { value: 'priceDesc', label: '높은 가격' },
-];
-const SEARCH_SORTS = [
-  { value: '', label: '관련도순' },
-  { value: 'latest', label: '최신순' },
   { value: 'priceAsc', label: '낮은 가격' },
   { value: 'priceDesc', label: '높은 가격' },
 ];
 
 function readFilters(searchParams) {
   return Object.fromEntries(Object.keys(INITIAL_FILTERS).map((key) => [key, searchParams.get(key) ?? '']));
-}
-
-// 화면에서 고른 정렬 → API sort 값
-function toApiSort(keyword, sort) {
-  if (keyword) return sort || 'relevance';
-  return sort === 'latest' ? '' : sort;
 }
 
 function getErrorMessage(error) {
@@ -56,7 +43,7 @@ function HomePage() {
   const keyword = searchParams.get('keyword')?.trim() ?? '';
   const filters = readFilters(searchParams);
   // 목록 조회 조건 (검색어 + 필터 + API 정렬). 문자열로 만들어 바뀔 때만 다시 조회
-  const query = JSON.stringify({ ...filters, sort: toApiSort(keyword, filters.sort), keyword });
+  const query = JSON.stringify({ ...filters, keyword });
 
   usePageTitle(keyword ? `'${keyword}' 검색 결과` : undefined);
 
@@ -79,8 +66,7 @@ function HomePage() {
   const categoryLabel = SPECIES_CATEGORIES.find((item) => item.value === filters.category)?.label;
   const listTitle = selectedSpecies?.name ?? (filters.category ? categoryLabel : '새로 올라온 식물');
 
-  // 검색어가 없을 때 'latest'는 기본(최신순)과 같음
-  const selectedSort = !keyword && filters.sort === 'latest' ? '' : filters.sort;
+  const selectedSort = filters.sort;
 
   // 바뀐 필터만 URL에 반영 (빈 값은 URL에서 삭제, 검색어는 그대로 유지)
   // replace: 필터를 누를 때마다 방문 기록이 쌓이지 않도록 (뒤로 가기 한 번에 이전 페이지로)
@@ -191,7 +177,7 @@ function HomePage() {
       keyword={keyword}
       listTitle={listTitle}
       filters={filters}
-      sorts={keyword ? SEARCH_SORTS : SORTS}
+      sorts={SORTS}
       selectedSort={selectedSort}
       selectedSpecies={selectedSpecies}
       isFiltered={isFiltered}

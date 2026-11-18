@@ -76,8 +76,6 @@ function LoginView({ email, password, onEmailChange, onPasswordChange, onSubmit,
         </div>
       </form>
       <div className="flex justify-end gap-3 text-[13px] text-[#4b5563]">
-        <Link to="/find-id" className="hover:underline">아이디 찾기</Link>
-        <span className="text-[#d1d5db]">|</span>
         <Link to="/reset-password" className="hover:underline">비밀번호 재설정</Link>
       </div>
       <SubmitButton form="login-form" disabled={isSubmitting}>로그인</SubmitButton>

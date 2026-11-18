@@ -2,11 +2,11 @@ import { ActionErrorLine } from '../../../components/common/ActionError';
 import { AuthCardPage, AuthHeading, FieldHint, LabeledInput, SubmitButton } from '../../../components/member/AuthField';
 import EmailCodeFields from '../../../components/member/EmailCodeFields';
 
-// 시안 06-2-3 비밀번호 재설정 1/2 (이메일 인증)
+// 시안 06-2-1 비밀번호 재설정 1/2 (이메일 인증)
 export function ResetPasswordView({ emailCode, on, onSubmit }) {
   return (
     <AuthCardPage backTo="/login">
-      <AuthHeading step="1 / 2 · 이메일 인증" title="비밀번호 재설정" description="가입한 이메일로 인증번호를 보내 드려요." />
+      <AuthHeading step="1 / 2 · 이메일 인증" title="비밀번호 재설정" description="가입한 이메일을 입력하면 인증번호를 보내 드려요." />
       <EmailCodeFields variant="plain" emailCode={emailCode} on={on} />
       <SubmitButton type="button" onClick={onSubmit}>
         다음
@@ -15,7 +15,7 @@ export function ResetPasswordView({ emailCode, on, onSubmit }) {
   );
 }
 
-// 시안 06-2-4 비밀번호 재설정 2/2 (새 비밀번호)
+// 시안 06-2-2 비밀번호 재설정 2/2 (새 비밀번호)
 // password · confirm: 입력값, passwordState · confirmState: default | error, error: 바꾸기 실패 문구
 export function ResetPasswordNewView({ email, password, confirm, passwordState, confirmState, on, onSubmit, error, isSubmitting }) {
   return (

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { registerSeller, sendEmailCode, verifyEmailCode } from '../../api/memberApi';
+import { getSellerConsentPolicy, registerSeller, sendEmailCode, verifyEmailCode } from '../../api/memberApi';
 import useAuth from '../../hooks/useAuth';
 import useEmailCode from '../../hooks/useEmailCode';
 import usePageTitle from '../../hooks/usePageTitle';
+import useSellerConsentPolicy from '../../hooks/useSellerConsentPolicy';
 import {
   SignupDoneView,
   SignupEmailView,
@@ -34,6 +35,8 @@ function SignupPage() {
   const [role, setRole] = useState('seller');
   const [intro, setIntro] = useState('');
   const [agreed, setAgreed] = useState(false);
+  // 가입 중에는 로그인 전이라 동의 문구 API를 부르지 않고 시안 문구를 보여 줌
+  const consentPolicy = useSellerConsentPolicy(false);
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [doneError, setDoneError] = useState('');
@@ -95,7 +98,7 @@ function SignupPage() {
     const handleSubmit = async () => {
       if (isSubmitting) return;
       if (isSeller && !agreed) {
-        setSubmitError('상품 사진 외부 전송 · 학습 이용에 동의해야 판매자로 등록할 수 있어요');
+        setSubmitError('상품 검수 동의에 체크해야 판매자로 등록할 수 있어요');
         return;
       }
 
@@ -113,7 +116,9 @@ function SignupPage() {
       if (isSeller) {
         try {
           await login({ email: verifiedEmail, password: info.password });
-          await registerSeller(intro.trim());
+          // 로그인한 뒤 현재 동의 문구 버전을 받아 함께 보냄
+          const policyResponse = await getSellerConsentPolicy();
+          await registerSeller(intro.trim(), policyResponse.data.data?.version);
           await refreshUser();
         } catch {
           setDoneError('가입은 끝났지만 판매자 등록을 하지 못했어요. 로그인한 뒤 마이페이지에서 다시 등록해 주세요.');
@@ -128,6 +133,7 @@ function SignupPage() {
         role={role}
         intro={intro}
         agreed={agreed}
+        consentPolicy={consentPolicy}
         on={{ roleChange: setRole, introChange: setIntro, agreedChange: setAgreed }}
         onPrev={() => goStep(STEP.INFO)}
         onSubmit={handleSubmit}

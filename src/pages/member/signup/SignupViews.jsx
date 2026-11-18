@@ -4,6 +4,7 @@ import { AuthHeading, DoneMark, FieldHint, SubmitButton } from '../../../compone
 import authInputClass from '../../../components/member/authInputClass';
 import EmailCodeFields from '../../../components/member/EmailCodeFields';
 import MemberInfoFields from '../../../components/member/MemberInfoFields';
+import SellerConsentBox from '../../../components/member/SellerConsentBox';
 import TermsAgreement from '../../../components/member/TermsAgreement';
 
 // 시안 06-3 회원가입: 1 이메일 인증 → 2 정보 입력 → 3 판매자 등록 (선택) → 가입 완료, 카카오 가입
@@ -186,7 +187,8 @@ export const INTRO_MAX_LENGTH = 500;
 
 // 06-3-6 판매자로 가입 · 06-3-7 구매자로 가입
 // role: 'seller' | 'buyer'
-export function SignupSellerView({ role, intro, agreed, on, onPrev, onSubmit, error, isSubmitting }) {
+// 판매자를 골랐으면 [필수] 동의를 체크해야 가입 버튼이 눌림
+export function SignupSellerView({ role, intro, agreed, consentPolicy, on, onPrev, onSubmit, error, isSubmitting }) {
   const isSeller = role === 'seller';
   return (
     <SignupCard width={640}>
@@ -234,30 +236,7 @@ export function SignupSellerView({ role, intro, agreed, on, onPrev, onSubmit, er
               </span>
             </div>
           </div>
-          <label className="p-4 bg-[#f9fafb] border border-[#e5e7eb] flex items-start gap-3 cursor-pointer">
-            {agreed ? (
-              <span className="w-5 h-5 mt-0.5 flex items-center justify-center bg-[#0f4c3a] text-white shrink-0">
-                <StepCheck />
-              </span>
-            ) : (
-              <span className="w-5 h-5 mt-0.5 border-2 border-[#d1d5db] bg-white shrink-0" />
-            )}
-            <span className="space-y-1">
-              <span className="block text-sm font-bold text-[#111827]">
-                <span className="text-[#b91c1c]">[필수]</span>
-                {' 상품 사진 외부 전송(검수) · 학습 이용에 동의해요'}
-              </span>
-              <span className="block text-[13px] text-[#4b5563] leading-relaxed">
-                올린 상품 사진은 검수를 위해 외부 AI 서비스로 보내고, 검수 품질을 높이는 학습에 쓰여요. 동의해야 판매자로 등록할 수 있어요.
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              className="sr-only"
-              checked={agreed}
-              onChange={(event) => on.agreedChange(event.target.checked)}
-            />
-          </label>
+          <SellerConsentBox policy={consentPolicy} agreed={agreed} onAgreedChange={on.agreedChange} />
         </>
       )}
       <div>
@@ -270,9 +249,19 @@ export function SignupSellerView({ role, intro, agreed, on, onPrev, onSubmit, er
           >
             이전
           </button>
-          <button type="button" onClick={onSubmit} disabled={isSubmitting} className="flex-1 h-12 bg-[#0f4c3a] text-white text-base font-bold">
-            {isSeller ? '판매자 등록하고 가입 완료' : '구매자로 가입 완료'}
-          </button>
+          {isSeller && !agreed ? (
+            <button
+              type="button"
+              disabled
+              className="flex-1 h-12 bg-[#d1d5db] border border-[#d1d5db] text-white text-base font-bold cursor-not-allowed"
+            >
+              판매자 등록하고 가입 완료
+            </button>
+          ) : (
+            <button type="button" onClick={onSubmit} disabled={isSubmitting} className="flex-1 h-12 bg-[#0f4c3a] text-white text-base font-bold">
+              {isSeller ? '판매자 등록하고 가입 완료' : '구매자로 가입 완료'}
+            </button>
+          )}
         </div>
         <ActionErrorLine message={error} />
       </div>

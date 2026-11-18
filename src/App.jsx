@@ -22,7 +22,6 @@ import RefundRequestPage from './pages/market/RefundRequestPage';
 // 06 회원: 로그인 · 가입
 import OAuthCallbackPage from './pages/member/OAuthCallbackPage';
 import LoginPage from './pages/member/LoginPage';
-import FindIdPage from './pages/member/find/FindIdPage';
 import ResetPasswordPage from './pages/member/find/ResetPasswordPage';
 import SignupPage from './pages/member/SignupPage';
 import SocialSignupPage from './pages/member/SocialSignupPage';
@@ -94,9 +93,8 @@ function App() {
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/orders/:orderId/items/:orderItemId/return" element={<RefundRequestPage />} />
 
-          {/* 06 회원: 로그인 · 아이디 찾기 · 비밀번호 재설정 · 회원가입 */}
+          {/* 06 회원: 로그인 · 비밀번호 재설정 · 회원가입 */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/find-id" element={<FindIdPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/social" element={<SocialSignupPage />} />

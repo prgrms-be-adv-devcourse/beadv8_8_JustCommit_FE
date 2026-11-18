@@ -31,10 +31,16 @@ export function signup(form) {
   return client.post('/api/v1/users', form);
 }
 
-// TODO(member): 판매자 등록에는 「상품 사진 외부 전송(검수) · 학습 이용」 동의가 필수 (BE docs/services/member.md 정책 「권한」).
-// 지금 API는 intro만 받으므로, 동의 항목(내용 · 버전)이 요청에 추가되면 함께 보냅니다.
-export function registerSeller(intro) {
-  return client.post('/api/v1/sellers', { intro });
+// 판매자 등록 동의 문구 → data: { version, title, content(줄바꿈 포함 일반 텍스트) }
+// TODO(member): 응답을 받지 못하면 화면은 시안 문구(SELLER_CONSENT_FALLBACK)를 기본값으로 씀
+export function getSellerConsentPolicy() {
+  return client.get('/api/v1/sellers/consent-policy');
+}
+
+// 판매자 등록: 검수 동의(reviewConsentAgreed=true)와 동의한 문구 버전이 필수
+// (버전이 현재 것이 아니면 409 REVIEW_CONSENT_VERSION_MISMATCH)
+export function registerSeller(intro, reviewConsentVersion) {
+  return client.post('/api/v1/sellers', { intro, reviewConsentAgreed: true, reviewConsentVersion });
 }
 
 export function checkPhone(phone) {
@@ -60,45 +66,20 @@ export function socialSignup(signupToken, form) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// 아직 백엔드에 없는 API (BE docs/reference/external-apis.md 「추가 예정」: 아이디 찾기 · 비밀번호 재설정)
-// 경로 · 요청 · 응답은 회원 담당이 정하면 채웁니다. 그 전까지는 「준비 중」 오류를 돌려줍니다.
-// ---------------------------------------------------------------------------
-function notReady() {
-  const error = new Error('NOT_READY');
-  error.response = { data: { code: 'NOT_READY', message: '아직 준비 중인 기능이에요. 잠시만 기다려 주세요.' } };
-  return Promise.reject(error);
-}
-
-// TODO(member): 아이디 찾기 인증번호 발송. 예상 응답 data: { expiresIn, resendAvailableIn }
-// eslint-disable-next-line no-unused-vars
-export function sendFindIdCode(email) {
-  return notReady();
-}
-
-// TODO(member): 아이디 찾기 인증번호 확인 + 계정 조회.
-// 예상 응답 data: { email, provider: 'LOCAL' | 'KAKAO', nickname, joinedAt }
-// eslint-disable-next-line no-unused-vars
-export function findId({ email, code }) {
-  return notReady();
-}
-
-// TODO(member): 비밀번호 재설정 인증번호 발송 (이메일 인증 목적: 비밀번호 재설정). 예상 응답 data: { expiresIn, resendAvailableIn }
-// eslint-disable-next-line no-unused-vars
+// ===== 비밀번호 재설정 (시안 06-2, BE docs/reference/external-apis.md 「비밀번호 재설정 · 가입 계정 안내」) =====
+// 발송은 가입 여부와 관계없이 같은 200 (가입된 이메일이면 메일이 감)
 export function sendPasswordResetCode(email) {
-  return notReady();
+  return client.post('/api/v1/auth/email/send', { email, purpose: 'PASSWORD_RESET' });
 }
 
-// TODO(member): 비밀번호 재설정 인증번호 확인
-// eslint-disable-next-line no-unused-vars
+// 인증번호 확인 → data: { resetToken, expiresIn }. 틀림 · 만료 · 한도 초과는 모두 400 EMAIL_CODE_INVALID
 export function verifyPasswordResetCode({ email, code }) {
-  return notReady();
+  return client.post('/api/v1/auth/email/verify', { email, code, purpose: 'PASSWORD_RESET' });
 }
 
-// TODO(member): 새 비밀번호 저장 (성공하면 모든 기기 로그아웃)
-// eslint-disable-next-line no-unused-vars
-export function resetPassword({ email, newPassword }) {
-  return notReady();
+// 새 비밀번호 저장 (성공하면 모든 기기 로그아웃). 토큰 오류는 400 INVALID_RESET_TOKEN
+export function resetPassword({ resetToken, newPassword }) {
+  return client.post('/api/v1/auth/passwordResets', { resetToken, newPassword });
 }
 
 // ===== 회원 정보 수정 (시안 06-5) =====
@@ -115,16 +96,19 @@ export function changePassword({ currentPassword, newPassword }) {
   return client.patch('/api/v1/users/me/password', { currentPassword, newPassword });
 }
 
-// 계좌 변경용 이메일 인증 (목적별 구분: 가입 · 비밀번호 재설정 · 계좌 변경)
+// 계좌 변경 (BE docs/reference/external-apis.md 「계좌 변경」)
+// ① 회원 정보의 이메일로 인증번호 발송 → data: { expiresIn, resendAvailableIn }
 export function sendAccountEmailCode() {
-  return client.post('/api/v1/auth/email/send', { purpose: 'ACCOUNT_CHANGE' });
+  return client.post('/api/v1/users/me/account/verifications');
 }
 
+// ② 인증번호 확인 → data: { accountChangeToken, expiresIn(600초) }
 export function verifyAccountEmailCode(code) {
-  return client.post('/api/v1/auth/email/verify', { purpose: 'ACCOUNT_CHANGE', code });
+  return client.post('/api/v1/users/me/account/changeTokens', { code });
 }
 
-// 계좌 변경 (이메일 재인증 후) form = { bankCode, accountNo, accountHolder }
+// ③ 계좌 변경 form = { accountChangeToken, bankCode(3자리), accountNo, accountHolder }
+//    토큰 오류(만료 · 이미 사용 등)는 400 INVALID_ACCOUNT_CHANGE_TOKEN → 이메일 인증부터 다시
 export function changeAccount(form) {
   return client.patch('/api/v1/users/me/account', form);
 }
@@ -138,8 +122,9 @@ export function deleteAddress(addressId) {
   return client.delete(`/api/v1/users/me/addresses/${addressId}`);
 }
 
-// 회원 탈퇴. 막히면 409 + 막힌 이유
-// 실패 응답 data(임시 이름) = { pendingOrderCount, pendingSellerOrderCount, walletBalance, unpaidSettlementAmount }
+// 회원 탈퇴. 막히면 409 + 막힌 이유, 확인하지 못하면 결과 UNAVAILABLE (시안 06-5-11 · 06-5-12)
+// TODO(member): 외부 응답 형식이 아직 docs에 없음. 지금은 실패 응답 data = { result, details } 또는 details 그대로를 읽음
+//   details = { pendingOrderCount, activeSellerOrderCount, walletBalance, hasPendingTransactions, incompleteSettlementCount, outstandingDebt }
 export function withdraw() {
   return client.delete('/api/v1/users/me');
 }

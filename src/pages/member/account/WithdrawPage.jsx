@@ -6,24 +6,44 @@ import useAuth from '../../../hooks/useAuth';
 import usePageTitle from '../../../hooks/usePageTitle';
 import { formatPrice } from '../../../utils/format';
 import WithdrawView from './WithdrawView';
+import { AccountMenuContext } from './accountMenuContext';
+import useMyInfo from './useMyInfo';
 
-// 탈퇴가 막힌 이유 → 모달 줄 (값이 0이면 그 줄은 안 보임)
-// TODO: 응답 필드 이름은 백엔드 탈퇴 API가 정해지면 맞춥니다 (BE docs/flows/signup-and-replica.md#탈퇴)
-function toBlockers(data = {}) {
+// 탈퇴가 막힌 이유 → 모달 줄 (06-5-11, 값이 없거나 0이면 그 줄은 숨김)
+// details 이름: 백엔드 탈퇴 확인 결과 (activeSellerOrderCount · incompleteSettlementCount · hasPendingTransactions · outstandingDebt)
+// TODO(member): 구매 주문 수 · 예치금 잔액 이름(pendingOrderCount · walletBalance)은 외부 응답이 정해지면 맞춤
+function toBlockers(details = {}) {
   return [
-    { value: data.pendingOrderCount, label: '구매 확정 전인 주문', unit: '건', linkLabel: '주문 내역 보기', to: '/orders' },
+    { value: details.pendingOrderCount, label: '구매 확정 전인 주문', unit: 'count', linkLabel: '주문 내역 보기', to: '/orders' },
     {
-      value: data.pendingSellerOrderCount,
-      label: '판매자 수락을 기다리는 판매 주문',
-      unit: '건',
+      value: details.activeSellerOrderCount,
+      label: '진행 중인 판매 주문',
+      unit: 'count',
       linkLabel: '판매 주문 보기',
       to: '/orders/seller',
     },
-    { value: data.walletBalance, label: '예치금 잔액', unit: 'won', linkLabel: '예치금 정리하기', to: '/wallet' },
-    { value: data.unpaidSettlementAmount, label: '지급 전 정산', unit: 'won', linkLabel: '정산 리포트 보기', to: '/settlements' },
+    { value: details.walletBalance, label: '예치금 잔액', unit: 'won', linkLabel: '예치금 정리하기', to: '/wallet' },
+    { value: details.hasPendingTransactions, label: '진행 중인 충전 · 인출', unit: 'flag', linkLabel: '예치금 보기', to: '/wallet' },
+    {
+      value: details.incompleteSettlementCount,
+      label: '완료되지 않은 정산',
+      unit: 'count',
+      linkLabel: '정산 리포트 보기',
+      to: '/settlements',
+    },
+    { value: details.outstandingDebt, label: '미수금', unit: 'won', linkLabel: '예치금 보기', to: '/wallet' },
   ]
-    .filter((row) => row.value > 0)
-    .map((row) => ({ ...row, valueText: row.unit === 'won' ? formatPrice(row.value) : `${row.value}건` }));
+    .filter((row) => (row.unit === 'flag' ? row.value === true : row.value > 0))
+    .map((row) => {
+      if (row.unit === 'flag') return { ...row, valueText: '' };
+      return { ...row, valueText: row.unit === 'won' ? formatPrice(row.value) : `${row.value}건` };
+    });
+}
+
+// 실패 응답 → { result, details }. data가 { result, details }여도, details만 와도 읽음
+function readWithdrawalCheck(error) {
+  const data = error.response?.data?.data ?? {};
+  return { result: data.result ?? error.response?.data?.code, details: data.details ?? data };
 }
 
 function WithdrawPage() {
@@ -34,7 +54,10 @@ function WithdrawPage() {
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  // 메뉴에서 카카오 회원의 「비밀번호 변경」 탭을 숨기려고 가입 방식만 봄
+  const { myInfo } = useMyInfo();
   const [blockers, setBlockers] = useState(null);
+  const [isUnavailable, setIsUnavailable] = useState(false);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -44,8 +67,12 @@ function WithdrawPage() {
       await logout().catch(() => {});
       navigate('/', { replace: true });
     } catch (error) {
-      const rows = error.response?.status === 409 ? toBlockers(error.response.data?.data) : [];
-      if (rows.length > 0) {
+      const { result, details } = readWithdrawalCheck(error);
+      const rows = error.response?.status === 409 ? toBlockers(details) : [];
+      if (result === 'UNAVAILABLE') {
+        // 탈퇴 확인을 하지 못함 (06-5-12)
+        setIsUnavailable(true);
+      } else if (rows.length > 0) {
         setBlockers(rows);
       } else {
         setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
@@ -59,7 +86,8 @@ function WithdrawPage() {
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/mypage/account/withdraw' }} />;
 
   return (
-    <WithdrawView
+    <AccountMenuContext.Provider value={{ isKakao: myInfo?.provider === 'KAKAO' }}>
+      <WithdrawView
       agreed={agreed}
       onAgreeChange={setAgreed}
       isSubmitting={isSubmitting}
@@ -67,7 +95,10 @@ function WithdrawPage() {
       submitError={submitError}
       blockers={blockers}
       onCloseBlocked={() => setBlockers(null)}
-    />
+      isUnavailable={isUnavailable}
+      onCloseUnavailable={() => setIsUnavailable(false)}
+      />
+    </AccountMenuContext.Provider>
   );
 }
 

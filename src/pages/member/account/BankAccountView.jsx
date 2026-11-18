@@ -4,12 +4,12 @@ import AccountLayout from './AccountLayout';
 import { CardTitle, CheckLine, InfoNote, SideButton, SubmitButton } from './AccountUi';
 import { inputClass } from './accountStyle';
 
-// 시안 06-5-5 계좌 변경 (이메일 인증) · 06-5-6 계좌 입력
+// 시안 06-5-5 계좌 변경 ① 이메일 재인증 · 06-5-6 ② 새 계좌 입력 (변경 토큰 10분)
 // props
 //   currentAccount: 'KB국민은행 ***4567 · 예금주 김개식'
 //   isVerified: 인증을 마쳤으면 계좌 입력 화면
 //   인증: email, codeSent, resendSeconds, codeSecondsText('4:18'), code, onCodeChange, onSend, onVerify, verifyError
-//   입력: form{bankCode,accountNo,accountHolder}, onFormChange(name, value), canSubmit, isSubmitting, onSubmit, submitError
+//   입력: form{bankCode(은행 코드 3자리, 화면엔 은행 이름),accountNo,accountHolder}, onFormChange(name, value), canSubmit, isSubmitting, onSubmit, submitError
 
 function CurrentAccount({ text }) {
   return (
@@ -27,7 +27,7 @@ function VerifyStep({ currentAccount, email, codeSent, resendSeconds, codeSecond
     <>
       <CardTitle
         title="계좌 변경"
-        description="인출과 정산은 이 계좌로 들어가요. 계좌를 바꾸려면 가입한 이메일로 한 번 더 인증해 주세요."
+        description="예치금 인출은 이 계좌로 들어가요. 계좌를 바꾸려면 가입한 이메일로 한 번 더 인증해 주세요."
       />
       <CurrentAccount text={currentAccount} />
       <div className="space-y-2">
@@ -83,7 +83,10 @@ function FormStep({ currentAccount, form, onFormChange, canSubmit, isSubmitting,
   const bankName = BANKS.find((bank) => bank.code === form.bankCode)?.name ?? '은행 선택';
   return (
     <>
-      <CardTitle title="계좌 변경" description="인출과 정산은 이 계좌로 들어가요." />
+      <CardTitle title="계좌 변경" description="예치금 인출은 이 계좌로 들어가요." />
+      <InfoNote>
+        이메일 인증 후 <b>10분 안에</b> 변경해 주세요. 시간이 지나면 이메일 인증부터 다시 해야 해요.
+      </InfoNote>
       <CheckLine className="flex items-center gap-1.5 text-sm font-semibold text-[#0f4c3a]" iconClass="w-4 h-4" strokeWidth="3">
         이메일 인증을 마쳤어요
       </CheckLine>

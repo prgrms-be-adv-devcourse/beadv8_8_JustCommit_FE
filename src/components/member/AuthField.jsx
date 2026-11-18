@@ -1,7 +1,7 @@
 import authInputClass from './authInputClass';
 import PageBackLink from '../common/PageBackLink';
 
-// 06 회원 (로그인 · 아이디 찾기 · 비밀번호 재설정 · 회원가입) 시안의 입력칸 · 안내 문구 · 버튼 모음
+// 06 회원 (로그인 · 비밀번호 재설정 · 회원가입) 시안의 입력칸 · 안내 문구 · 버튼 모음
 // 여러 화면에서 같은 class로 반복되므로 여기 한 곳에 둡니다.
 
 // 입력칸 하나. state: default | error | success, extra: 시안에서 뒤에 붙는 class (flex-1, bg-[#f3f4f6] 등)
@@ -109,7 +109,7 @@ export function CodeInput({ state = 'default', remainingText, ...props }) {
 export const CODE_RULE_TEXT =
   '인증번호는 5분 동안 쓸 수 있어요 · 60초 뒤에 다시 받을 수 있고, 하루 5번까지 받을 수 있어요';
 
-// 로그인 · 아이디 찾기 · 비밀번호 재설정 화면의 틀 (440px 카드, 위에 「‹ 로그인」 링크 선택)
+// 로그인 · 비밀번호 재설정 화면의 틀 (440px 카드, 위에 「‹ 로그인」 링크 선택)
 export function AuthCardPage({ backTo, backLabel = '로그인', children }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-14 flex justify-center">
@@ -136,7 +136,7 @@ export function AuthHeading({ step, title, description, relaxed = true }) {
   );
 }
 
-// 큰 체크 아이콘 상자 (아이디 찾기 결과 · 가입 완료)
+// 큰 체크 아이콘 상자 (가입 완료)
 export function DoneMark({ size = 'md' }) {
   const box = size === 'lg' ? 'w-16 h-16' : 'w-14 h-14';
   const icon = size === 'lg' ? 'w-8 h-8' : 'w-7 h-7';
