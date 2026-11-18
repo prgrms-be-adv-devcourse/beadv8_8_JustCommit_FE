@@ -8,7 +8,7 @@ import { SocialSignupView } from './signup/SignupViews';
 import { TERMS_REQUIRED_MESSAGE } from './signup/memberRules';
 import useMemberInfoForm from './signup/useMemberInfoForm';
 
-// 시안 06-3-9 카카오 가입 (가입 토큰 10분 안에 정보 입력)
+// 시안 06-3-10 카카오 가입 (가입 토큰 10분 안에 정보 입력)
 
 const SIGNUP_TOKEN_KEY = 'socialSignupToken';
 const LOGIN_AGAIN = '가입 시간이 지났어요. 카카오 로그인부터 다시 해 주세요.';

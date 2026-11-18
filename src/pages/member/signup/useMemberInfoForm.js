@@ -4,7 +4,7 @@ import { BANKS } from '../../../constants/banks';
 import { loadPostcodeScript, openPostcode } from '../../../utils/postcode';
 import { ACCOUNT_NO_REGEX, NICKNAME_REGEX, PHONE_REGEX, formatPhone, isValidPassword, onlyDigits } from './memberRules';
 
-// 회원가입 정보 입력 (06-3-5) · 카카오 가입 (06-3-9) 공통 상태
+// 회원가입 정보 입력 (06-3-6) · 카카오 가입 (06-3-10) 공통 상태
 // 반환: form · on (MemberInfoFields에 그대로 넘김), validate(), toProfileRequest()
 
 function getMessage(error, fallback) {

@@ -13,7 +13,7 @@ const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 export const SENT_TEXT = '인증번호를 보냈어요. 메일함을 확인해 주세요.';
 const EXPIRED_TEXT = '인증 시간이 지났어요. 인증번호를 다시 받아 주세요';
 const MISMATCH_TEXT = '인증번호가 맞지 않아요 · 5번 틀리면 인증번호가 폐기돼 다시 받아야 해요';
-// 5번 틀려 폐기됨 (시안 06-3-10)
+// 5번 틀려 폐기됨 (시안 06-3-4)
 const ATTEMPTS_EXCEEDED_TEXT = '인증번호를 5번 틀려서 폐기됐어요. 인증번호를 다시 받아 주세요';
 
 function getMessage(error, fallback) {
@@ -33,7 +33,7 @@ export function toSendError(error) {
   if (code === 'DUPLICATE_EMAIL') {
     return { status: 'duplicate', text: '이미 가입한 이메일이에요. 로그인하거나 비밀번호를 재설정해 주세요.' };
   }
-  // 429 EMAIL_SEND_DAILY_LIMIT + Retry-After (06-3-4)
+  // 429 EMAIL_SEND_DAILY_LIMIT + Retry-After (06-3-5)
   if (code === 'EMAIL_SEND_DAILY_LIMIT') {
     return {
       status: 'limit',
@@ -57,7 +57,7 @@ export function toVerifyErrorText(error) {
 
 function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT_TEXT }) {
   const [email, setEmailValue] = useState(initialEmail);
-  // idle: 아직 안 보냄 · sent: 보냄 · discarded: 5번 틀려 폐기됨(06-3-10) · duplicate · limit · error: 보내기 실패
+  // idle: 아직 안 보냄 · sent: 보냄 · discarded: 5번 틀려 폐기됨(06-3-4) · duplicate · limit · error: 보내기 실패
   const [status, setStatus] = useState('idle');
   const [sendMessage, setSendMessage] = useState(null);
   const [code, setCodeValue] = useState('');
@@ -135,7 +135,7 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
       resendTimer.stop();
       await onVerified?.(response);
     } catch (error) {
-      // 5번 틀려 폐기됨 (06-3-10): 인증번호 칸을 비워 막고, 「다시 받기」만 바로 누를 수 있게
+      // 5번 틀려 폐기됨 (06-3-4): 인증번호 칸을 비워 막고, 「다시 받기」만 바로 누를 수 있게
       if (error.response?.data?.code === 'EMAIL_CODE_ATTEMPTS_EXCEEDED') {
         setStatus('discarded');
         setSendMessage(null);

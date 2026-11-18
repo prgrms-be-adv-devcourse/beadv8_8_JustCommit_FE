@@ -9,7 +9,7 @@ import WithdrawView from './WithdrawView';
 import { AccountMenuContext } from './accountMenuContext';
 import useMyInfo from './useMyInfo';
 
-// 탈퇴가 막힌 이유 → 모달 줄 (06-5-11, 값이 없거나 0이면 그 줄은 숨김)
+// 탈퇴가 막힌 이유 → 모달 줄 (06-5-13, 값이 없거나 0이면 그 줄은 숨김)
 // details 이름: 백엔드 탈퇴 확인 결과 (activeSellerOrderCount · incompleteSettlementCount · hasPendingTransactions · outstandingDebt)
 // TODO(member): 구매 주문 수 · 예치금 잔액 이름(pendingOrderCount · walletBalance)은 외부 응답이 정해지면 맞춤
 function toBlockers(details = {}) {
@@ -70,7 +70,7 @@ function WithdrawPage() {
       const { result, details } = readWithdrawalCheck(error);
       const rows = error.response?.status === 409 ? toBlockers(details) : [];
       if (result === 'UNAVAILABLE') {
-        // 탈퇴 확인을 하지 못함 (06-5-12)
+        // 탈퇴 확인을 하지 못함 (06-5-14)
         setIsUnavailable(true);
       } else if (rows.length > 0) {
         setBlockers(rows);

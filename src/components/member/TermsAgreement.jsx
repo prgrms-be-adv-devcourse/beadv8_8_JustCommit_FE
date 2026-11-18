@@ -10,7 +10,7 @@ function CheckIcon() {
   );
 }
 
-// 회원가입 정보 입력(06-3-5) · 카카오 가입(06-3-9) 가입 버튼 바로 위 「[필수] 이용약관 · 개인정보처리방침 동의」
+// 회원가입 정보 입력(06-3-6) · 카카오 가입(06-3-10) 가입 버튼 바로 위 「[필수] 이용약관 · 개인정보처리방침 동의」
 // 「이용약관 보기」는 푸터와 같은 이용약관 모달, 「개인정보처리방침 보기」는 /privacy
 function TermsAgreement({ agreed, onChange }) {
   const [isTermsOpen, setIsTermsOpen] = useState(false);

@@ -5,12 +5,12 @@ import AccountLayout from './AccountLayout';
 import { CardTitle, CheckLine, InfoNote, SideButton, SubmitButton } from './AccountUi';
 import { inputClass } from './accountStyle';
 
-// 시안 06-5-5 계좌 변경 ① 이메일 재인증 · 06-5-6 ② 새 계좌 입력 (변경 토큰 10분) · 06-5-14 변경 토큰 만료로 ①에 돌아옴
+// 시안 06-5-6 계좌 변경 ① 이메일 재인증 · 06-5-7 ② 새 계좌 입력 (변경 토큰 10분) · 06-5-8 변경 토큰 만료로 ①에 돌아옴
 // props
 //   currentAccount: 'KB국민은행 ***4567 · 예금주 김*식'
 //   isVerified: 인증을 마쳤으면 계좌 입력 화면
 //   인증: email, codeSent, resendSeconds, codeSecondsText('4:18'), code, onCodeChange, onSend, onVerify, verifyError,
-//         isTokenExpired(06-5-14: 초록 「인증번호 받기」 + 빨간 줄 + 10분 안내)
+//         isTokenExpired(06-5-8: 초록 「인증번호 받기」 + 빨간 줄 + 10분 안내)
 //   입력: form{bankCode(은행 코드 3자리, 화면엔 은행 이름),accountNo,accountHolder}, onFormChange(name, value), canSubmit, isSubmitting, onSubmit, submitError
 
 function CurrentAccount({ text }) {

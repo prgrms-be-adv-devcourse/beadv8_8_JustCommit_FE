@@ -5,7 +5,7 @@ import ModalButton from '../../../components/common/ModalButton';
 import AccountLayout from './AccountLayout';
 import { CardTitle, CheckBox, SubmitButton } from './AccountUi';
 
-// 시안 06-5-10 회원 탈퇴 · 06-5-11 탈퇴 불가 모달 · 06-5-12 확인 실패 모달
+// 시안 06-5-12 회원 탈퇴 · 06-5-13 탈퇴 불가 모달 · 06-5-14 확인 실패 모달
 // props: agreed, onAgreeChange, isSubmitting, onSubmit, submitError,
 //        blockers = [{ label, valueText(없으면 ''), linkLabel, to }] (있으면 탈퇴 불가 모달), onCloseBlocked,
 //        isUnavailable (탈퇴 확인 결과 UNAVAILABLE), onCloseUnavailable

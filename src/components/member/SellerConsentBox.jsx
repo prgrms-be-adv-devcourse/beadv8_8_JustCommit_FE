@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 
-// 판매자 등록 [필수] 검수 동의 상자 (시안 06-3-6, 본문은 08-1-1 판매자 등록 시안과 같음)
+// 판매자 등록 [필수] 검수 동의 상자 (시안 06-3-7, 본문은 08-1-1 판매자 등록 시안과 같음)
 // 체크 칸을 누르면 동의, 「자세히 보기 ▾ / 접기 ▴」로 본문을 펼침
 // policy: { title, content } (useSellerConsentPolicy), agreed · onAgreedChange
 function SellerConsentBox({ policy, agreed, onAgreedChange, defaultOpen = false }) {

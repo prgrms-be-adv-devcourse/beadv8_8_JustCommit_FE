@@ -122,7 +122,7 @@ export function deleteAddress(addressId) {
   return client.delete(`/api/v1/users/me/addresses/${addressId}`);
 }
 
-// 회원 탈퇴. 막히면 409 + 막힌 이유, 확인하지 못하면 결과 UNAVAILABLE (시안 06-5-11 · 06-5-12)
+// 회원 탈퇴. 막히면 409 + 막힌 이유, 확인하지 못하면 결과 UNAVAILABLE (시안 06-5-13 · 06-5-14)
 // TODO(member): 외부 응답 형식이 아직 docs에 없음. 지금은 실패 응답 data = { result, details } 또는 details 그대로를 읽음
 //   details = { pendingOrderCount, activeSellerOrderCount, walletBalance, hasPendingTransactions, incompleteSettlementCount, outstandingDebt }
 export function withdraw() {

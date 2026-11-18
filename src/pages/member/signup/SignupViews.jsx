@@ -88,7 +88,7 @@ function LoginPrompt() {
   );
 }
 
-// 06-3-1 이메일 인증 · 06-3-2 가입한 이메일 · 06-3-3 인증번호 틀림 · 06-3-4 하루 5번 초과
+// 06-3-1 이메일 인증 · 06-3-2 가입한 이메일 · 06-3-3 인증번호 틀림 · 06-3-5 하루 5번 초과
 export function SignupEmailView({ emailCode, on }) {
   return (
     <SignupCard width={440}>
@@ -113,7 +113,7 @@ export function SignupEmailView({ emailCode, on }) {
   );
 }
 
-// 06-3-5 정보 입력 (가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
+// 06-3-6 정보 입력 (가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
 export function SignupInfoView({ email, form, on, termsAgreed, onTermsChange, onNext, error }) {
   return (
     <SignupCard width={560}>
@@ -185,7 +185,7 @@ function ChoiceCard({ selected, icon, title, description, onSelect }) {
 
 export const INTRO_MAX_LENGTH = 500;
 
-// 06-3-6 판매자로 가입 · 06-3-7 구매자로 가입
+// 06-3-7 판매자로 가입 · 06-3-8 구매자로 가입
 // role: 'seller' | 'buyer'
 // 판매자를 골랐으면 [필수] 동의를 체크해야 가입 버튼이 눌림
 export function SignupSellerView({ role, intro, agreed, consentPolicy, on, onPrev, onSubmit, error, isSubmitting }) {
@@ -269,7 +269,7 @@ export function SignupSellerView({ role, intro, agreed, consentPolicy, on, onPre
   );
 }
 
-// 06-3-8 가입 완료
+// 06-3-9 가입 완료
 export function SignupDoneView({ nickname, to, error }) {
   return (
     <SignupCard width={440}>
@@ -293,7 +293,7 @@ export function SignupDoneView({ nickname, to, error }) {
   );
 }
 
-// 06-3-9 카카오 가입 (정보 입력 한 장, 가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
+// 06-3-10 카카오 가입 (정보 입력 한 장, 가입 버튼 바로 위 [필수] 이용약관 · 개인정보처리방침 동의)
 export function SocialSignupView({ email, remainingText, form, on, termsAgreed, onTermsChange, onSubmit, error, isSubmitting }) {
   return (
     <SignupCard width={560}>

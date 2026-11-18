@@ -3,8 +3,8 @@ import { AuthInput, CODE_RULE_TEXT, CodeInput, FieldHint, FieldLabel, FieldMessa
 // 이메일 + 인증번호 칸 (useEmailCode 결과를 그대로 받음)
 // variant
 //   plain : 비밀번호 재설정 06-2-1 (확인 버튼은 카드 아래, 남은 시간 04:32)
-//   signup: 회원가입 06-3-1 ~ 4 (인증번호 옆 확인 버튼, 남은 시간 4:59, 보냄 문구에 체크 아이콘)
-//           06-3-10 인증번호 폐기: 인증번호 칸 · 확인 버튼을 막고 남은 시간을 숨김
+//   signup: 회원가입 06-3-1 ~ 5 (인증번호 옆 확인 버튼, 남은 시간 4:59, 보냄 문구에 체크 아이콘)
+//           06-3-4 인증번호 폐기: 인증번호 칸 · 확인 버튼을 막고 남은 시간을 숨김
 //
 // emailCode: { email, status, sendMessage, code, codeMessage, remaining, isCodeVisible, isCodeDiscarded, sendButton }
 // on: { emailChange, send, codeChange, verify }

@@ -39,7 +39,7 @@ function BannerHead({ title, desc, badge, tabular = false }) {
   );
 }
 
-// 보내는 주소: 판매자 배송지(최대 4개) 중 하나를 고름. 처음엔 기본 배송지
+// 보내는 주소: 판매자 배송지(최대 4개) 중 하나를 고름. 처음엔 기본 배송지, 없으면 안내 문구 + 수락 버튼 막힘 (시안 08-5-3)
 // 시안의 버튼 모양을 그리고, 그 위에 투명한 select를 겹쳐 브라우저 기본 목록으로 고르게 함
 // sender = { options: [{ addressId, isDefault, text }], selectedId, onChange(addressId) }
 function SenderAddressSelect({ sender, disabled }) {
@@ -298,7 +298,7 @@ function ShipmentSteps({ step, stepTimes }) {
   );
 }
 
-// 시안 08-5-2 · 08-5-3 판매 주문 상세, 04-2-1 · 04-5-1 ~ 04-5-3 취소 · 반품 상태 (화면만, 데이터는 props)
+// 시안 08-5-2 수락 대기 · 08-5-3 수락 대기 · 배송지 없음 · 08-5-4 판매 주문 상세, 04-2-1 · 04-5-1 ~ 04-5-3 취소 · 반품 상태 (화면만, 데이터는 props)
 // mode: ACCEPT(수락 대기) · NORMAL · CANCEL_RETURN(구매자 취소 반송 중) · RETURN_REQUESTED(반품 신청)
 function SalesOrderDetailView({ order, accept, returnRequest }) {
   const { mode, shipment, settlement } = order;

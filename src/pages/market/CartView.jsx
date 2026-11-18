@@ -150,7 +150,7 @@ function InfoIcon() {
 const INFO_ROW = {
   reserved: { text: '다른 회원이 결제 중인 상품이라 지금은 주문할 수 없어요.', showPrice: true },
   hidden: { text: '판매자가 숨긴 상품이에요', showPrice: true },
-  reviewing: { title: '검수 중인 상품', text: '판매자가 숨긴 상품이에요', showPrice: false },
+  reviewing: { title: '검수 중인 상품', text: '검수 중이라 지금은 주문할 수 없어요', showPrice: false },
   deleted: { title: '판매가 끝난 상품이에요', text: '장바구니에서 삭제해 주세요', showPrice: false, hideSeller: true },
 };
 

@@ -2,7 +2,7 @@ import { BANKS } from '../../constants/banks';
 import { AuthInput, FieldHint, FieldLabel, FieldMessage, LabeledInput, SideButton } from './AuthField';
 import authInputClass from './authInputClass';
 
-// 회원가입 06-3-5 정보 입력 · 06-3-9 카카오 가입의 「기본 정보 · 환급 계좌 · 기본 배송지」 칸
+// 회원가입 06-3-6 정보 입력 · 06-3-10 카카오 가입의 「기본 정보 · 환급 계좌 · 기본 배송지」 칸
 //
 // form: 화면에 그릴 값 (휴대폰 · 연락처는 하이픈 넣은 표시값)
 //   nickname, nicknameState, nicknameMessage, password, passwordState, confirm, confirmState, confirmMessage,

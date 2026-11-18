@@ -86,7 +86,7 @@ export function SubmitButton({ children, ...props }) {
 }
 
 // 인증번호 입력칸 + 오른쪽 남은 시간
-// remainingText가 없으면 남은 시간을 그리지 않음 (06-3-10 폐기), extra: 앞에 덧붙일 class
+// remainingText가 없으면 남은 시간을 그리지 않음 (06-3-4 폐기), extra: 앞에 덧붙일 class
 export function CodeInput({ state = 'default', remainingText, extra = '', ...props }) {
   return (
     <div className="relative flex-1">

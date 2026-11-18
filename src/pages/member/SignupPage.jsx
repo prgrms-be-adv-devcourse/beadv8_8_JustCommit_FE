@@ -14,7 +14,7 @@ import {
 import { TERMS_REQUIRED_MESSAGE } from './signup/memberRules';
 import useMemberInfoForm from './signup/useMemberInfoForm';
 
-// 시안 06-3-1 ~ 06-3-8 이메일 회원가입
+// 시안 06-3-1 ~ 06-3-9 이메일 회원가입
 // 1 이메일 인증 → 2 정보 입력 → 3 판매자 등록 (선택) → 가입 완료
 const STEP = { EMAIL: 0, INFO: 1, SELLER: 2, DONE: 3 };
 
