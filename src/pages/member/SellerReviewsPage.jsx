@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { getSeller } from '../../api/memberApi';
 import { getSellerReviews } from '../../api/reviewApi';
 import ErrorPage from '../../components/common/ErrorPage';
@@ -16,6 +16,7 @@ function getErrorMessage(error) {
 
 // 판매자 상점 · 리뷰 전체 (시안 02-4-6). 누구나 봄 (로그인 필요 없음)
 function SellerReviews({ sellerId }) {
+  const location = useLocation();
   const [seller, setSeller] = useState(null);
   const [summary, setSummary] = useState(null); // { averageRating, totalCount }
   const [reviews, setReviews] = useState([]);
@@ -75,6 +76,7 @@ function SellerReviews({ sellerId }) {
       reviewCountText={summary.totalCount == null ? '{리뷰 수}개' : `${summary.totalCount.toLocaleString('ko-KR')}개`}
       reviews={reviews.map(toReviewCard)}
       backTo={`/sellers/${sellerId}`}
+      backState={location.state?.fromProductId ? { fromProductId: location.state.fromProductId } : undefined}
       hasMore={reviews.length < totalElements}
       isLoadingMore={isLoadingMore}
       onLoadMore={handleLoadMore}

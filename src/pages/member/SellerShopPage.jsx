@@ -74,6 +74,8 @@ function SellerShop({ sellerId }) {
       reviews={reviews.content.slice(0, RECENT_REVIEW_SIZE).map(toRecentReview)}
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
       reviewsTo={`/sellers/${sellerId}/reviews`}
+      // 리뷰 전체에서 「‹ 상점」으로 돌아와도 처음 들어온 상품으로 갈 수 있게 넘김
+      reviewsState={fromProductId ? { fromProductId } : undefined}
     />
   );
 }

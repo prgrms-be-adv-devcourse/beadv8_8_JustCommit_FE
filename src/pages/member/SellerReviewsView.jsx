@@ -7,11 +7,11 @@ import SellerShopBar from '../../components/seller/SellerShopBar';
 // seller = SellerShopBar의 seller, reviewCountText = "23개"
 // reviews = [ ReviewCard의 review ], backTo = 「< 상점」 이동할 곳
 // hasMore · isLoadingMore · onLoadMore = 「더 불러오기」, errorMessage = 더 불러오기 실패 안내
-function SellerReviewsView({ seller, reviewCountText, reviews, backTo, hasMore, isLoadingMore, onLoadMore, errorMessage }) {
+function SellerReviewsView({ seller, reviewCountText, reviews, backTo, backState, hasMore, isLoadingMore, onLoadMore, errorMessage }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
-        <PageBackLink to={backTo} label="상점" />
+        <PageBackLink to={backTo} state={backState} label="상점" />
         <SellerShopBar seller={seller} />
         <h2 className="text-xl font-bold text-[#111827]">
           {'리뷰 '}

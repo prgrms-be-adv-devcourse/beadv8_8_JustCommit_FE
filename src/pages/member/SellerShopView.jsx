@@ -9,7 +9,7 @@ import SellerShopBar from '../../components/seller/SellerShopBar';
 // products = [ ProductCard의 product ], productCountText = "8개"
 // reviews = [{ key, nickname(null = 탈퇴한 회원), rating, dateText, productText, content }]
 // backTo = 「< 상품 상세」 이동할 곳, reviewsTo = 「리뷰 전체 보기」 이동할 곳
-function SellerShopView({ seller, products, productCountText, reviews, backTo, reviewsTo }) {
+function SellerShopView({ seller, products, productCountText, reviews, backTo, reviewsTo, reviewsState }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
@@ -83,6 +83,7 @@ function SellerShopView({ seller, products, productCountText, reviews, backTo, r
                 </ul>
                 <Link
                   to={reviewsTo}
+                  state={reviewsState}
                   className="mt-1 h-11 flex items-center justify-center gap-1 bg-white border border-[#d1d5db] text-sm font-semibold text-[#111827]"
                 >
                   리뷰 전체 보기
