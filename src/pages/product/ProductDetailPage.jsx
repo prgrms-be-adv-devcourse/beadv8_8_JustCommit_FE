@@ -114,7 +114,7 @@ function ProductDetail({ productId }) {
     }
   };
 
-  // 내 상품 숨기기 · 숨김 해제 (판매 완료 상품은 수정 대신 이 버튼)
+  // 내 상품 숨기기 · 숨김 해제 (시안 02-2-4 「숨기기」)
   const handleToggleHidden = async () => {
     if (isBusy) return;
     setIsBusy(true);

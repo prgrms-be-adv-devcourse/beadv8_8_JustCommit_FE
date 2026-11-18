@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { StarIcon } from '../review/Stars';
 
-// 판매자 상점 맨 위 판매자 한 줄 (시안 02-4-1 상점 · 02-4-3 리뷰 전체 · 02-4-4 리뷰 없음 공통)
-// seller = { nickname, ratingText, reviewCountText, soldCountText, noReviews(true면 별점 자리에 「아직 리뷰 없음」) }
+// 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 상점 · 02-3-3 리뷰 전체 · 02-3-4 리뷰 없음 공통)
+// seller = { nickname, ratingText, reviewCountText, soldCountText, noReviews(true면 별점 자리에 「아직 리뷰 없음」),
+//           intro(판매자 소개글, 비었으면 줄을 숨김) }
 function SellerShopBar({ seller }) {
   return (
     <section
@@ -36,7 +38,25 @@ function SellerShopBar({ seller }) {
         {'판매 완료 '}
         <strong className="font-semibold text-[#111827] tabular-nums">{seller.soldCountText}</strong>
       </span>
+      {seller.intro && <SellerIntro key={seller.intro} intro={seller.intro} />}
     </section>
+  );
+}
+
+// 판매자 소개글 한 단락: 2줄에서 자르고 「더 보기」를 누르면 전체를 펼침
+// 시안은 글 길이와 상관없이 「더 보기」를 그려서 그대로 둠 (짧은 글이면 눌러도 모양이 같음)
+function SellerIntro({ intro }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="basis-full flex items-end gap-3 pt-1">
+      <p className={`flex-1 text-sm text-[#4b5563] leading-relaxed ${expanded ? 'whitespace-pre-line' : 'line-clamp-2'}`}>{intro}</p>
+      {!expanded && (
+        <button type="button" className="text-[13px] font-semibold text-[#0f4c3a] underline shrink-0" onClick={() => setExpanded(true)}>
+          더 보기
+        </button>
+      )}
+    </div>
   );
 }
 

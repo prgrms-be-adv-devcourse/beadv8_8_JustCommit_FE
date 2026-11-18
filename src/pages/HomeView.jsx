@@ -27,7 +27,7 @@ const BENEFITS = [
   },
   {
     title: '구매 확정 후 정산',
-    description: '구매자가 구매를 확정하면 판매자에게 결제 대금이 당일 즉시 정산돼요.',
+    description: '구매가 확정되면 수수료를 뺀 금액이 판매자 예치금으로 정산돼요.',
     icon: (
       <>
         <rect height="12" rx="2" width="20" x="2" y="6" />

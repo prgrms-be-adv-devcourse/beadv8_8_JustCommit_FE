@@ -2,12 +2,14 @@ import PageBackLink from '../../components/common/PageBackLink';
 import { ActionErrorLine } from '../../components/common/ActionError';
 import ReviewCard from '../../components/review/ReviewCard';
 import SellerShopBar from '../../components/seller/SellerShopBar';
+import SellerTagChips from '../../components/seller/SellerTagChips';
 
-// 판매자 상점 · 리뷰 전체 (시안 02-4-3)
+// 판매자 상점 · 리뷰 전체 (시안 02-3-3)
 // seller = SellerShopBar의 seller, reviewCountText = "23개"
+// tags = 받은 태그 칩 [{ label, count }] (「리뷰 N개」 아래)
 // reviews = [ ReviewCard의 review ], backTo = 「< 상점」 이동할 곳
 // hasMore · isLoadingMore · onLoadMore = 「더 불러오기」, errorMessage = 더 불러오기 실패 안내
-function SellerReviewsView({ seller, reviewCountText, reviews, backTo, backState, hasMore, isLoadingMore, onLoadMore, errorMessage }) {
+function SellerReviewsView({ seller, reviewCountText, tags, reviews, backTo, backState, hasMore, isLoadingMore, onLoadMore, errorMessage }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
@@ -17,6 +19,7 @@ function SellerReviewsView({ seller, reviewCountText, reviews, backTo, backState
           {'리뷰 '}
           <span className="text-[15px] font-medium text-[#4b5563] tabular-nums">{reviewCountText}</span>
         </h2>
+        <SellerTagChips tags={tags} />
         <ul className="max-w-[880px] space-y-3">
           {reviews.map((review) => (
             <li key={review.reviewId}>
