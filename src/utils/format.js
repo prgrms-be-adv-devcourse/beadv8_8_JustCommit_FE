@@ -46,7 +46,8 @@ export function formatTime(totalSeconds) {
 }
 
 /**
- * 등록 시각을 "방금 전", "12분 전", "3시간 전", "어제", "3일 전", 날짜 형태로 변환
+ * 등록 시각을 "방금 전", "12분 전", "3시간 전", "어제", "3일 전", "2주 전", "3달 전", "1년 전" 형태로 변환
+ * 7~29일 = N주 전 (7일 단위 내림), 30~364일 = N달 전 (30일 단위 내림, 최대 11달), 365일 이상 = N년 전 (365일 단위 내림)
  */
 export function formatRelativeTime(value) {
   const date = new Date(value);
@@ -63,8 +64,10 @@ export function formatRelativeTime(value) {
   const days = Math.floor(hours / 24);
   if (days === 1) return '어제';
   if (days < 7) return `${days}일 전`;
+  if (days < 30) return `${Math.floor(days / 7)}주 전`;
+  if (days < 365) return `${Math.min(Math.floor(days / 30), 11)}달 전`;
 
-  return date.toLocaleDateString('ko-KR');
+  return `${Math.floor(days / 365)}년 전`;
 }
 
 /**

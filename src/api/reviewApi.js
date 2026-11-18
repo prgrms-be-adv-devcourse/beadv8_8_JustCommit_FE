@@ -43,9 +43,10 @@ export function deleteReview(reviewId) {
   return client.delete(`/api/v1/reviews/${reviewId}`);
 }
 
-// 판매자 상점의 리뷰 요약 + 최근 리뷰 (시안 02-4-4 B안, 누구나 봄)
-// → { averageRating, totalCount, content: [{ reviewId, reviewerNickname(null = 탈퇴), rating, createdAt, content, productNames[] }] }
-// TODO: GET /api/v1/sellers/{sellerId}/reviews?size=3 (임시 이름). 지금은 서버를 부르지 않고 null 요약을 돌려줍니다
+// 판매자 상점의 리뷰 요약 + 리뷰 목록 (시안 02-4-4 상점은 최근 3개, 02-4-6 리뷰 전체는 페이지로, 누구나 봄)
+// params = { page, size } → { averageRating, totalCount, totalElements,
+//   content: [{ reviewId, reviewerNickname(null = 탈퇴), rating, createdAt, content, tags[], productNames[] }] }
+// TODO: GET /api/v1/sellers/{sellerId}/reviews?page=0&size=10 (임시 이름). 지금은 서버를 부르지 않고 null 요약을 돌려줍니다
 //  (화면은 평균 별점 · 리뷰 수에 자리 문구를 쓰고, 최근 리뷰는 비어 보임)
 // eslint-disable-next-line no-unused-vars
 export function getSellerReviews(sellerId, params = {}) {

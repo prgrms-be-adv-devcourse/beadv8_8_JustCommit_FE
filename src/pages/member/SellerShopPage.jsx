@@ -7,6 +7,7 @@ import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDate } from '../../utils/format';
 import SellerShopView from './SellerShopView';
+import { toShopSeller } from './sellerShopFormat';
 
 const RECENT_REVIEW_SIZE = 3;
 
@@ -23,7 +24,7 @@ function toRecentReview(review) {
   };
 }
 
-// 판매자 상점 B안 (시안 02-4-4 · 02-4-5). 누구나 봄 (로그인 필요 없음)
+// 판매자 상점 B안 (시안 02-4-4 · 02-4-5 · 02-4-7). 누구나 봄 (로그인 필요 없음)
 function SellerShop({ sellerId }) {
   const location = useLocation();
   const [data, setData] = useState(null); // { seller, products, productTotal, reviews }
@@ -67,19 +68,12 @@ function SellerShop({ sellerId }) {
 
   return (
     <SellerShopView
-      seller={{
-        nickname: seller.nickname,
-        // TODO: 평균 별점 · 리뷰 수 API 없음 (리뷰 API docs ⬜)
-        ratingText: reviews.averageRating == null ? '{평균 별점}' : reviews.averageRating.toFixed(1),
-        reviewCountText: reviews.totalCount == null ? '{리뷰 수}' : reviews.totalCount.toLocaleString('ko-KR'),
-        // TODO: 판매 완료 수가 GET sellers/{sellerId} 응답에 없음 → soldCount 필드 요청
-        soldCountText: seller.soldCount == null ? '{판매 완료 수}' : seller.soldCount.toLocaleString('ko-KR'),
-      }}
+      seller={toShopSeller(seller, reviews)}
       products={products}
       productCountText={`${productTotal.toLocaleString('ko-KR')}개`}
       reviews={reviews.content.slice(0, RECENT_REVIEW_SIZE).map(toRecentReview)}
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
-      reviewsTo={null}
+      reviewsTo={`/sellers/${sellerId}/reviews`}
     />
   );
 }
