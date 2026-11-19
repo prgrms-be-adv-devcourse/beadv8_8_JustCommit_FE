@@ -54,6 +54,8 @@ jobs:
     timeout-minutes: 10
     env:
       TARGET: /var/www/replant
+      # 사이트 도메인. 확인 단계가 사용자와 같은 경로(HTTPS + 이 도메인)로 묻는다
+      SITE_DOMAIN: replant.kro.kr
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -71,5 +73,7 @@ jobs:
           rsync -a dist/index.html "$TARGET/index.html"
           echo "배포 완료: ${GITHUB_SHA::7}"
 
+      # Nginx는 certbot 설정 뒤 80번을 https로 넘기고, 도메인이 아닌 Host(127.0.0.1 등)에는 404를 준다.
+      # 그래서 사용자와 같은 https://도메인/ 으로 묻되, --resolve로 연결만 이 서버(127.0.0.1)로 보낸다
       - name: 확인
-        run: curl -fsS -o /dev/null -w "Nginx / 응답 %{http_code}\n" http://127.0.0.1/
+        run: curl -fsS -o /dev/null --resolve "$SITE_DOMAIN:443:127.0.0.1" -w "Nginx https://$SITE_DOMAIN/ 응답 %{http_code}\n" "https://$SITE_DOMAIN/"
