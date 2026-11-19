@@ -24,7 +24,7 @@ export function verifyEmailCode({ email, code }) {
 }
 
 export function checkNickname(nickname) {
-  return client.get('/api/v1/users/checkNickname', { params: { nickname } });
+  return client.get('/api/v1/users/nicknameAvailability', { params: { nickname } });
 }
 
 export function signup(form) {
@@ -44,7 +44,7 @@ export function registerSeller(intro, reviewConsentVersion) {
 }
 
 export function checkPhone(phone) {
-  return client.get('/api/v1/users/checkPhone', { params: { phone } });
+  return client.get('/api/v1/users/phoneAvailability', { params: { phone } });
 }
 
 export function getAddresses() {
