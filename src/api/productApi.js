@@ -21,7 +21,7 @@ export function getSpecies(speciesId) {
 
 // 업로드 링크 발급: files = [{ contentType, size }] → [{ uploadUrl, imageUrl }]
 export function issueImageUploadUrls(files) {
-  return client.post('/api/v1/products/images/upload-urls', { files });
+  return client.post('/api/v1/products/images/uploadUrls', { files });
 }
 
 export function createProduct(form) {
