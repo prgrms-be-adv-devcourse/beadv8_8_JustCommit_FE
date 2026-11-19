@@ -38,3 +38,24 @@ export const REVIEW_BADGE_CLASS = {
   BANNED_SUSPECT: 'bg-[#fef2f2] border border-[#fecaca] text-[#b91c1c]',
   DEFAULT: 'bg-[#f3f4f6] text-[#4b5563]',
 };
+
+// 관리자 확인으로 보낸 이유 (BE ManualReason) → 「확인할 이유」 배지
+// TODO: 배지 문구는 시안에 사유별로 그려져 있지 않아 임시 문구. 시안 · 기획이 정하면 바꿈
+export const MANUAL_REASON_BADGE = {
+  APPEAL: { type: 'APPEAL', text: '이의 신청' },
+  BANNED_SUSPECTED: { type: 'BANNED_SUSPECT', text: '금지 품종 의심' },
+  REVIEW_KEYWORD: { type: 'DEFAULT', text: '확인 단어 포함' },
+  OTHER_SPECIES: { type: 'DEFAULT', text: '기타 품종' },
+  LOW_CONFIDENCE: { type: 'DEFAULT', text: '품종 판단 어려움' },
+  SPECIES_MISMATCH: { type: 'DEFAULT', text: '선택 품종과 다름' },
+  ENGINE_ERROR: { type: 'DEFAULT', text: '자동 검수 오류' },
+  REPEATED_REJECTIONS: { type: 'DEFAULT', text: '반려 반복' },
+};
+
+// 엔진이 본 판매 형태 (BE SaleForm). PLANT 말고는 자동 반려 근거
+export const SALE_FORM_LABEL = {
+  PLANT: '심어진 식물',
+  SEED: '씨앗',
+  CUTTING: '삽수',
+  BULB: '구근',
+};

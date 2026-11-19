@@ -19,9 +19,10 @@ export function getSpecies(speciesId) {
   return client.get(`/api/v1/species/${speciesId}`);
 }
 
-// 업로드 링크 발급: files = [{ contentType, size }] → [{ uploadUrl, imageUrl }]
+// 업로드 링크 발급 (BE ImageUploadUrlRequest · ImageUploadUrlResponse)
+// files = [{ contentType, size }] (1~10개) → [{ uploadUrl, imageUrl }] (요청 순서대로, 링크 10분)
 export function issueImageUploadUrls(files) {
-  return client.post('/api/v1/products/images/upload-urls', { files });
+  return client.post('/api/v1/products/images/uploadUrls', { files });
 }
 
 export function createProduct(form) {
@@ -66,7 +67,6 @@ export function updateProduct(productId, form) {
 
 // TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · products/me/counts)
 // 경로 · 응답은 담당이 확정하면 맞춥니다. 조회 함수는 아직 부르지 않고 화면에 자리 문구를 씁니다.
-// 이의 신청은 버튼을 누르면 부릅니다 (API가 없으면 실패 안내가 보임).
 
 // 등록 제한 현황 → { reviewingCount, reviewingLimit, registeredToday, registerLimit, reviewedToday, reviewLimit }
 export function getMyProductQuota() {
@@ -78,15 +78,25 @@ export function getMyProductCounts() {
   return client.get('/api/v1/products/me/counts');
 }
 
-// 검수 결과 → { stage: CHECKING|MANUAL|DELAYED|PASSED|REJECTED, rejectReason, decidedBy: AUTO|ADMIN,
-//              decidedAt, expiresAt, reReviewLeft, appealable }
-export function getProductReview(productId) {
-  return client.get(`/api/v1/products/${productId}/review`);
+// 내 상품 검수 기록 (BE SellerImageReviewHistoryResponse)
+// → { productId, productStatus, remainingResubmits, appealable, resubmittable,
+//     reviews: [{ reviewVersion, scope, status: IN_REVIEW|ADMIN_CHECK|ADMIN_CHECK_DELAYED|APPROVED|REJECTED|REPLACED,
+//                 rejectReason, rejectMessage, decidedBy: ENGINE|ADMIN|DEADLINE, appealMemo,
+//                 requestedAt, decidedAt, expiresAt }] } (최신 검수 버전부터)
+export function getProductImageReviews(productId) {
+  return client.get(`/api/v1/products/${productId}/imageReviews`);
 }
 
-// 자동 반려 이의 신청 (메모 필수, 200자)
+// 기한 초과(REVIEW_EXPIRED) 반려를 같은 내용으로 다시 검수 요청 (다른 상태면 409 RESUBMIT_NOT_ALLOWED)
+// TODO: 검수 결과 화면(EXPIRED)의 「같은 내용으로 다시 검수받기」는 지금 수정 화면 링크라 아직 부르지 않음.
+//  버튼으로 바꾸려면 시안 · View 수정이 필요해 따로 정합니다.
+export function resubmitProductImageReview(productId) {
+  return client.post(`/api/v1/products/${productId}/imageReviews`);
+}
+
+// 자동 반려 이의 신청 (memo 필수, 200자). 관리자 · 기한 초과 반려는 409 APPEAL_NOT_ALLOWED, 두 번째는 409 APPEAL_ALREADY_USED
 export function appealProductReview(productId, memo) {
-  return client.post(`/api/v1/products/${productId}/review/appeal`, { memo });
+  return client.post(`/api/v1/products/${productId}/appeals`, { memo });
 }
 
 // ===== 판매자 상점 (시안 02-3-1 B안) =====

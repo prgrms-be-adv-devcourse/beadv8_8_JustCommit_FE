@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { appealProductReview, getProduct } from '../../api/productApi';
+import { appealProductReview, getProduct, getProductImageReviews } from '../../api/productApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
+import { REVIEW_REJECT_HELP, REVIEW_REJECT_REASON } from '../../constants/seller';
 import { formatDateTime, formatPrice } from '../../utils/format';
 import ReviewResultView from './ReviewResultView';
 
 // 검수 중일 때 결과를 다시 확인하는 간격
 const POLL_MS = 5000;
 
-// TODO: 검수 결과 API(getProductReview)가 생기면 사유 · 판정 주체 · 기한 · 남은 재검수 횟수를 받아 교체
-// 지금은 상품 상태만 보고 화면을 고르고, 나머지 값은 자리 문구로 둠
-function toReview(product) {
+// 판정 주체 (BE decidedBy) → 화면 문구. 내 판매 목록과 같은 말을 씀
+const DECIDED_BY_LABEL = { ENGINE: '자동 판정', ADMIN: '관리자 판정', DEADLINE: '기한 초과' };
+
+// 검수 기록을 못 받았을 때: 상품 상태만 보고 화면을 고르고, 나머지 값은 자리 문구로 둠
+function toReviewFromProduct(product) {
   if (product.status === 'REVIEW_PENDING') {
     return { stage: 'CHECKING' };
   }
@@ -29,6 +32,40 @@ function toReview(product) {
   return { stage: 'PASSED' };
 }
 
+// 검수 기록(GET products/{productId}/imageReviews) → ReviewResultView의 review
+// 최신 검수 버전(REPLACED 제외) 하나로 화면 단계를 고름
+function toReview(history, product) {
+  const latest = history?.reviews?.find((item) => item.status !== 'REPLACED');
+  if (!latest) return toReviewFromProduct(product);
+
+  const expiresAt = latest.expiresAt ? formatDateTime(latest.expiresAt) : '{확인 기한}';
+  switch (latest.status) {
+    case 'IN_REVIEW':
+      return { stage: 'CHECKING' };
+    case 'ADMIN_CHECK':
+      return { stage: 'MANUAL', expiresAt };
+    case 'ADMIN_CHECK_DELAYED':
+      return { stage: 'DELAYED', expiresAt };
+    case 'APPROVED':
+      return { stage: 'PASSED' };
+    default:
+      break;
+  }
+
+  const code = latest.rejectReason;
+  let stage = 'REJECTED'; // 자동 반려 → 이의 신청 가능
+  if (code === 'REVIEW_EXPIRED') stage = 'EXPIRED';
+  else if (latest.decidedBy === 'ADMIN') stage = 'REJECTED_ADMIN';
+  return {
+    stage,
+    reasonTitle: latest.rejectMessage ?? REVIEW_REJECT_REASON[code] ?? '{반려 사유}',
+    reasonHelp: REVIEW_REJECT_HELP[code] ?? '{반려 사유 설명}',
+    decidedByLabel: DECIDED_BY_LABEL[latest.decidedBy] ?? '{판정 주체}',
+    decidedAt: latest.decidedAt ? formatDateTime(latest.decidedAt) : '{판정 시각}',
+    reReviewLeft: history.remainingResubmits ?? '{재검수 남은 횟수}',
+  };
+}
+
 function ReviewResultPage() {
   usePageTitle('검수 결과');
   const { productId } = useParams();
@@ -36,6 +73,7 @@ function ReviewResultPage() {
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
   const [product, setProduct] = useState(null);
+  const [history, setHistory] = useState(null);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
 
   const [appealOpen, setAppealOpen] = useState(false);
@@ -43,12 +81,17 @@ function ReviewResultPage() {
   const [appealError, setAppealError] = useState('');
   const [isAppealing, setIsAppealing] = useState(false);
 
+  // 상품 + 검수 기록. 검수 기록이 실패하면 상품 상태만으로 화면을 고름 (toReviewFromProduct)
   const load = useCallback(
     () =>
-      getProduct(productId).then((response) => {
-        setProduct(response.data.data);
+      Promise.all([
+        getProduct(productId),
+        getProductImageReviews(productId).catch(() => null),
+      ]).then(([productResponse, historyResponse]) => {
+        setProduct(productResponse.data.data);
+        setHistory(historyResponse?.data.data ?? null);
         setLoadState('done');
-        return response.data.data;
+        return productResponse.data.data;
       }),
     [productId],
   );
@@ -100,7 +143,7 @@ function ReviewResultPage() {
 
   return (
     <ReviewResultView
-      review={toReview(product)}
+      review={toReview(history, product)}
       product={{
         productId,
         title: product.title,
