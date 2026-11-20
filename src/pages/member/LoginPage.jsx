@@ -7,8 +7,8 @@ import { startKakaoLogin } from '../../utils/oauth';
 import LoginView from './login/LoginView';
 
 // 카카오 로그인 실패 코드 → 위쪽 안내 상자 (OAuthCallbackPage가 state.socialError로 넘김)
-// TODO(member): 지금 백엔드 SocialLoginFailureHandler는 이유와 관계없이 SOCIAL_LOGIN_FAILED만 넘깁니다.
-//   SOCIAL_EMAIL_CONFLICT · SOCIAL_EMAIL_REQUIRED와 가린 이메일(ki***@example.com)을 콜백 주소로 넘겨 주면 시안 06-1-3 · 06-1-4가 나옵니다.
+// 백엔드 SocialLoginSuccessHandler가 SOCIAL_EMAIL_CONFLICT · SOCIAL_EMAIL_REQUIRED를 ?error=로 넘김
+// TODO(member): 가린 이메일(ki***@example.com)은 콜백 주소로 넘기지 않음 → 넘겨 주면 06-1-3 문구에 넣음 (그전까지 자리 문구)
 function toSocialNotice({ code, maskedEmail }) {
   if (code === 'SOCIAL_EMAIL_CONFLICT') {
     return {
