@@ -26,9 +26,32 @@ export function createCharge(amount) {
   return client.post('/api/v1/wallet/charges', { amount });
 }
 
-// 토스 결제 성공 후 승인 → { chargeId, amount, balanceAfter, ... }
+// 충전 승인은 토스 승인을 최대 60초 기다림 → 게이트웨이 payment-charge-confirm 라우트(65초)에 맞춰 이 요청만 늘림
+const CHARGE_CONFIRM_TIMEOUT_MS = 65000;
+
+// 토스 결제 성공 후 승인 → { chargeId, status, pgOrderNo, amount, balanceAfter, approvedAt }
+// status: APPROVED(적립 완료) | PENDING(결과 불명 · 반영 실패, 200 "충전 처리 중입니다." · balanceAfter는 적립 전 잔액)
 export function confirmCharge(chargeId, { paymentKey, orderId, amount }) {
-  return client.post(`/api/v1/wallet/charges/${chargeId}/confirm`, { paymentKey, orderId, amount });
+  return client.post(
+    `/api/v1/wallet/charges/${chargeId}/confirm`,
+    { paymentKey, orderId, amount },
+    { timeout: CHARGE_CONFIRM_TIMEOUT_MS },
+  );
+}
+
+// 인출 신청 (인출 가능 금액 안에서, 받는 계좌는 서버가 member에서 조회)
+// Idempotency-Key 필수: 같은 키로 다시 보내면 처음 결과 (금액이 다르면 409 IDEMPOTENCY_KEY_CONFLICT)
+// 응답: { cashOutId, amount, status, accountLast4, balanceAfter } (은행 이름 · 신청 시각 없음)
+// status: PENDING | COMPLETED (지급 실패도 200 + PENDING)
+export function requestCashOut(amount, idempotencyKey) {
+  return client.post('/api/v1/wallet/cashOuts', { amount }, { headers: { 'Idempotency-Key': idempotencyKey } });
+}
+
+// 인출 내역 → Spring Page { content: [{ cashOutId, amount, status, accountLast4, requestedAt, completedAt }], ... }
+// 기본 20건, 신청 시각 최신순. 지갑이 없으면 빈 목록
+// TODO: 은행 이름(bankCode)이 응답에 없음 · 이체 실패 상태는 #389에서 추가 예정
+export function getCashOuts(params = {}) {
+  return client.get('/api/v1/wallet/cashOuts', { params });
 }
 
 // ===== 아래는 백엔드 API가 아직 없는 기능 (docs/reference/external-apis.md 「추가 예정」 payment) =====
@@ -45,17 +68,4 @@ export function getCharges(params = {}) {
 // 필요한 응답: { chargeId, cancelledAmount(이번에 취소된 금액), usedAmount, balanceAfter }
 export function cancelCharge(chargeId) {
   return client.post(`/api/v1/wallet/charges/${chargeId}/cancel`);
-}
-
-// TODO: 인출 신청 (인출 가능 금액 안에서, 받는 계좌는 서버가 member에서 조회)
-// 필요한 응답: { cashOutId, amount, status, bankName, accountLast4, requestedAt }
-export function requestCashOut(amount) {
-  return client.post('/api/v1/wallet/cash-outs', { amount });
-}
-
-// TODO: 인출 내역
-// 필요한 응답: { content: [{ cashOutId, amount, bankName, accountLast4, status, requestedAt }] }
-// status: REQUESTED(신청됨) | COMPLETED(인출 완료) | FAILED(이체 실패, 금액 복원)
-export function getCashOuts(params = {}) {
-  return client.get('/api/v1/wallet/cash-outs', { params });
 }
