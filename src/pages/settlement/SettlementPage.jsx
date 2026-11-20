@@ -8,6 +8,7 @@ import { fetchSettlements, toSettlementRow } from './settlementRows';
 import SettlementView from './SettlementView';
 
 function isThisMonth(value) {
+  if (!value) return false;
   const date = new Date(value);
   const now = new Date();
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
