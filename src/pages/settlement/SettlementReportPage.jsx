@@ -70,7 +70,8 @@ function SettlementReportPage() {
     return day >= range.from && day <= range.to;
   });
 
-  const sum = (list, field) => list.reduce((total, row) => total + row[field], 0);
+  // 값이 없는 칸은 0으로 더함 (NaN 방지)
+  const sum = (list, field) => list.reduce((total, row) => total + (Number(row[field]) || 0), 0);
   const fee = sum(inRange, 'fee');
   const burden = sum(inRange, 'sellerBurden');
   const summary = {
@@ -88,7 +89,7 @@ function SettlementReportPage() {
   const monthList = Array.from({ length: CHART_MONTHS }, (_, i) => {
     const date = new Date(end.getFullYear(), end.getMonth() - (CHART_MONTHS - 1 - i), 1);
     const key = monthKey(date.getFullYear(), date.getMonth());
-    const amount = rows.filter((row) => row.date?.slice(0, 7) === key).reduce((t, row) => t + row.payoutAmount, 0);
+    const amount = rows.filter((row) => row.date?.slice(0, 7) === key).reduce((t, row) => t + (Number(row.payoutAmount) || 0), 0);
     return { key, label: `${date.getMonth() + 1}월`, amount, selected: key >= fromMonth && key <= toMonth };
   });
   const max = Math.max(...monthList.map((month) => month.amount), 0);

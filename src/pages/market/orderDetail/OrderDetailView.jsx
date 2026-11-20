@@ -61,13 +61,15 @@ function TrackingLine({ tracking, onOpenTracking }) {
             {`${tracking.invoiceLabel} `}
             <span className="font-semibold text-[#111827] tabular-nums">{tracking.invoiceNo}</span>
           </span>
-          <Separator />
+          {tracking.location && <Separator />}
         </>
       )}
-      <span className="flex items-center gap-1 text-[#111827] min-w-0">
-        <PinIcon />
-        <span className="truncate">{tracking.location}</span>
-      </span>
+      {tracking.location && (
+        <span className="flex items-center gap-1 text-[#111827] min-w-0">
+          <PinIcon />
+          <span className="truncate">{tracking.location}</span>
+        </span>
+      )}
       <button
         type="button"
         className="ml-auto shrink-0 flex items-center gap-0.5 text-[13px] font-semibold text-[#0f4c3a]"
@@ -86,11 +88,15 @@ function DistanceBox({ distance, refreshCooldown, onRefresh }) {
   return (
     <div className={`mx-5 my-3 px-4 py-3 border ${box} space-y-1`}>
       <div className="flex items-center gap-3">
-        <p className="text-sm text-[#111827]">
-          {'수거지까지 기사님 거리 약 '}
-          <b className="tabular-nums">{distance.km}</b>{' '}
-          <span className="text-[13px] text-[#6b7280] tabular-nums">{`· ${distance.checkedAt} 기준`}</span>
-        </p>
+        {distance.km && (
+          <p className="text-sm text-[#111827]">
+            {'수거지까지 기사님 거리 약 '}
+            <b className="tabular-nums">{distance.km}</b>{' '}
+            {distance.checkedAt && (
+              <span className="text-[13px] text-[#6b7280] tabular-nums">{`· ${distance.checkedAt} 기준`}</span>
+            )}
+          </p>
+        )}
         <span className="ml-auto">
           {refreshCooldown > 0 ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-[#9ca3af] tabular-nums">

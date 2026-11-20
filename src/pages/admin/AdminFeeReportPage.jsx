@@ -5,8 +5,13 @@ import usePageTitle from '../../hooks/usePageTitle';
 import ErrorPage from '../../components/common/ErrorPage';
 import { REPORT_PERIODS } from '../../constants/adminReport';
 import AdminFeeReportView from './AdminFeeReportView';
+import ComingSoonPage from '../ComingSoonPage';
 
 const DEFAULT_PERIOD = 'MONTH';
+
+// BE 수수료 리포트 API(GET /api/v1/admin/reports/fees)가 아직 없음. 생기면 true로 바꿈.
+// 그 전까지는 기간과 상관없이 「준비 중」 화면 (시안 09-3-1 · 09-3-2 제목의 「미구현 · 준비 중 화면」)
+const FEE_REPORT_API_READY = false;
 
 // 일별 내역 CSV (표와 같은 열, 금액 단위: 원)
 function buildCsv(report) {
@@ -61,13 +66,13 @@ function AdminFeeReportPage() {
   useEffect(() => {
     let ignore = false;
     // TODO: 「직접 선택」은 기간 고르기 시안이 없어 아직 조회하지 않음
-    if (period === 'CUSTOM') return undefined;
+    if (!FEE_REPORT_API_READY || period === 'CUSTOM') return undefined;
     getFeeReport({ period })
       .then((response) => {
         if (!ignore) setResult({ period, report: response.data.data, status: null });
       })
       .catch((error) => {
-        // TODO: BE 리포트 API가 생기기 전에는 실패하므로 자리 문구 화면을 그대로 둠
+        // TODO: BE 리포트 API가 생기기 전에는 실패하므로 「준비 중」 화면을 보여 줌
         if (!ignore) setResult({ period, report: null, status: error.response?.status ?? null });
       });
     return () => {
@@ -75,7 +80,10 @@ function AdminFeeReportPage() {
     };
   }, [period]);
 
+  if (!FEE_REPORT_API_READY) return <ComingSoonPage title="수수료 · 배송비 리포트" />;
   if (result.status === 403) return <ErrorPage type="FORBIDDEN" />;
+  // 조회가 끝났는데 리포트가 없으면(API 없음 · 실패) 빈 값 대신 준비 중 안내
+  if (result.period === period && result.report == null) return <ComingSoonPage title="수수료 · 배송비 리포트" />;
 
   const report = result.period === period ? result.report : null;
 

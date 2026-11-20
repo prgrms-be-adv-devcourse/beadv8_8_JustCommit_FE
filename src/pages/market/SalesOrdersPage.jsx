@@ -14,6 +14,7 @@ import { formatDateTime, formatPrice } from '../../utils/format';
 import { addHours, formatMonthDayTime } from '../../utils/sellerFormat';
 import { attachTrackingNos, fetchSalesOrders } from './salesOrderLoader';
 import SalesOrdersView from './SalesOrdersView';
+import { EMPTY, NO_TRACKING_NO, CANCELLED_LABEL } from '../../constants/emptyText';
 
 // "몬스테라 델리시오사 외 1개"
 function getItemName(order) {
@@ -21,12 +22,15 @@ function getItemName(order) {
   return order.itemCount > 1 ? `${name} 외 ${order.itemCount - 1}개` : name;
 }
 
-// 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 자리 문구
-function deadlineText(deadline, startedAt, hours, placeholder) {
+// 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 null (문장에서 시각을 뺌)
+function deadlineText(deadline, startedAt, hours) {
   if (deadline) return formatMonthDayTime(deadline);
   if (startedAt) return formatMonthDayTime(addHours(startedAt, hours));
-  return placeholder;
+  return null;
 }
+
+// "10월 17일 14:20까지 " · 시각이 없으면 ''
+const untilText = (text) => (text ? `${text}까지 ` : '');
 
 // 판매 주문 응답 → 목록 한 줄
 // 송장번호(trackingNo)는 목록 응답에 없어 판매 주문 상세로 채움(attachTrackingNos)
@@ -38,7 +42,7 @@ function toSalesRow(order) {
     sellerOrderId: order.sellerOrderId,
     createdAtText: formatDateTime(order.createdAt),
     orderNo: order.orderNo,
-    buyer: order.buyerNickname ?? '{구매자 닉네임}',
+    buyer: order.buyerNickname ?? EMPTY,
     thumbnailUrl: order.thumbnailUrl,
     itemName: getItemName(order),
     amountText: formatPrice(Number(order.saleAmount ?? order.totalAmount)),
@@ -47,11 +51,11 @@ function toSalesRow(order) {
     statusNote: null,
     action: 'DETAIL',
   };
-  const tracking = order.trackingNo ?? '{송장번호}';
+  const tracking = order.trackingNo ?? NO_TRACKING_NO;
 
   switch (statusKey) {
     case 'ACCEPT_PENDING':
-      row.statusNote = `${deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}')}까지 수락하지 않으면 자동으로 거절돼요`;
+      row.statusNote = `${untilText(deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS))}수락하지 않으면 자동으로 거절돼요`;
       row.action = 'ACCEPT';
       break;
     case 'PICKUP':
@@ -60,11 +64,11 @@ function toSalesRow(order) {
       row.statusNote = `송장번호 ${tracking}`;
       break;
     case 'RETURN_REQUESTED':
-      row.statusNote = `${deadlineText(order.returnDeadlineAt, order.returnRequestedAt, RETURN_RESPONSE_HOURS, '{응답 마감}')}까지 응답하지 않으면 자동으로 승인돼요`;
+      row.statusNote = `${untilText(deadlineText(order.returnDeadlineAt, order.returnRequestedAt, RETURN_RESPONSE_HOURS))}응답하지 않으면 자동으로 승인돼요`;
       row.action = 'RETURN';
       break;
     case 'CANCELLED':
-      row.statusLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? '{취소 주체}';
+      row.statusLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? CANCELLED_LABEL;
       row.statusNote = '결제 금액이 구매자에게 환불됐어요';
       break;
     default:

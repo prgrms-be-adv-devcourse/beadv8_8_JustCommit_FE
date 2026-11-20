@@ -15,6 +15,7 @@ import { formatPrice } from '../../../utils/format';
 import WithdrawView from './WithdrawView';
 import { AccountMenuContext } from './accountMenuContext';
 import useMyInfo from './useMyInfo';
+import { orEmpty } from '../../../constants/emptyText';
 
 // 탈퇴가 막힌 이유 → 모달 줄 (06-5-16, 값이 없거나 0이면 그 줄은 숨김)
 // details: 서비스별 blockers[].details를 합친 것 (BE WithdrawalEligibilityResponse)
@@ -44,7 +45,7 @@ function toBlockers(details = {}) {
     .filter((row) => (row.unit === 'flag' ? row.value === true : row.value > 0))
     .map((row) => {
       if (row.unit === 'flag') return { ...row, valueText: '' };
-      return { ...row, valueText: row.unit === 'won' ? formatPrice(row.value) : `${row.value}건` };
+      return { ...row, valueText: row.unit === 'won' ? formatPrice(row.value) : `${orEmpty(row.value)}건` };
     });
 }
 

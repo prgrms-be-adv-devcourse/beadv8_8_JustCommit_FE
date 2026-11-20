@@ -54,7 +54,7 @@ export function getCashOuts(params = {}) {
 }
 
 // ===== 아래는 백엔드 API가 아직 없는 기능 (docs/reference/external-apis.md 「추가 예정」 payment) =====
-// 경로는 담당이 확정 전이라 임시로 적어 둠. 화면은 지금 이 함수 결과 대신 자리 문구를 보여 줌
+// 경로는 담당이 확정 전이라 임시로 적어 둠. 화면은 지금 이 함수 결과 대신 일반 문구를 보여 줌
 
 // TODO: 충전 내역 (충전 취소는 하지 않기로 함). 지금 충전 내역 화면은 거래 내역(refType=CHARGE)으로 그림
 // 필요한 응답: { content: [{ chargeId, amount, status, approvedAt }] }

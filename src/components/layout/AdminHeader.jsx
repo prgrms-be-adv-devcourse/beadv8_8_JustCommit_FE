@@ -3,12 +3,13 @@ import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import CountBadge from '../common/CountBadge';
 import logo from '../../assets/logo.webp';
+import { EMPTY } from '../../constants/emptyText';
 
 // 시안: 캔버스 「replant 웹 시안」 09 관리자 헤더 (AdminHeader)
 // 알림 종 · 안 읽은 수 배지는 일반 Header와 같은 알림 컨텍스트 · 경로(/notifications)를 씀
 
-// pendingReviewCount: 사진 검수 대기 수 (AdminLayout이 관리자 확인 대기 목록의 totalElements로 줌). 불러오기 전 · 실패면 기본값 자리 문구
-function AdminHeader({ pendingReviewCount = '{검수 대기 수}' }) {
+// pendingReviewCount: 사진 검수 대기 수 (AdminLayout이 관리자 확인 대기 목록의 totalElements로 줌). 불러오기 전 · 실패면 배지 숨김
+function AdminHeader({ pendingReviewCount }) {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotification();
   const navigate = useNavigate();
@@ -41,13 +42,15 @@ function AdminHeader({ pendingReviewCount = '{검수 대기 수}' }) {
             {({ isActive }) => (
               <>
                 사진 검수
-                <span
-                  className={`min-w-[22px] h-[22px] px-1.5 flex items-center justify-center text-xs font-semibold ${
-                    isActive ? 'bg-[#0f4c3a] text-white' : 'bg-[#f3f4f6] text-[#4b5563]'
-                  }`}
-                >
-                  {pendingReviewCount}
-                </span>
+                {typeof pendingReviewCount === 'number' && (
+                  <span
+                    className={`min-w-[22px] h-[22px] px-1.5 flex items-center justify-center text-xs font-semibold ${
+                      isActive ? 'bg-[#0f4c3a] text-white' : 'bg-[#f3f4f6] text-[#4b5563]'
+                    }`}
+                  >
+                    {pendingReviewCount}
+                  </span>
+                )}
               </>
             )}
           </NavLink>
@@ -71,7 +74,7 @@ function AdminHeader({ pendingReviewCount = '{검수 대기 수}' }) {
             </svg>
             <CountBadge count={unreadCount} />
           </Link>
-          <span className="text-[#4b5563]">{user?.nickname ?? '{관리자 이름}'}</span>
+          <span className="text-[#4b5563]">{user?.nickname ?? EMPTY}</span>
           <a href="/login" onClick={handleLogout} className="flex items-center gap-1 text-[#4b5563] underline">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

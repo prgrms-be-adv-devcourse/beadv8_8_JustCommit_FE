@@ -7,6 +7,7 @@ import { formatTime } from '../../utils/format';
 import { SocialSignupView } from './signup/SignupViews';
 import { TERMS_REQUIRED_MESSAGE } from './signup/memberRules';
 import useMemberInfoForm from './signup/useMemberInfoForm';
+import { EMPTY } from '../../constants/emptyText';
 
 // 시안 06-3-10 카카오 가입 (가입 토큰 10분 안에 정보 입력)
 
@@ -119,8 +120,8 @@ function SocialSignupPage() {
 
   return (
     <SocialSignupView
-      email={claims.email || '{카카오 이메일}'}
-      remainingText={remaining === null ? '{남은 시간}' : formatTime(remaining)}
+      email={claims.email || EMPTY}
+      remainingText={remaining === null ? EMPTY : formatTime(remaining)}
       form={info.form}
       on={info.on}
       termsAgreed={termsAgreed}

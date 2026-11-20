@@ -12,6 +12,7 @@ import useWallet from '../../hooks/useWallet';
 import { formatPrice, formatTime, maskPhone } from '../../utils/format';
 import AddressModal from '../member/mypage/AddressModal';
 import CheckoutView, { AddressChangeModal, LeaveModal, PriceChangedModal, ShippingFeeChangedModal } from './CheckoutView';
+import { EMPTY } from '../../constants/emptyText';
 
 // 주문서 두 가지 모드
 // - /checkout?items=12,13 : 장바구니에서 고른 상품으로 새 주문 (배송지 변경 가능)
@@ -75,12 +76,12 @@ function groupCartItems(items, prevPrices) {
 }
 
 // 결제 대기 주문 상세 → 판매자별 묶음
-// 판매자 이름은 주문 상세 응답에 없어 판매자 공개 API로 채움(withSellerNicknames). 실패하면 자리 문구
+// 판매자 이름은 주문 상세 응답에 없어 판매자 공개 API로 채움(withSellerNicknames). 실패하면 「-」
 function groupOrderItems(order) {
   return (order.sellerOrders ?? []).map((sellerOrder) => ({
     key: sellerOrder.id,
     sellerId: sellerOrder.sellerId,
-    sellerName: sellerOrder.sellerName ?? '{판매자 이름}',
+    sellerName: sellerOrder.sellerName ?? EMPTY,
     shippingFee: Number(sellerOrder.shippingFee ?? SHIPPING_FEE_PER_SELLER),
     items: sellerOrder.items.map((item) => ({
       key: item.id,

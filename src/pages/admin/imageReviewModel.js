@@ -2,6 +2,7 @@
 // 응답 필드는 api/adminApi.js 참고
 import { ADMIN_REJECT_REASONS } from '../../constants/imageReview';
 import { formatStepTime } from '../../utils/format';
+import { orEmpty } from '../../constants/emptyText';
 
 // 관리자 확인으로 보낸 이유 (BE ManualReason) → 배지
 const MANUAL_REASON_BADGE = {
@@ -93,7 +94,7 @@ function toCandidates(review) {
 }
 
 function toHistory(review) {
-  const history = [{ time: formatStepTime(review.requestedAt), text: `검수 요청 (버전 ${review.reviewVersion})` }];
+  const history = [{ time: formatStepTime(review.requestedAt), text: `검수 요청 (버전 ${orEmpty(review.reviewVersion)})` }];
   if (review.appealedAt) {
     const reason = ADMIN_REJECT_REASONS.find((item) => item.code === review.rejectReason);
     history.push({ time: formatStepTime(review.appealedAt), text: `자동 반려${reason ? ` (${reason.label})` : ''} 뒤 이의 신청` });

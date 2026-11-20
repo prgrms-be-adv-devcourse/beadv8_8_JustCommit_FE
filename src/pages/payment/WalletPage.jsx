@@ -13,22 +13,22 @@ import { describeTransaction, loadDescriptionRefs } from './walletDescriptions';
 const FETCH_SIZE = 100;
 
 // 거래 종류(백엔드 RefType)별 배지 · 설명
-// description: 참조 값을 불러오기 전 · 찾지 못했을 때 쓰는 기본 문구 (상품명 등은 walletDescriptions.js가 refId로 채움)
+// description: 참조 값을 불러오기 전 · 찾지 못했을 때 쓰는 일반 문구 (상품명 등은 walletDescriptions.js가 refId로 채움)
 // TODO: 거래 응답에 설명이 생기면 description으로 교체
 const REF_TYPE = {
   CHARGE: { badge: '충전', description: '토스페이먼츠 충전' },
-  PAYMENT: { badge: '결제', description: '{대표 상품명} 외 {N}개' },
-  SHIPPING_FEE: { badge: '결제', description: '{판매자} 배송비' },
-  ORDER_REFUND: { badge: '환불', description: '{상품명} · {환불 사유}' },
-  ORDER_ITEM_CANCEL_REFUND: { badge: '환불', description: '{상품명} · {환불 사유}' },
-  SHIPPING_FEE_REFUND: { badge: '환불', description: '{판매자} 배송비 환불' },
-  SETTLEMENT: { badge: '정산', description: '{상품명} 판매 정산' },
-  SETTLEMENT_FEE: { badge: '정산', description: '{상품명} 정산 수수료' },
+  PAYMENT: { badge: '결제', description: '상품 결제' },
+  SHIPPING_FEE: { badge: '결제', description: '배송비' },
+  ORDER_REFUND: { badge: '환불', description: '주문 환불' },
+  ORDER_ITEM_CANCEL_REFUND: { badge: '환불', description: '주문 취소 환불' },
+  SHIPPING_FEE_REFUND: { badge: '환불', description: '배송비 환불' },
+  SETTLEMENT: { badge: '정산', description: '판매 정산' },
+  SETTLEMENT_FEE: { badge: '정산', description: '정산 수수료' },
   // TODO: 시안에 없는 거래 종류 (정산 회수 · 미수금 차감) → 배지 · 문구는 시안 확인 필요
   SETTLEMENT_COLLECTION: { badge: '정산', description: '정산 회수' },
   RECEIVABLE_COLLECTION: { badge: '정산', description: '미수금 차감' },
-  CASH_OUT: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 계좌로 인출' },
-  CASH_OUT_CANCEL: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 이체 실패로 복원' },
+  CASH_OUT: { badge: '인출', description: '계좌로 인출' },
+  CASH_OUT_CANCEL: { badge: '인출', description: '이체 실패로 복원' },
 };
 
 // 탭: 같은 성격의 거래 종류를 묶음 (결제 = 상품 결제 + 배송비 등)

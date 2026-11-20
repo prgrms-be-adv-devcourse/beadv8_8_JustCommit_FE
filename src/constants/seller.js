@@ -1,3 +1,4 @@
+import { orEmpty } from './emptyText';
 // 판매자 화면(시안 08 · 04 판매 주문 상세)에서 쓰는 상태 · 문구
 // 판매자 화면(내 판매 목록 · 상품 수정 · 검수 결과)의 상품 상태 배지 (시안 08)
 // tone: 배지 색 클래스. 검수 중은 검수 단계(응답의 reviewStatus)에 따라 라벨 · 색이 바뀜
@@ -39,16 +40,24 @@ export const REVIEW_REJECT_HELP = {
 // 등록 제한 줄 (상품 등록 · 내 판매 목록). 값은 GET products/me/counts
 // 검수 중 한도(5개)는 응답에 없어 BE ProductService.REVIEW_PENDING_LIMIT 값을 그대로 씀
 export const REVIEW_PENDING_LIMIT = 5;
+// 하루 등록 한도 · 하루 사진 검수 한도 (BE MyProductCountResponse dailyRegisterLimit · dailyPhotoReviewLimit의 정책값).
+// 응답에 한도가 없어도 같은 숫자로 보여 줌
+export const DAILY_REGISTER_LIMIT = 20;
+export const DAILY_PHOTO_REVIEW_LIMIT = 30;
 
-// counts 응답 → QuotaBar 문구. counts가 없으면(불러오기 전 · 실패) 「-」
+// counts 응답 → QuotaBar 문구. counts가 없거나(불러오기 전 · 실패) 필드가 없으면 「-」
 export function toQuota(counts) {
   if (!counts) {
-    return { reviewing: `- / ${REVIEW_PENDING_LIMIT}개`, registeredToday: '- / 20건', reviewedToday: '- / 30회' };
+    return {
+      reviewing: `- / ${REVIEW_PENDING_LIMIT}개`,
+      registeredToday: `- / ${DAILY_REGISTER_LIMIT}건`,
+      reviewedToday: `- / ${DAILY_PHOTO_REVIEW_LIMIT}회`,
+    };
   }
   return {
-    reviewing: `${counts.reviewPending} / ${REVIEW_PENDING_LIMIT}개`,
-    registeredToday: `${counts.todayRegistered} / ${counts.dailyRegisterLimit}건`,
-    reviewedToday: `${counts.todayPhotoReviews} / ${counts.dailyPhotoReviewLimit}회`,
+    reviewing: `${orEmpty(counts.reviewPending)} / ${REVIEW_PENDING_LIMIT}개`,
+    registeredToday: `${orEmpty(counts.todayRegistered)} / ${counts.dailyRegisterLimit ?? DAILY_REGISTER_LIMIT}건`,
+    reviewedToday: `${orEmpty(counts.todayPhotoReviews)} / ${counts.dailyPhotoReviewLimit ?? DAILY_PHOTO_REVIEW_LIMIT}회`,
   };
 }
 
@@ -93,7 +102,9 @@ export const SETTLEMENT_FEE_RATE = 0.05;
  * 판매 주문 상태 키(SALES_ORDER_STATUS)를 계산
  * 수락 대기: 주문 상태(OrderStatus)에는 없고, 목록은 acceptPending(boolean),
  *           상세는 items[].status === 'ACCEPT_PENDING'으로 옴 (BE SellerOrderResponse · SellerOrderDetailResponse)
- * TODO: 백엔드 반품 신청 상태가 생기면 필드명을 확인
+ * 반품 신청: 상세는 items[].status === 'RETURN_REQUESTED'(BE OrderItemStatus)로 옴
+ * TODO: 목록 응답(SellerOrderResponse)에는 주문상품 상태 · 반품 여부가 없어 목록에서는 반품 신청을 못 가림.
+ *       BE에 returnRequested(boolean)가 생기면 그대로 쓰임
  */
 export function getSalesOrderStatus(order) {
   if (order.status === 'CANCELLED') return 'CANCELLED';
@@ -105,7 +116,7 @@ export function getSalesOrderStatus(order) {
     return 'ACCEPT_PENDING';
   }
   const items = order.items ?? [];
-  if (order.returnRequested || items.some((item) => item.status === 'REFUND_REQUESTED')) {
+  if (order.returnRequested || items.some((item) => item.status === 'RETURN_REQUESTED')) {
     return 'RETURN_REQUESTED';
   }
   if (order.status === 'COMPLETED' || order.confirmedAt) return 'CONFIRMED';

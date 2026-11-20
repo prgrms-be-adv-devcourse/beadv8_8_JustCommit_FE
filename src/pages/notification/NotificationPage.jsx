@@ -10,6 +10,8 @@ import {
 import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import usePageTitle from '../../hooks/usePageTitle';
+import { toValidDate } from '../../utils/format';
+import { EMPTY } from '../../constants/emptyText';
 import NotificationView from './NotificationView';
 
 const PAGE_SIZE = 20;
@@ -24,7 +26,8 @@ async function fetchPage(page, tab) {
 
 // "방금 전" · "3분 전" · "1시간 전" · "어제" · "10월 14일" (시안 06-6-1)
 function formatNotificationTime(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60000);
   if (diffMinutes < 1) return '방금 전';
   if (diffMinutes < 60) return `${diffMinutes}분 전`;

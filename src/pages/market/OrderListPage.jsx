@@ -3,7 +3,8 @@ import { Navigate } from 'react-router-dom';
 import { getOrder, getOrders, mapWithLimit, withSellerNicknames } from '../../api/orderApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { formatDate, formatPrice, formatTime } from '../../utils/format';
+import { formatDate, formatPrice, formatTime, toValidDate } from '../../utils/format';
+import { EMPTY } from '../../constants/emptyText';
 import OrderListView from './OrderListView';
 
 // 시안 03-4 주문 목록
@@ -38,7 +39,7 @@ async function fetchAllOrders() {
 
 const DETAIL_CONCURRENCY = 4; // 주문 상세를 동시에 부르는 수
 
-const LIVE_ITEM = (item) => !['CANCELLED', 'REFUNDED'].includes(item.status);
+const LIVE_ITEM = (item) => !['CANCELLED', 'RETURNED'].includes(item.status);
 
 // 주문 상세의 판매자 주문 → 목록 카드 한 줄에 쓰는 값 (BE OrderDetailResponse.SellerOrderDetail)
 // 판매자 주문 상태는 응답에 없어 주문상품 상태로 정함: 모두 취소 → CANCELLED, 수락 대기 상품 → ACCEPT_PENDING,
@@ -70,7 +71,7 @@ function toListSellerOrder(sellerOrder) {
 }
 
 // 주문 목록 응답에는 판매자 주문이 없어 주문 상세(GET orders/{id}) + 판매자 닉네임으로 채움
-// 상세를 못 불러온 주문은 목록 응답 그대로 (자리 문구)
+// 상세를 못 불러온 주문은 목록 응답 그대로 (없는 값은 「-」)
 async function attachSellerOrders(orders) {
   return mapWithLimit(orders, DETAIL_CONCURRENCY, async (order) => {
     try {
@@ -86,7 +87,8 @@ async function attachSellerOrders(orders) {
 
 // "10월 15일 14:20"
 function formatMonthDayTime(ms) {
-  const date = new Date(ms);
+  const date = toValidDate(ms);
+  if (!date) return EMPTY;
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes}`;
@@ -94,7 +96,8 @@ function formatMonthDayTime(ms) {
 
 // "10월 11일"
 function formatMonthDay(ms) {
-  const date = new Date(ms);
+  const date = toValidDate(ms);
+  if (!date) return EMPTY;
   return `${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
@@ -108,7 +111,7 @@ const STAGES = {
   REJECTED: { badge: { label: '판매자 거절', tone: 'gray' }, tab: 'CANCELLED', muted: true },
   AUTO_CANCELLED: { badge: { label: '자동 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
   CANCELLED: { badge: { label: '주문 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
-  UNKNOWN: { badge: { label: '{배송 상태}', tone: 'green' }, tab: 'SHIPPING' },
+  UNKNOWN: { badge: { label: '진행 중', tone: 'green' }, tab: 'SHIPPING' }, // 배송 상태를 모를 때 일반 배지
 };
 
 // 판매자 주문 → 단계
@@ -139,30 +142,33 @@ function getStage(sellerOrder) {
 }
 
 function getStageNote(stage, sellerOrder) {
-  const refund = sellerOrder.refundAmount != null ? formatPrice(Number(sellerOrder.refundAmount)) : '{환불 금액}';
+  // 환불 금액이 없으면 금액만 빼고 안내
+  const refund = sellerOrder.refundAmount != null ? `${formatPrice(Number(sellerOrder.refundAmount))}이 ` : '';
   if (stage !== 'REJECTED' && stage !== 'AUTO_CANCELLED' && sellerOrder.cancelledItemCount > 0) {
     const count = sellerOrder.cancelledItemCount;
-    return { strong: `일부 취소 ${count}건`, text: `판매자가 ${count}건을 거절해 ${refund}이 예치금으로 환불됐어요` };
+    return { strong: `일부 취소 ${count}건`, text: `판매자가 ${count}건을 거절해 ${refund}예치금으로 환불됐어요` };
   }
   switch (stage) {
     case 'ACCEPT': {
+      // 결제 시각이 없으면 마감 시각 없이 안내
       const deadline = sellerOrder.paidAt
-        ? formatMonthDayTime(new Date(sellerOrder.paidAt).getTime() + ACCEPT_WINDOW_MS)
-        : '{수락 마감 시각}';
-      return { tone: 'amber', text: `${deadline}까지 판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요` };
+        ? `${formatMonthDayTime(new Date(sellerOrder.paidAt).getTime() + ACCEPT_WINDOW_MS)}까지 `
+        : '';
+      return { tone: 'amber', text: `${deadline}판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요` };
     }
     case 'PICKUP':
       return { tone: 'gray', text: '택배사가 곧 상품을 가지러 가요' };
     case 'DELIVERED': {
+      // 배송 완료 시각이 없으면 날짜 없이 안내
       const date = sellerOrder.deliveredAt
-        ? formatMonthDay(new Date(sellerOrder.deliveredAt).getTime() + AUTO_CONFIRM_MS)
-        : '{자동 구매 확정일}';
-      return { tone: 'gray', text: `${date}에 자동으로 구매 확정돼요` };
+        ? `${formatMonthDay(new Date(sellerOrder.deliveredAt).getTime() + AUTO_CONFIRM_MS)}에`
+        : `배송 완료 ${AUTO_CONFIRM_MS / (24 * 60 * 60 * 1000)}일 뒤`;
+      return { tone: 'gray', text: `${date} 자동으로 구매 확정돼요` };
     }
     case 'REJECTED':
-      return { tone: 'gray', text: `판매자가 주문을 거절해 ${refund}이 예치금으로 환불됐어요` };
+      return { tone: 'gray', text: `판매자가 주문을 거절해 ${refund}예치금으로 환불됐어요` };
     case 'AUTO_CANCELLED':
-      return { tone: 'gray', text: `판매자가 24시간 안에 수락하지 않아 ${refund}이 예치금으로 환불됐어요` };
+      return { tone: 'gray', text: `판매자가 24시간 안에 수락하지 않아 ${refund}예치금으로 환불됐어요` };
     default:
       return null;
   }
@@ -198,7 +204,7 @@ function toCard(order, now) {
       ...base,
       tabs: ['PENDING'],
       headerBadge: { label: '결제 대기', tone: 'pending' },
-      rows: [{ ...summaryRow, sellerText: sellerCount ? `판매자 ${sellerCount}곳` : '{판매자 수}' }],
+      rows: [{ ...summaryRow, sellerText: sellerCount ? `판매자 ${sellerCount}곳` : `판매자 ${EMPTY}곳` }],
       footerNote: {
         tone: 'red',
         text: `남은 시간 ${formatTime(getRemainingSeconds(order, now))} · 10분 안에 결제하지 않으면 주문이 취소돼요`,
@@ -217,7 +223,7 @@ function toCard(order, now) {
       rows: [
         {
           ...summaryRow,
-          sellerText: sellerOrders[0]?.sellerName ?? (sellerCount > 1 ? `판매자 ${sellerCount}곳` : '{판매자 이름}'),
+          sellerText: sellerOrders[0]?.sellerName ?? (sellerCount > 1 ? `판매자 ${sellerCount}곳` : EMPTY),
           muted: true,
         },
       ],
@@ -236,7 +242,7 @@ function toCard(order, now) {
       ...base,
       tabs: [STAGES[stage].tab],
       rows: [
-        { ...summaryRow, sellerText: '{판매자 이름}', muted: STAGES[stage].muted, badge: STAGES[stage].badge },
+        { ...summaryRow, sellerText: EMPTY, muted: STAGES[stage].muted, badge: STAGES[stage].badge },
       ],
     };
   }
@@ -246,7 +252,7 @@ function toCard(order, now) {
     return {
       key: sellerOrder.sellerOrderId ?? index,
       stage,
-      sellerText: sellerOrder.sellerName ?? '{판매자 이름}',
+      sellerText: sellerOrder.sellerName ?? EMPTY,
       itemName: sellerOrder.representativeItemName,
       moreCount: (sellerOrder.itemCount ?? 1) - 1,
       thumbnailUrl: sellerOrder.thumbnailUrl,

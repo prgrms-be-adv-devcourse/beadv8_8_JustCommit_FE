@@ -6,6 +6,7 @@ import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
 import SellerShopView from './SellerShopView';
 import { toShopSeller } from './sellerShopFormat';
+import { EMPTY } from '../../constants/emptyText';
 
 const SOLD_PAGE_SIZE = 6;
 
@@ -13,7 +14,7 @@ function getSoldErrorMessage(error) {
   return error.response?.data?.message ?? '판매 완료 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
-// 리뷰는 하지 않기로 해서(준비 중) 리뷰 요약은 빈 값: 평균 별점 · 리뷰 수는 자리 문구, 최근 리뷰 · 태그 칩은 비어 보임
+// 리뷰는 하지 않기로 해서(준비 중) 리뷰 요약은 빈 값: 평균 별점 · 리뷰 수는 「-」, 최근 리뷰 · 태그 칩은 비어 보임
 const NO_REVIEWS = { averageRating: null, totalCount: null, tagCounts: [], content: [] };
 
 // 판매자 상점 B안 (시안 02-3-1 · 02-3-2 · 02-3-4). 누구나 봄 (로그인 필요 없음)
@@ -23,7 +24,7 @@ function SellerShop({ sellerId }) {
   const [loadState, setLoadState] = useState('loading'); // loading | done | notFound | error
   // 판매 완료 줄: SOLD_OUT이면서 숨기지 않은 상품만 (BE docs/services/product.md 「상태」 · 「숨김」)
   const [soldProducts, setSoldProducts] = useState([]);
-  const [soldTotal, setSoldTotal] = useState(null); // null = 모름 (API 없음 → 자리 문구)
+  const [soldTotal, setSoldTotal] = useState(null); // null = 모름 (API 없음 → 「-」)
   const [soldPage, setSoldPage] = useState(0);
   const [isLoadingMoreSold, setIsLoadingMoreSold] = useState(false);
   const [soldErrorMessage, setSoldErrorMessage] = useState('');
@@ -85,14 +86,14 @@ function SellerShop({ sellerId }) {
     <SellerShopView
       seller={toShopSeller(seller, reviews, soldTotal)}
       products={products}
-      productCountText={`${productTotal.toLocaleString('ko-KR')}개`}
-      // 판매 완료 0개면 줄을 통째로 숨김. 개수를 모르면(API 없음) 줄은 보이고 개수는 자리 문구
+      productCountText={productTotal == null ? EMPTY : `${productTotal.toLocaleString('ko-KR')}개`}
+      // 판매 완료 0개면 줄을 통째로 숨김. 개수를 모르면(API 없음) 줄은 보이고 개수는 「-」
       sold={
         soldTotal === 0
           ? null
           : {
               products: soldProducts,
-              countText: soldTotal == null ? '{판매 완료 수}개' : `${soldTotal.toLocaleString('ko-KR')}개`,
+              countText: soldTotal == null ? EMPTY : `${soldTotal.toLocaleString('ko-KR')}개`,
               hasMore: soldTotal != null && soldProducts.length < soldTotal,
               isLoadingMore: isLoadingMoreSold,
               onLoadMore: handleLoadMoreSold,

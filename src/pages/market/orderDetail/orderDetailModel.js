@@ -1,10 +1,11 @@
 import { AUTO_CONFIRM_DAYS } from '../../../constants/order';
-import { formatDateTime, formatPrice, maskPhone } from '../../../utils/format';
+import { formatDateTime, formatPrice, maskPhone, toValidDate } from '../../../utils/format';
+import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 
 // 주문 상세 응답(getOrder) → 화면(OrderDetailView) 데이터
 // 근거: BE docs/flows/cancel-refund.md · docs/services/market.md 「정책」
 //
-// 응답에 아직 없는 값은 {넣을값} 자리 문구로 둡니다. 백엔드에 추가되면 아래 TODO 필드명을 확인해 바꿔요.
+// 응답에 아직 없는 값은 기본값(constants/emptyText.js)으로 보여 줍니다. 백엔드에 추가되면 아래 TODO 필드명을 확인해 바꿔요.
 // - sellerOrders[].sellerNickname          판매자 닉네임 (주문 응답에 없어 화면이 판매자 공개 API로 붙임: orderApi withSellerNicknames)
 // - 판매자 수락 전: BE는 판매자 주문이 아니라 items[].status = ACCEPT_PENDING으로 줌 (없으면 배송이 없을 때 수락 전으로 봄)
 // - sellerOrders[].trackingNo              송장번호
@@ -29,20 +30,22 @@ const pad = (value) => String(value).padStart(2, '0');
 
 // "10.13 11:02"
 export function formatShortDateTime(value) {
-  if (!value) return null;
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return null;
   return `${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 // "10월 16일"
 export function formatMonthDay(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   return `${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
 // "10월 16일 11:02"
 export function formatMonthDayTime(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   return `${formatMonthDay(date)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -55,26 +58,42 @@ export function getReturnDeadline(sellerOrder) {
   return sellerOrder.deliveredAt ? addHours(sellerOrder.deliveredAt, RETURN_WINDOW_HOURS) : null;
 }
 
-export function getSellerName(sellerOrder, index) {
-  // 주문 상세 응답에는 sellerId만 있어 화면이 판매자 공개 API로 sellerNickname을 붙여 넘김 (실패하면 자리 문구)
-  return sellerOrder.sellerNickname ?? `{판매자 ${index + 1} 닉네임}`;
+export function getSellerName(sellerOrder) {
+  // 주문 상세 응답에는 sellerId만 있어 화면이 판매자 공개 API로 sellerNickname을 붙여 넘김 (실패하면 「-」)
+  return sellerOrder.sellerNickname ?? EMPTY;
 }
 
 // 판매자 수락 전: 주문상품 상태 ACCEPT_PENDING (BE OrderItemStatus)
 // 구매자가 취소했고 택배 취소 · 환불 결과를 기다리는 주문상품 (BE ADR 0026)
 const CANCELLING_ITEM_STATUSES = ['CANCEL_PROCESSING', 'REVIEW_REQUIRED'];
 
+// 취소가 아직 끝나지 않은 주문: 주문상품 CANCEL_PROCESSING 또는 배송 CANCEL_PENDING (BE ADR 0026)
+// 끝나면 주문상품은 CANCELLED · REVIEW_REQUIRED(사람이 확인) · NORMAL(택배 취소 실패)로 바뀜
+export function isCancelInProgress(order) {
+  return (order?.sellerOrders ?? []).some(
+    (sellerOrder) =>
+      sellerOrder.shipmentStatus === 'CANCEL_PENDING' ||
+      sellerOrder.items.some((item) => item.status === 'CANCEL_PROCESSING'),
+  );
+}
+
 function isAcceptPending(sellerOrder) {
   if (sellerOrder.items.some((item) => item.status === 'ACCEPT_PENDING')) return true;
   return !sellerOrder.shipmentStatus;
 }
 
-// 반품 상태: returnRequest가 없으면 주문상품 상태로 짐작 (REFUND_REQUESTED → 신청, REFUNDED → 완료)
+// 반품 상태: returnRequest가 없으면 주문상품 상태(BE OrderItemStatus)로 정함
+// RETURN_REQUESTED → 신청, RETURN_IN_TRANSIT · RETURN_PROCESSING(도착, 환불 대기) → 반품 배송 중, RETURNED → 완료
+const RETURN_STATUS_BY_ITEM_STATUS = {
+  RETURN_REQUESTED: 'REQUESTED',
+  RETURN_IN_TRANSIT: 'SHIPPING',
+  RETURN_PROCESSING: 'SHIPPING',
+  RETURNED: 'COMPLETED',
+};
+
 function getReturnStatus(item) {
   if (item.returnRequest?.status) return item.returnRequest.status;
-  if (item.status === 'REFUND_REQUESTED') return 'REQUESTED';
-  if (item.status === 'REFUNDED') return 'COMPLETED';
-  return null;
+  return RETURN_STATUS_BY_ITEM_STATUS[item.status] ?? null;
 }
 
 function itemsText(items, unit) {
@@ -82,8 +101,23 @@ function itemsText(items, unit) {
   return items.length > 1 ? `${items[0].productName} 외 ${items.length - 1}${unit}` : items[0].productName;
 }
 
+// 현재 위치: BE에 택배 현재 위치가 없으면 null (위치 칸을 숨김)
 function getLocation(source) {
-  return `현재 위치: ${source?.currentLocation ?? '{현재 위치}'}`;
+  return source?.currentLocation ? `현재 위치: ${source.currentLocation}` : null;
+}
+
+// 배송 조회 모달 (시안 03-5-4): 택배사 이벤트 조회 API가 없어 배송 단계가 바뀐 시각으로 목록을 만듦. 최신이 위
+// BE OrderDetailResponse.SellerOrderDetail · SellerOrderDetailResponse의 bookedAt · pickedUpAt · inTransitAt · deliveredAt
+export function buildShipmentEvents(source) {
+  if (!source) return [];
+  return [
+    ['deliveredAt', '배송 완료'],
+    ['inTransitAt', '배송 중'],
+    ['pickedUpAt', '수거'],
+    ['bookedAt', '택배 예약'],
+  ]
+    .filter(([key]) => source[key])
+    .map(([key, status]) => ({ time: formatShortDateTime(source[key]), status }));
 }
 
 function buildShippingSteps(order, sellerOrder, current) {
@@ -100,10 +134,11 @@ function buildShippingSteps(order, sellerOrder, current) {
 function buildReturnSteps(returnRequest, status) {
   const current = RETURN_STEP_INDEX[status] ?? 0;
   const times = [
-    returnRequest?.requestedAt ? formatShortDateTime(returnRequest.requestedAt) : '{신청 시각}',
-    returnRequest?.approvedAt ? formatShortDateTime(returnRequest.approvedAt) : '{승인 시각}',
-    returnRequest?.shippedAt ? formatShortDateTime(returnRequest.shippedAt) : '{수거 시각}',
-    returnRequest?.completedAt ? formatShortDateTime(returnRequest.completedAt) : '{도착 시각}',
+    // 시각이 없으면 null → 단계 아래 시각을 숨김
+    formatShortDateTime(returnRequest?.requestedAt),
+    formatShortDateTime(returnRequest?.approvedAt),
+    formatShortDateTime(returnRequest?.shippedAt),
+    formatShortDateTime(returnRequest?.completedAt),
   ];
   return {
     label: '반품 단계',
@@ -173,6 +208,14 @@ function buildItem(order, sellerOrder, item, context) {
 
   // 진행 중(ACCEPT_PENDING · NORMAL) · 취소 중(CANCEL_PROCESSING) · 환불 확인 필요(REVIEW_REQUIRED)
   const shipment = sellerOrder.shipmentStatus;
+  // 시안 04-1-6: 환불 결과를 사람이 확인해야 하는 상태(REVIEW_REQUIRED)는 자동으로 끝나지 않으므로 다른 문구
+  if (item.status === 'REVIEW_REQUIRED') {
+    return {
+      ...base,
+      note: { tone: 'pending', text: '환불을 확인하고 있어요. 확인이 끝나면 알림으로 알려 드려요' },
+      badge: { tone: 'pending', label: '환불 확인 중' },
+    };
+  }
   if (CANCELLING_ITEM_STATUSES.includes(item.status) || shipment === 'CANCEL_PENDING') {
     return {
       ...base,
@@ -224,7 +267,7 @@ function buildGroup(order, sellerOrder, index, context) {
   );
 
   // 머리 배지: 남은 상품(취소 · 반품 완료 제외)이 모두 구매 확정이면 구매 확정, 아니면 배송 단계
-  const liveItems = sellerOrder.items.filter((item) => !['CANCELLED', 'REFUNDED'].includes(item.status));
+  const liveItems = sellerOrder.items.filter((item) => !['CANCELLED', 'RETURNED'].includes(item.status));
   const allConfirmed = liveItems.length > 0 && liveItems.every((item) => item.status === 'CONFIRMED');
   const allCancelled = sellerOrder.items.every((item) => item.status === 'CANCELLED');
   const acceptPending = isAcceptPending(sellerOrder);
@@ -251,7 +294,8 @@ function buildGroup(order, sellerOrder, index, context) {
     tracking: null,
     distance: null,
     items,
-    invoiceNo: sellerOrder.trackingNo ?? '{송장번호}',
+    invoiceNo: sellerOrder.trackingNo ?? NO_TRACKING_NO,
+    shipmentEvents: buildShipmentEvents(sellerOrder),
   };
 
   // 할 일(버튼) · 진행 중 안내가 있는 묶음만 펼침
@@ -264,12 +308,14 @@ function buildGroup(order, sellerOrder, index, context) {
   const returnStatus = returnItem && getReturnStatus(returnItem);
   if (returnItem && returnStatus !== 'REJECTED') {
     const returnRequest = returnItem.returnRequest;
-    group.headline = { kind: 'delivered', time: formatShortDateTime(sellerOrder.deliveredAt) ?? '{배송 완료 시각}' };
+    const deliveredTime = formatShortDateTime(sellerOrder.deliveredAt);
+    // 배송 완료 시각이 없으면 그 한 줄을 숨김
+    group.headline = deliveredTime ? { kind: 'delivered', time: deliveredTime } : null;
     group.steps = buildReturnSteps(returnRequest, returnStatus);
     if (returnStatus === 'SHIPPING' || returnStatus === 'COMPLETED') {
       group.tracking = {
         invoiceLabel: '반품 송장번호',
-        invoiceNo: returnRequest?.trackingNo ?? '{반품 송장번호}',
+        invoiceNo: returnRequest?.trackingNo ?? NO_TRACKING_NO,
         location: getLocation(returnRequest),
       };
     }
@@ -278,17 +324,21 @@ function buildGroup(order, sellerOrder, index, context) {
 
   if (returnStatus === 'REJECTED') {
     const r = returnItem.returnRequest;
+    // 시각이 없으면 시각만 빼고 문장은 남김
+    const withTime = (label, value) => [label, formatShortDateTime(value)].filter(Boolean).join(' ');
     group.headline = {
       kind: 'text',
-      text: `반품 신청 ${formatShortDateTime(r?.requestedAt) ?? '{신청 시각}'} → 판매자 거절 ${formatShortDateTime(r?.rejectedAt) ?? '{거절 시각}'} · 거절돼 바로 구매 확정됐어요`,
+      text: `${withTime('반품 신청', r?.requestedAt)} → ${withTime('판매자 거절', r?.rejectedAt)} · 거절돼 바로 구매 확정됐어요`,
     };
   }
 
   group.steps = buildShippingSteps(order, sellerOrder, current);
 
   if (acceptPending) {
-    const deadline = order.paidAt ? formatMonthDayTime(addHours(order.paidAt, ACCEPT_WINDOW_HOURS)) : '{수락 마감 시각}';
-    group.acceptNotice = `${deadline}까지 판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요`;
+    // 결제 시각이 없으면 마감 시각 없이 안내
+    group.acceptNotice = order.paidAt
+      ? `${formatMonthDayTime(addHours(order.paidAt, ACCEPT_WINDOW_HOURS))}까지 판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요`
+      : '판매자가 수락하지 않으면 자동으로 취소되고 예치금으로 환불돼요';
     return group;
   }
 
@@ -308,12 +358,16 @@ function buildGroup(order, sellerOrder, index, context) {
     group.tracking.tag = locked
       ? { tone: 'danger', label: '기사님 근접 · 취소 불가' }
       : { tone: 'default', label: '기사 배정 · 수거 예정' };
-    // TODO: 기사님 거리 API가 생기면 값 교체 (지금은 자리 문구)
-    group.distance = {
-      locked,
-      km: sellerOrder.driverDistanceKm != null ? `${sellerOrder.driverDistanceKm}km` : '{기사 거리}',
-      checkedAt: sellerOrder.driverCheckedAt ? formatShortDateTime(sellerOrder.driverCheckedAt).slice(6) : '{조회 시각}',
-    };
+    // TODO: 기사님 거리 API가 생기면 값 교체. 거리 값이 없으면 박스를 숨김(판매자 화면과 같게)
+    //   다만 2km 안 취소 잠금(CANCEL_LOCKED)은 거리 값이 없어도 안내가 필요해 박스를 보임
+    const km = sellerOrder.driverDistanceKm != null ? `${sellerOrder.driverDistanceKm}km` : null;
+    if (km || locked) {
+      group.distance = {
+        locked,
+        km,
+        checkedAt: sellerOrder.driverCheckedAt ? formatShortDateTime(sellerOrder.driverCheckedAt)?.slice(6) : null,
+      };
+    }
   }
   return group;
 }
@@ -326,9 +380,9 @@ function buildRefundNote(sellerOrders) {
   sellerOrders.forEach((sellerOrder) => {
     sellerOrder.items.forEach((item) => {
       if (item.status === 'CANCELLED') cancelled += Number(item.price);
-      if (item.status === 'REFUNDED') returned += Number(item.price);
+      if (item.status === 'RETURNED') returned += Number(item.price);
     });
-    const allGone = sellerOrder.items.every((item) => ['CANCELLED', 'REFUNDED'].includes(item.status));
+    const allGone = sellerOrder.items.every((item) => ['CANCELLED', 'RETURNED'].includes(item.status));
     if (allGone) {
       const fee = Number(sellerOrder.shippingFee ?? 0);
       if (sellerOrder.items.every((item) => item.status === 'CANCELLED')) cancelled += fee;
@@ -366,7 +420,7 @@ export function buildOrderDetailView(order, context = {}) {
       totalAmount: formatPrice(Number(order.totalAmount)),
       amountDetail: `상품 ${formatPrice(itemTotal)} + 배송비 ${formatPrice(shippingTotal)} (판매자 ${sellerOrders.length}곳)`,
       refundNote: buildRefundNote(sellerOrders),
-      recipient: `${order.recipientName} · ${maskPhone(order.recipientPhone)}`,
+      recipient: `${orEmpty(order.recipientName)} · ${orEmpty(maskPhone(order.recipientPhone))}`,
       address: [order.address1, order.address2].filter(Boolean).join(', '),
     },
     itemSummary: `${itemCount}개 · 판매자 ${sellerOrders.length}곳`,
@@ -446,14 +500,15 @@ export function buildConfirmTarget(order, itemId) {
   for (const sellerOrder of order.sellerOrders ?? []) {
     const item = sellerOrder.items.find((candidate) => candidate.id === itemId);
     if (!item) continue;
-    const autoConfirm = sellerOrder.deliveredAt
-      ? formatMonthDay(addHours(sellerOrder.deliveredAt, AUTO_CONFIRM_DAYS * 24))
-      : '{자동 구매 확정일}';
+    // 배송 완료 시각이 없으면 날짜 없이 안내
+    const autoConfirmNote = sellerOrder.deliveredAt
+      ? `확정하지 않아도 ${formatMonthDay(addHours(sellerOrder.deliveredAt, AUTO_CONFIRM_DAYS * 24))}에 자동으로 구매 확정돼요.`
+      : `확정하지 않아도 배송 완료 ${AUTO_CONFIRM_DAYS}일 뒤 자동으로 구매 확정돼요.`;
     return {
       itemId,
       itemName: item.productName,
       price: formatPrice(item.price),
-      autoConfirmNote: `확정하지 않아도 ${autoConfirm}에 자동으로 구매 확정돼요.`,
+      autoConfirmNote,
     };
   }
   return null;

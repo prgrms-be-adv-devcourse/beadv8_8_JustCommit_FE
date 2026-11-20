@@ -18,7 +18,7 @@ function AdminReviewsPage() {
         if (!ignore) setData(toReviewList(response.data.data));
       })
       .catch((error) => {
-        // 403 말고 실패하면 자리 문구 화면을 그대로 둠
+        // 403 말고 실패하면 값 자리에 「-」를 보여 줌
         if (!ignore && error.response?.status === 403) setForbidden(true);
       });
     return () => {

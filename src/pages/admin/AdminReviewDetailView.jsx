@@ -6,23 +6,22 @@ import { formatDuration } from '../../utils/adminFormat';
 import { formatDateTime, formatPrice } from '../../utils/format';
 import PageBackLink from '../../components/common/PageBackLink';
 
-// 자리 문구: "{넣을값}"
-const P = (text) => `{${text}}`;
+import { EMPTY, orEmpty } from '../../constants/emptyText';
 
 // 시안 09-2-2 사진 검수 상세 (AdminReviewDetail)
-// review: null이면 자리 문구 (API 응답 모양은 api/adminApi.js 참고)
+// review: null이면 값 자리에 「-」, 배지는 숨김 (API 응답 모양은 api/adminApi.js 참고)
 // onApprove · onReject: 통과 · 반려 버튼. error: 버튼 아래 실패 안내
 function AdminReviewDetailView({ review, onApprove, onReject, busy = false, error }) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const photos = review?.photos ?? [];
   const engine = review?.engine;
-  const badges = review?.badges ?? [{ type: 'DEFAULT', text: P('확인할 이유') }];
+  const badges = review?.badges ?? [];
 
-  let saleForm = P('판매 형태');
+  let saleForm = EMPTY;
   if (engine)
     saleForm = engine.saleFormIsRejectReason
-      ? `${engine.saleForm} · 자동 반려 근거`
-      : engine.saleForm;
+      ? `${orEmpty(engine.saleForm)} · 자동 반려 근거`
+      : orEmpty(engine.saleForm);
 
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
@@ -38,25 +37,25 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
               ))}
             </div>
             <h1 className="text-2xl font-bold text-[#111827] tracking-tight">
-              {review?.productName ?? P('상품명')}
+              {review?.productName ?? EMPTY}
             </h1>
             <p className="text-sm text-[#4b5563]">
               {review
-                ? `판매자 ${review.sellerNickname} · ${formatPrice(review.price)} · 검수 버전 ${review.reviewVersion}`
-                : '판매자 {판매자 닉네임} · {가격} · 검수 버전 {검수 버전}'}
+                ? `판매자 ${orEmpty(review.sellerNickname)} · ${review.price == null ? EMPTY : formatPrice(review.price)} · 검수 버전 ${orEmpty(review.reviewVersion)}`
+                : `판매자 ${EMPTY} · ${EMPTY} · 검수 버전 ${EMPTY}`}
             </p>
           </div>
           <dl className="px-5 py-3 bg-[#f9fafb] border border-[#e5e7eb] text-sm space-y-1 shrink-0">
             <div className="flex gap-6 justify-between">
               <dt className="text-[#6b7280]">기다린 시간</dt>
               <dd className="font-semibold tabular-nums">
-                {review ? formatDuration(review.waitedMinutes) : P('기다린 시간')}
+                {review ? formatDuration(review.waitedMinutes) : EMPTY}
               </dd>
             </div>
             <div className="flex gap-6 justify-between">
               <dt className="text-[#6b7280]">자동 반려까지</dt>
               <dd className="font-semibold tabular-nums">
-                {review ? formatDuration(review.remainingMinutes) : P('남은 시간')}
+                {review ? formatDuration(review.remainingMinutes) : EMPTY}
               </dd>
             </div>
           </dl>
@@ -108,11 +107,11 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
               <dl className="border border-[#e5e7eb] divide-y divide-[#e5e7eb] text-sm">
                 <div className="px-4 py-2.5 flex justify-between">
                   <dt className="text-[#6b7280]">유해 검사</dt>
-                  <dd className="text-[#111827]">{engine?.harmful ?? P('유해 검사 결과')}</dd>
+                  <dd className="text-[#111827]">{engine?.harmful ?? EMPTY}</dd>
                 </div>
                 <div className="px-4 py-2.5 flex justify-between">
                   <dt className="text-[#6b7280]">식물 여부</dt>
-                  <dd className="text-[#111827]">{engine?.plant ?? P('식물 여부')}</dd>
+                  <dd className="text-[#111827]">{engine?.plant ?? EMPTY}</dd>
                 </div>
                 <div className="px-4 py-2.5 flex justify-between">
                   <dt className="text-[#6b7280]">판매 형태</dt>
@@ -128,7 +127,7 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
                 </div>
                 <div className="px-4 py-2.5 flex justify-between">
                   <dt className="text-[#6b7280]">금지 의심</dt>
-                  <dd className="text-[#111827]">{engine?.bannedSuspect ?? P('금지 의심 사유')}</dd>
+                  <dd className="text-[#111827]">{engine?.bannedSuspect ?? EMPTY}</dd>
                 </div>
               </dl>
             </section>
@@ -136,7 +135,7 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
               <h2 className="text-sm font-bold text-[#111827]">
                 품종 후보{' '}
                 <span className="font-normal text-[#6b7280]">
-                  {`(판매자 선택: ${review?.selectedSpeciesName ?? P('선택 품종')})`}
+                  {`(판매자 선택: ${review?.selectedSpeciesName ?? EMPTY})`}
                 </span>
               </h2>
               <ol className="border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
@@ -166,7 +165,7 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
             <section className="bg-white border border-[#e5e7eb] p-5 space-y-2">
               <h2 className="text-sm font-bold text-[#111827]">판매자가 쓴 내용</h2>
               <p className="text-sm text-[#111827] leading-relaxed">
-                {review?.description ?? P('상품 설명')}
+                {review?.description ?? EMPTY}
               </p>
             </section>
             <section className="bg-white border border-[#e5e7eb] p-5 space-y-2">

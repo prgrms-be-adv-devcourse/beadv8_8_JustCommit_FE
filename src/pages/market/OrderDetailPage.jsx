@@ -4,6 +4,7 @@ import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder, withSellerNic
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
+import usePollWhile from '../../hooks/usePollWhile';
 import useWallet from '../../hooks/useWallet';
 import OrderDetailView from './orderDetail/OrderDetailView';
 import { CancelAllModal, CancelModal, ConfirmModal, TrackingModal } from './orderDetail/OrderDetailModals';
@@ -12,7 +13,12 @@ import {
   buildCancelTarget,
   buildConfirmTarget,
   buildOrderDetailView,
+  isCancelInProgress,
 } from './orderDetail/orderDetailModel';
+import { EMPTY, NO_LOCATION } from '../../constants/emptyText';
+
+const CANCEL_POLL_INTERVAL_MS = 2500; // 취소 처리 중이면 2.5초마다 다시 조회
+const CANCEL_POLL_TIMEOUT_MS = 2 * 60 * 1000; // 2분이 지나도 안 끝나면 멈추고 지금 화면 그대로
 
 const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로고침은 10초에 한 번
 
@@ -73,6 +79,14 @@ function OrderDetailPage() {
       ignore = true;
     };
   }, [isLoggedIn, orderId]);
+
+  // 취소는 BE에서 비동기로 끝남: 처리 중(CANCEL_PROCESSING · CANCEL_PENDING)이면 끝날 때까지 다시 조회하고,
+  // 끝나면 환불된 예치금을 헤더 잔액에 반영
+  usePollWhile(isCancelInProgress(order), reload, {
+    interval: CANCEL_POLL_INTERVAL_MS,
+    timeout: CANCEL_POLL_TIMEOUT_MS,
+    onDone: () => refreshWallet().catch(() => {}),
+  });
 
   // 새로고침 대기 초 줄이기
   useEffect(() => {
@@ -189,11 +203,14 @@ function OrderDetailPage() {
     }
   };
 
-  // TODO: 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록을 받아 씀. 지금은 자리 문구
+  // 배송 조회: 택배사 이벤트 API가 없어 배송 단계 시각으로 목록을 만듦(buildShipmentEvents). 시각이 하나도 없으면 「조회 전」 한 줄
+  // TODO: 택배사 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록 · 위치로 교체
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
     invoiceNo: trackingGroup.tracking?.invoiceNo ?? trackingGroup.invoiceNo,
-    events: [{ time: '{시각}', status: '{배송 단계}', location: '{위치}' }],
+    events: trackingGroup.shipmentEvents?.length
+      ? trackingGroup.shipmentEvents
+      : [{ time: EMPTY, status: NO_LOCATION }],
   };
 
   const copyInvoice = () => {

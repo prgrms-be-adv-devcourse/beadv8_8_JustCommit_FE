@@ -2,6 +2,7 @@ import { ActionErrorLine } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
 import { formatPrice } from '../../utils/format';
+import { EMPTY } from '../../constants/emptyText';
 
 // 시안 03-2 주문서 (Order · OrderShort · OrderJeju · OrderPriceUpdated · OrderPending + 모달 4종)
 // 데이터는 모두 props로 받음 → 페이지(CheckoutPage)가 API를 부르고, 비교 하네스는 가짜 데이터를 넣음
@@ -407,7 +408,7 @@ export function PriceChangedModal({ items, onClose, onSubmit }) {
 }
 
 // 03-2-7 배송비 변경 모달 (결제 때 SHIPPING_FEE_CHANGED)
-// newFee가 없으면(응답에 아직 없음) 자리 문구
+// newFee가 없으면(응답에 아직 없음) 「-」, regionLabel이 없으면 괄호 없이
 export function ShippingFeeChangedModal({ sellerCount, prevFee, newFee, regionLabel, onClose, onSubmit }) {
   return (
     <Modal
@@ -432,8 +433,8 @@ export function ShippingFeeChangedModal({ sellerCount, prevFee, newFee, regionLa
           <span className="text-[#111827]">{formatPrice(prevFee)}</span>
         </div>
         <div className="px-4 py-3 flex justify-between gap-4">
-          <span className="text-[#6b7280]">{`바뀐 배송비 (${regionLabel ?? '{지역}'})`}</span>
-          <span className="font-bold text-[#dc2626]">{newFee == null ? '{바뀐 배송비}' : formatPrice(newFee)}</span>
+          <span className="text-[#6b7280]">{regionLabel ? `바뀐 배송비 (${regionLabel})` : '바뀐 배송비'}</span>
+          <span className="font-bold text-[#dc2626]">{newFee == null ? EMPTY : formatPrice(newFee)}</span>
         </div>
       </div>
     </Modal>

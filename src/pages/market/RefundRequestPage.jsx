@@ -13,6 +13,14 @@ import {
   getReturnDeadline,
   getSellerName,
 } from './orderDetail/orderDetailModel';
+import { EMPTY } from '../../constants/emptyText';
+
+// 반품 신청 실패 code → 안내 (그 밖은 BE message)
+const RETURN_ERROR_MESSAGES = {
+  RETURN_ALREADY_REQUESTED: '이미 반품을 신청한 상품이에요.',
+  RETURN_NOT_REQUESTABLE: '배송 완료된 상품만 반품을 신청할 수 있어요.',
+  RETURN_PERIOD_EXPIRED: '반품 신청 기간(배송 완료 후 72시간)이 지났어요.',
+};
 
 // 시안 04-3 반품 신청 (주문상품 하나씩, 배송 완료 후 72시간 안 · BE docs/flows/cancel-refund.md)
 function RefundRequestPage() {
@@ -60,19 +68,31 @@ function RefundRequestPage() {
   const product = {
     name: item.productName,
     imageUrl: item.thumbnailUrl,
-    meta: `판매자 ${getSellerName(sellerOrder, sellerIndex)} · 배송 완료 ${formatShortDateTime(sellerOrder.deliveredAt) ?? '{배송 완료 시각}'}`,
-    deadline: `${deadline ? formatMonthDayTime(deadline) : '{반품 마감 시각}'}까지 반품을 신청할 수 있어요`,
+    // 시각이 없으면 「-」, 마감 시각이 없으면 시각 없는 문장
+    meta: `판매자 ${getSellerName(sellerOrder, sellerIndex)} · 배송 완료 ${formatShortDateTime(sellerOrder.deliveredAt) ?? EMPTY}`,
+    deadline: deadline
+      ? `${formatMonthDayTime(deadline)}까지 반품을 신청할 수 있어요`
+      : '배송 완료 후 72시간 안에 반품을 신청할 수 있어요',
     price: formatPrice(Number(item.price)),
   };
 
   const submit = async () => {
+    const trimmed = detail.trim();
+    // BE: 기타 사유는 직접 작성 내용 필수
+    if (reason === 'OTHER' && !trimmed) {
+      setError('기타 사유는 상세 설명을 적어 주세요.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await requestReturn(item.id, { reason, detail: detail.trim() || null });
+      await requestReturn(item.id, { reason, detail: trimmed || null });
       navigate(`/orders/${orderId}`, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message ?? '반품을 신청하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      const data = err.response?.data;
+      setError(
+        RETURN_ERROR_MESSAGES[data?.code] ?? data?.message ?? '반품을 신청하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      );
       setSubmitting(false);
     }
   };

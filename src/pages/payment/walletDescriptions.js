@@ -9,7 +9,7 @@ import { bankNameForLast4 } from '../../constants/banks';
 // refId의 뜻 (BE payment WalletTransaction · PaymentService):
 //   PAYMENT = orderId · SHIPPING_FEE · SHIPPING_FEE_REFUND = sellerOrderId · ORDER_ITEM_CANCEL_REFUND = orderItemId
 //   SETTLEMENT · SETTLEMENT_FEE = settlementId · CASH_OUT = cashOutId
-// 같은 id는 한 번만 부르고, 실패한 조회는 건너뜀 (그 자리는 자리 문구로 남음)
+// 같은 id는 한 번만 부르고, 실패한 조회는 건너뜀 (그 자리는 WalletPage의 일반 문구로 남음)
 // TODO: 환불 사유는 어느 API에도 없음 · 배송비 거래의 판매자는 같은 주문의 결제 거래가 목록에 있을 때만 찾음
 
 const CASH_OUT_FETCH_SIZE = 100;
@@ -97,9 +97,6 @@ export async function loadDescriptionRefs(transactions) {
   };
 }
 
-// 값이 있으면 그 값, 없으면 자리 문구
-const or = (value, placeholder) => (value ? value : placeholder);
-
 /**
  * 거래 하나 → 설명. 이 거래 종류를 여기서 만들지 않으면 null (화면 기본 문구를 씀)
  */
@@ -122,7 +119,7 @@ export function describeTransaction(item, refs) {
     }
     case 'ORDER_ITEM_CANCEL_REFUND': {
       const name = refs.orderItemNames.get(refId);
-      return name ? `${name} · {환불 사유}` : null;
+      return name ? `${name} · 주문 취소 환불` : null;
     }
     case 'SETTLEMENT':
     case 'SETTLEMENT_FEE': {
@@ -134,7 +131,8 @@ export function describeTransaction(item, refs) {
       const last4 = refs.cashOutLast4.get(refId);
       if (!last4) return null;
       const bank = bankNameForLast4(last4, refs.myAccount);
-      return `${or(bank, '{은행}')} ***${last4} 계좌로 인출`;
+      // 은행을 모르면 계좌 끝 4자리만
+      return `${bank ? `${bank} ` : ''}***${last4} 계좌로 인출`;
     }
     default:
       return null;

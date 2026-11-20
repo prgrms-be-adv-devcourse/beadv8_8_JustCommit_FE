@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ActionErrorLine } from '../../components/common/ActionError';
 import InfoNote from '../../components/common/InfoNote';
 import { won } from './chargeUtils';
+import { EMPTY } from '../../constants/emptyText';
 
 // 시안 07-4-1 인출 · 07-4-2 인출 금액 초과
 // account: "KB국민은행 ***4567 · 예금주 김*식" 형태 한 줄 (예금주는 응답 값 그대로)
@@ -19,9 +20,9 @@ function WithdrawView({
   disabled,
   errorMessage,
 }) {
-  let after = '—';
+  let after = '-';
   if (!isOver && typeof balance === 'number') after = won(balance - amount);
-  else if (!isOver) after = '{인출 후 예치금}';
+  else if (!isOver) after = EMPTY;
 
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-14 flex justify-center items-start">
