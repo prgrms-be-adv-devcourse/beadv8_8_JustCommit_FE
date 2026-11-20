@@ -7,6 +7,7 @@ import ReviewSection from './ReviewSection';
 import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 03-5 · 04-1 · 04-4 · 05-1 구매자 주문 상세 화면 (데이터는 props로만 받음)
+// onCancelAll: 주문 전체 취소가 가능할 때만 넘김 (시안 03-5-2 「주문 전체 취소」 버튼)
 // 데이터 모양은 orderDetailModel.js의 buildOrderDetailView 참고
 
 // 상태 배지 색 (판매자 묶음 머리 · 상품 줄)
@@ -253,6 +254,7 @@ function OrderDetailView({
   onAction = () => {},
   onOpenTracking = () => {},
   onRefreshDistance = () => {},
+  onCancelAll = null,
   children,
 }) {
   const { order } = view;
@@ -262,7 +264,20 @@ function OrderDetailView({
         <PageBackLink to="/orders" label="주문 목록" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">주문 상세</h1>
         <section className="bg-white border border-[#e5e7eb] p-6">
-          <h2 className="text-lg font-bold text-[#111827] mb-4">주문 정보</h2>
+          {onCancelAll ? (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#111827]">주문 정보</h2>
+              <button
+                type="button"
+                className="h-9 px-4 flex items-center justify-center bg-white border border-[#d1d5db] text-sm font-semibold text-[#b91c1c]"
+                onClick={onCancelAll}
+              >
+                주문 전체 취소
+              </button>
+            </div>
+          ) : (
+            <h2 className="text-lg font-bold text-[#111827] mb-4">주문 정보</h2>
+          )}
           <dl className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
             <div className="space-y-1">
               <dt className="text-[13px] text-[#6b7280]">주문 번호</dt>

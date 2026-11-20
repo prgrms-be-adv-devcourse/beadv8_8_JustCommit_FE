@@ -162,7 +162,7 @@ export function getSeller(sellerId) {
 
 // 내 판매자 소개글 수정 (판매자만, 500자) → data: { sellerId, nickname, intro, createdAt }
 // intro는 필수: 지우려면 ''를 보냄. 판매자가 아니면 403 NOT_SELLER
-// TODO: 소개글 수정 화면이 아직 없음 (시안 먼저)
+// 화면: 시안 06-5-2 판매자 소개 (IntroPage)
 export function changeSellerIntro(intro) {
   return client.patch('/api/v1/sellers/me/intro', { intro });
 }

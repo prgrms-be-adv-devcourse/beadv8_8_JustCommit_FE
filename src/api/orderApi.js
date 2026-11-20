@@ -59,8 +59,7 @@ export function cancelOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/cancel`);
 }
 
-// 구매자 주문 전체 취소 (모든 판매자 주문의 남은 상품) → 200 본문 없음. 실패 코드는 상품 하나 취소와 같음
-// TODO: 주문 전체 취소 버튼이 시안에 없음 (지금 화면은 상품 하나씩 취소)
+// 구매자 주문 전체 취소 (시안 03-5-3, 모든 판매자 주문의 남은 상품) → 200 본문 없음. 실패 코드는 상품 하나 취소와 같음
 export function cancelOrder(orderId) {
   return client.post(`/api/v1/orders/${orderId}/cancel`);
 }

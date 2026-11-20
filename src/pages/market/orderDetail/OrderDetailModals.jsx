@@ -60,7 +60,62 @@ export function CancelModal({ target, cancelling, error, onClose, onConfirm }) {
   );
 }
 
-// 시안 03-5-4 구매 확정 확인 (모달의 「구매 확정」을 눌러야 확정)
+// 시안 03-5-3 주문 전체 취소 확인 (cancelling: 모달 안 「취소 중…」)
+// target = { itemCount, summary, refundAmount, shippingFeeNote }
+export function CancelAllModal({ target, cancelling, error, onClose, onConfirm }) {
+  const close = cancelling ? undefined : onClose;
+  return (
+    <Modal
+      title="주문을 모두 취소할까요?"
+      width={440}
+      top={160}
+      onClose={close}
+      footer={
+        cancelling ? (
+          <>
+            <button
+              type="button"
+              disabled
+              className="h-9 w-[88px] bg-white border border-[#e5e7eb] text-[14px] font-medium text-[#9ca3af] cursor-not-allowed"
+            >
+              닫기
+            </button>
+            <button
+              type="button"
+              disabled
+              className="h-9 w-[88px] bg-[#f3f4f6] text-[14px] font-medium text-[#9ca3af] cursor-not-allowed"
+            >
+              취소 중…
+            </button>
+          </>
+        ) : (
+          <>
+            <ModalButton onClick={onClose}>닫기</ModalButton>
+            <ModalButton variant="danger" onClick={onConfirm}>
+              취소하기
+            </ModalButton>
+          </>
+        )
+      }
+    >
+      <p className="text-[#4b5563] leading-relaxed">{`이 주문의 상품 ${target.itemCount}개를 모두 취소하고 예치금으로 환불해요.`}</p>
+      <dl className="border border-[#e5e7eb] divide-y divide-[#e5e7eb]">
+        <div className="px-4 py-3 flex justify-between">
+          <dt className="text-[#6b7280]">취소할 상품</dt>
+          <dd className="text-[#111827] font-medium">{target.summary}</dd>
+        </div>
+        <div className="px-4 py-3 flex justify-between">
+          <dt className="text-[#6b7280]">환불 금액 (예치금)</dt>
+          <dd className="text-[#111827] font-bold tabular-nums">{target.refundAmount}</dd>
+        </div>
+      </dl>
+      <p className="text-[13px] text-[#6b7280]">{target.shippingFeeNote}</p>
+      <ActionErrorBar message={error} />
+    </Modal>
+  );
+}
+
+// 시안 03-5-5 구매 확정 확인 (모달의 「구매 확정」을 눌러야 확정)
 // target = { itemName, price, autoConfirmNote }
 export function ConfirmModal({ target, confirming, error, onClose, onConfirm }) {
   return (
@@ -97,7 +152,7 @@ export function ConfirmModal({ target, confirming, error, onClose, onConfirm }) 
   );
 }
 
-// 시안 03-5-3 배송 조회 모달
+// 시안 03-5-4 배송 조회 모달
 // tracking = { sellerName, invoiceNo, events: [{ time, status, location }] } — 첫 줄이 최신
 export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, onClose }) {
   return (

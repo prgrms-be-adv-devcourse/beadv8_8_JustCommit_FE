@@ -1,7 +1,7 @@
 import { ActionErrorLine } from '../../../components/common/ActionError';
 import AccountLayout from './AccountLayout';
 
-// 시안 06-5-9 배송지 관리 (4 / 4 가득 참) · 06-5-10 배송지 추가 모달은 AddressModal
+// 시안 06-5-10 배송지 관리 (4 / 4 가득 참) · 06-5-11 배송지 추가 모달은 AddressModal
 // props
 //   addresses = [{ addressId, recipientName, addressName, phoneText, addressText, addressLine, isDefault }] (기본 배송지가 맨 위)
 //   maxCount(4), onAdd, onEdit(address), onDelete(address), onSetDefault(address), busyId, actionError

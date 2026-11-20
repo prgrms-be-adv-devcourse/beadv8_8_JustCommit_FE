@@ -449,7 +449,46 @@ export function buildCancelTarget(order, itemId) {
   return null;
 }
 
-/** 구매 확정 확인 모달(시안 03-5-4)용: 상품 이름 · 상품 금액 · 자동 구매 확정일 */
+/**
+ * 주문 전체 취소 (시안 03-5-2 버튼 · 03-5-3 모달): BE POST orders/{orderId}/cancel
+ * BE OrderCancelTransactions.requestCancel 조건을 화면에서 미리 판단
+ * - 주문이 PAID, 주문상품은 ACCEPT_PENDING · NORMAL(취소할 것) 또는 이미 취소 흐름(CANCEL_PROCESSING · CANCELLED)만
+ * - 수락된 판매자 주문(NORMAL 상품)은 택배가 READY · BOOKED일 때만 (그 밖은 409 SHIPMENT_NOT_CANCELABLE)
+ * 취소할 수 없으면 null
+ */
+const CANCEL_ALL_OPEN = ['ACCEPT_PENDING', 'NORMAL'];
+const CANCEL_ALL_DONE = ['CANCEL_PROCESSING', 'CANCELLED'];
+export function buildCancelAllTarget(order, lockedSellerOrderIds = new Set()) {
+  if (order?.status !== 'PAID') return null;
+  let count = 0;
+  let sellers = 0;
+  let refund = 0;
+  let shipping = 0;
+  for (const sellerOrder of order.sellerOrders ?? []) {
+    const items = sellerOrder.items ?? [];
+    if (items.some((item) => !CANCEL_ALL_OPEN.includes(item.status) && !CANCEL_ALL_DONE.includes(item.status))) return null;
+    const open = items.filter((item) => CANCEL_ALL_OPEN.includes(item.status));
+    if (open.length === 0) continue;
+    if (open.some((item) => item.status === 'NORMAL')) {
+      if (!['READY', 'BOOKED'].includes(sellerOrder.shipmentStatus)) return null;
+      if (lockedSellerOrderIds.has(sellerOrder.id)) return null;
+    }
+    const fee = Number(sellerOrder.shippingFee ?? 0);
+    count += open.length;
+    sellers += 1;
+    shipping += fee;
+    refund += open.reduce((sum, item) => sum + Number(item.price), 0) + fee;
+  }
+  if (count === 0) return null;
+  return {
+    itemCount: count,
+    summary: `${count}개 · 판매자 ${sellers}곳`,
+    refundAmount: formatPrice(refund),
+    shippingFeeNote: `배송비 ${formatPrice(shipping)}도 함께 환불돼요. 택배 수거가 시작된 판매자가 있으면 취소할 수 없어요.`,
+  };
+}
+
+/** 구매 확정 확인 모달(시안 03-5-5)용: 상품 이름 · 상품 금액 · 자동 구매 확정일 */
 export function buildConfirmTarget(order, itemId) {
   for (const sellerOrder of order.sellerOrders ?? []) {
     const item = sellerOrder.items.find((candidate) => candidate.id === itemId);

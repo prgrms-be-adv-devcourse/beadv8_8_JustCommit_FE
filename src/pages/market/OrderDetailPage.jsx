@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { cancelOrderItem, confirmOrderItem, getOrder } from '../../api/orderApi';
+import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import OrderDetailView from './orderDetail/OrderDetailView';
-import { CancelModal, ConfirmModal, TrackingModal } from './orderDetail/OrderDetailModals';
-import { buildCancelTarget, buildConfirmTarget, buildOrderDetailView } from './orderDetail/orderDetailModel';
+import { CancelAllModal, CancelModal, ConfirmModal, TrackingModal } from './orderDetail/OrderDetailModals';
+import {
+  buildCancelAllTarget,
+  buildCancelTarget,
+  buildConfirmTarget,
+  buildOrderDetailView,
+} from './orderDetail/orderDetailModel';
 
 const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로고침은 10초에 한 번
 
@@ -40,6 +45,9 @@ function OrderDetailPage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState(null);
   const [trackingGroup, setTrackingGroup] = useState(null);
+  const [cancelAllTarget, setCancelAllTarget] = useState(null);
+  const [cancellingAll, setCancellingAll] = useState(false);
+  const [cancelAllError, setCancelAllError] = useState(null);
   const [refreshCooldown, setRefreshCooldown] = useState(0);
 
   const reload = useCallback(async () => {
@@ -87,6 +95,15 @@ function OrderDetailPage() {
     setConfirmError(null);
   }, []);
   const closeTracking = useCallback(() => setTrackingGroup(null), []);
+  const closeCancelAll = useCallback(() => {
+    setCancelAllTarget(null);
+    setCancelAllError(null);
+  }, []);
+  // 주문 전체 취소가 가능한 상태면 모달 내용, 아니면 null (버튼도 숨김)
+  const cancelAllPreview = useMemo(
+    () => (order ? buildCancelAllTarget(order, lockedSellerOrderIds) : null),
+    [order, lockedSellerOrderIds],
+  );
 
   if (isInitializing) return <main className="flex-1" />;
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: `/orders/${orderId}` }} />;
@@ -154,6 +171,23 @@ function OrderDetailPage() {
     }
   };
 
+  // 주문 전체 취소 (시안 03-5-3): 성공하면 예치금 갱신 + 다시 불러옴. 실패는 모달 안 오류, 409면 상태도 다시 불러옴
+  const runCancelAll = async () => {
+    setCancellingAll(true);
+    setCancelAllError(null);
+    try {
+      await cancelOrder(orderId);
+      refreshWallet().catch(() => {});
+      closeCancelAll();
+      await reload();
+    } catch (error) {
+      setCancelAllError(error.response?.data?.message ?? '주문을 취소하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (error.response?.status === 409) reload().catch(() => {});
+    } finally {
+      setCancellingAll(false);
+    }
+  };
+
   // TODO: 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록을 받아 씀. 지금은 자리 문구
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
@@ -173,7 +207,17 @@ function OrderDetailPage() {
       onAction={handleAction}
       onOpenTracking={setTrackingGroup}
       onRefreshDistance={refreshDistance}
+      onCancelAll={cancelAllPreview ? () => setCancelAllTarget(cancelAllPreview) : null}
     >
+      {cancelAllTarget && (
+        <CancelAllModal
+          target={cancelAllTarget}
+          cancelling={cancellingAll}
+          error={cancelAllError}
+          onClose={closeCancelAll}
+          onConfirm={runCancelAll}
+        />
+      )}
       {cancelTarget && (
         <CancelModal
           target={cancelTarget}
