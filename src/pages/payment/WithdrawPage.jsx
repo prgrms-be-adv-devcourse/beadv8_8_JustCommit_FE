@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { requestCashOut } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
@@ -25,6 +25,8 @@ function WithdrawPage() {
   const [amount, setAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  // 인출 신청 Idempotency-Key: 같은 금액으로 다시 누르면(503 계좌 조회 실패 · 응답 끊김 후 재시도) 같은 키를 써서 두 번 빠지지 않게 함
+  const idempotencyRef = useRef(null);
 
   useEffect(() => {
     if (isLoggedIn) refreshWallet().catch(() => {});
@@ -42,10 +44,18 @@ function WithdrawPage() {
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      await requestCashOut(amount);
+      if (idempotencyRef.current?.amount !== amount) {
+        idempotencyRef.current = { amount, key: crypto.randomUUID() };
+      }
+      await requestCashOut(amount, idempotencyRef.current.key);
+      idempotencyRef.current = null;
       refreshWallet().catch(() => {});
       navigate('/wallet/withdrawals', { replace: true });
     } catch (error) {
+      // 같은 키로 다른 요청이 이미 처리됨 → 다음 신청은 새 키로
+      if (error.response?.data?.code === 'IDEMPOTENCY_KEY_CONFLICT') idempotencyRef.current = null;
+      // 한도 초과 등은 화면 잔액이 서버와 다를 수 있어 다시 맞춤
+      refreshWallet().catch(() => {});
       setErrorMessage(error.response?.data?.message ?? '인출을 신청하지 못했어요. 잠시 후 다시 시도해 주세요.');
       setIsSubmitting(false);
     }

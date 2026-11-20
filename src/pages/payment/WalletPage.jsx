@@ -23,6 +23,9 @@ const REF_TYPE = {
   SHIPPING_FEE_REFUND: { badge: '환불', description: '{판매자} 배송비 환불' },
   SETTLEMENT: { badge: '정산', description: '{상품명} 판매 정산' },
   SETTLEMENT_FEE: { badge: '정산', description: '{상품명} 정산 수수료' },
+  // TODO: 시안에 없는 거래 종류 (정산 회수 · 미수금 차감) → 배지 · 문구는 시안 확인 필요
+  SETTLEMENT_COLLECTION: { badge: '정산', description: '정산 회수' },
+  RECEIVABLE_COLLECTION: { badge: '정산', description: '미수금 차감' },
   CASH_OUT: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 계좌로 인출' },
   CASH_OUT_CANCEL: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 이체 실패로 복원' },
 };
@@ -33,7 +36,7 @@ const TABS = [
   { key: 'CHARGE', label: '충전', types: ['CHARGE', 'CHARGE_CANCEL'] },
   { key: 'PAYMENT', label: '결제', types: ['PAYMENT', 'SHIPPING_FEE'] },
   { key: 'REFUND', label: '환불', types: ['ORDER_REFUND', 'ORDER_ITEM_CANCEL_REFUND', 'SHIPPING_FEE_REFUND'] },
-  { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE'] },
+  { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE', 'SETTLEMENT_COLLECTION', 'RECEIVABLE_COLLECTION'] },
   { key: 'CASH_OUT', label: '인출', types: ['CASH_OUT', 'CASH_OUT_CANCEL'] },
 ];
 
