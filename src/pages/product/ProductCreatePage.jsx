@@ -112,12 +112,12 @@ function ProductForm({ productId }) {
     };
   }, [isEdit, productId]);
 
-  // 품종 검색 (입력이 멈추고 0.3초 뒤에 요청)
+  // 품종 검색 (입력이 멈추고 0.3초 뒤에 요청). size를 주지 않으면 백엔드가 전체 품종(최대 500개)을 이름순으로 한 번에 줌
   useEffect(() => {
     if (!isDropdownOpen) return undefined;
     let ignore = false;
     const timer = setTimeout(() => {
-      searchSpecies({ keyword: speciesQuery.trim() || undefined, size: 8 })
+      searchSpecies({ keyword: speciesQuery.trim() || undefined })
         .then((response) => {
           if (ignore) return;
           setSpeciesOptions(response.data.data.content);
