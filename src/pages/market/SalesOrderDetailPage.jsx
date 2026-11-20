@@ -14,6 +14,7 @@ import {
 } from '../../constants/seller';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
+import usePollWhile from '../../hooks/usePollWhile';
 import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
@@ -23,6 +24,13 @@ const SHIPPING_FEE_NOTE = '배송비는 플랫폼 매출로 들어가 정산에 
 const GRAY_BADGE = 'bg-[#f3f4f6] border-[#f3f4f6] text-[#6b7280]';
 
 const itemIdOf = (item) => item.orderItemId ?? item.id;
+
+const CANCEL_POLL_INTERVAL_MS = 2500; // 취소 처리 중이면 2.5초마다 다시 조회
+const CANCEL_POLL_TIMEOUT_MS = 2 * 60 * 1000; // 2분이 지나도 안 끝나면 멈추고 지금 화면 그대로
+
+// 취소(거절 포함)가 아직 끝나지 않은 판매 주문 (BE ADR 0026)
+const isSalesCancelInProgress = (order) =>
+  order?.shipmentStatus === 'CANCEL_PENDING' || (order?.items ?? []).some((item) => item.status === 'CANCEL_PROCESSING');
 
 // 응답 필드 이름이 isDefault / default 중 어느 쪽이어도 동작하도록
 const isDefaultAddress = (address) => address.isDefault ?? address.default ?? false;
@@ -214,6 +222,12 @@ function SalesOrderDetailPage() {
       ignore = true;
     };
   }, [canSell, load]);
+
+  // 거절 · 구매자 취소는 BE에서 비동기로 끝남: 처리 중(CANCEL_PROCESSING · CANCEL_PENDING)이면 끝날 때까지 다시 조회
+  usePollWhile(isSalesCancelInProgress(order), load, {
+    interval: CANCEL_POLL_INTERVAL_MS,
+    timeout: CANCEL_POLL_TIMEOUT_MS,
+  });
 
   // 보내는 주소 후보 = 내 배송지 (GET /api/v1/users/me/addresses, 최대 4개). 처음엔 기본 배송지
   useEffect(() => {
