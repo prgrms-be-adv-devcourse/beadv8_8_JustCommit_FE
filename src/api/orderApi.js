@@ -91,6 +91,7 @@ export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds, senderAd
 }
 
 // 반품 승인 · 거절 (판매자)
+// TODO: BE에 아직 없음 (market #383). 경로는 BE가 만들 때 확인
 export function approveReturn(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return/approve`);
 }
@@ -99,10 +100,11 @@ export function rejectReturn(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return/reject`);
 }
 
-// TODO: 반품 신청 API (BE docs/services/market.md 「⬜ 반품 신청」, 경로 · 본문 미정)
-// form = { reason: 'DAMAGED' | 'NOT_AS_DESCRIBED' | 'OTHER', detail } (사유 이름도 백엔드 확정 후 맞춤)
-export function requestReturn(orderItemId, form) {
-  return client.post(`/api/v1/orders/items/${orderItemId}/return`, form);
+// 반품 신청 (BE OrderController.requestReturn · ReturnRequestCreateRequest). 성공은 200 본문 없음
+// reason = BE ReturnReason: 'DAMAGED' | 'NOT_AS_DESCRIBED' | 'OTHER' (OTHER면 reasonDetail 필수, 최대 500자)
+// 실패 code: RETURN_ALREADY_REQUESTED · RETURN_NOT_REQUESTABLE · RETURN_PERIOD_EXPIRED (409)
+export function requestReturn(orderItemId, { reason, detail }) {
+  return client.post(`/api/v1/orders/items/${orderItemId}/return`, { reason, reasonDetail: detail });
 }
 
 // TODO: 배송 조회 API (택배 이벤트 목록, 경로 미정). 생기기 전까지 화면은 「조회 전」 한 줄을 씀

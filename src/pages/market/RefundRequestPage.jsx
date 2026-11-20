@@ -15,6 +15,13 @@ import {
 } from './orderDetail/orderDetailModel';
 import { EMPTY } from '../../constants/emptyText';
 
+// 반품 신청 실패 code → 안내 (그 밖은 BE message)
+const RETURN_ERROR_MESSAGES = {
+  RETURN_ALREADY_REQUESTED: '이미 반품을 신청한 상품이에요.',
+  RETURN_NOT_REQUESTABLE: '배송 완료된 상품만 반품을 신청할 수 있어요.',
+  RETURN_PERIOD_EXPIRED: '반품 신청 기간(배송 완료 후 72시간)이 지났어요.',
+};
+
 // 시안 04-3 반품 신청 (주문상품 하나씩, 배송 완료 후 72시간 안 · BE docs/flows/cancel-refund.md)
 function RefundRequestPage() {
   usePageTitle('반품 신청');
@@ -70,13 +77,22 @@ function RefundRequestPage() {
   };
 
   const submit = async () => {
+    const trimmed = detail.trim();
+    // BE: 기타 사유는 직접 작성 내용 필수
+    if (reason === 'OTHER' && !trimmed) {
+      setError('기타 사유는 상세 설명을 적어 주세요.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await requestReturn(item.id, { reason, detail: detail.trim() || null });
+      await requestReturn(item.id, { reason, detail: trimmed || null });
       navigate(`/orders/${orderId}`, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message ?? '반품을 신청하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      const data = err.response?.data;
+      setError(
+        RETURN_ERROR_MESSAGES[data?.code] ?? data?.message ?? '반품을 신청하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      );
       setSubmitting(false);
     }
   };

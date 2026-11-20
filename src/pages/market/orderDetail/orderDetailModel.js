@@ -82,12 +82,18 @@ function isAcceptPending(sellerOrder) {
   return !sellerOrder.shipmentStatus;
 }
 
-// 반품 상태: returnRequest가 없으면 주문상품 상태로 짐작 (REFUND_REQUESTED → 신청, REFUNDED → 완료)
+// 반품 상태: returnRequest가 없으면 주문상품 상태(BE OrderItemStatus)로 정함
+// RETURN_REQUESTED → 신청, RETURN_IN_TRANSIT · RETURN_PROCESSING(도착, 환불 대기) → 반품 배송 중, RETURNED → 완료
+const RETURN_STATUS_BY_ITEM_STATUS = {
+  RETURN_REQUESTED: 'REQUESTED',
+  RETURN_IN_TRANSIT: 'SHIPPING',
+  RETURN_PROCESSING: 'SHIPPING',
+  RETURNED: 'COMPLETED',
+};
+
 function getReturnStatus(item) {
   if (item.returnRequest?.status) return item.returnRequest.status;
-  if (item.status === 'REFUND_REQUESTED') return 'REQUESTED';
-  if (item.status === 'REFUNDED') return 'COMPLETED';
-  return null;
+  return RETURN_STATUS_BY_ITEM_STATUS[item.status] ?? null;
 }
 
 function itemsText(items, unit) {
@@ -261,7 +267,7 @@ function buildGroup(order, sellerOrder, index, context) {
   );
 
   // 머리 배지: 남은 상품(취소 · 반품 완료 제외)이 모두 구매 확정이면 구매 확정, 아니면 배송 단계
-  const liveItems = sellerOrder.items.filter((item) => !['CANCELLED', 'REFUNDED'].includes(item.status));
+  const liveItems = sellerOrder.items.filter((item) => !['CANCELLED', 'RETURNED'].includes(item.status));
   const allConfirmed = liveItems.length > 0 && liveItems.every((item) => item.status === 'CONFIRMED');
   const allCancelled = sellerOrder.items.every((item) => item.status === 'CANCELLED');
   const acceptPending = isAcceptPending(sellerOrder);
@@ -370,9 +376,9 @@ function buildRefundNote(sellerOrders) {
   sellerOrders.forEach((sellerOrder) => {
     sellerOrder.items.forEach((item) => {
       if (item.status === 'CANCELLED') cancelled += Number(item.price);
-      if (item.status === 'REFUNDED') returned += Number(item.price);
+      if (item.status === 'RETURNED') returned += Number(item.price);
     });
-    const allGone = sellerOrder.items.every((item) => ['CANCELLED', 'REFUNDED'].includes(item.status));
+    const allGone = sellerOrder.items.every((item) => ['CANCELLED', 'RETURNED'].includes(item.status));
     if (allGone) {
       const fee = Number(sellerOrder.shippingFee ?? 0);
       if (sellerOrder.items.every((item) => item.status === 'CANCELLED')) cancelled += fee;

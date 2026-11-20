@@ -39,7 +39,7 @@ async function fetchAllOrders() {
 
 const DETAIL_CONCURRENCY = 4; // 주문 상세를 동시에 부르는 수
 
-const LIVE_ITEM = (item) => !['CANCELLED', 'REFUNDED'].includes(item.status);
+const LIVE_ITEM = (item) => !['CANCELLED', 'RETURNED'].includes(item.status);
 
 // 주문 상세의 판매자 주문 → 목록 카드 한 줄에 쓰는 값 (BE OrderDetailResponse.SellerOrderDetail)
 // 판매자 주문 상태는 응답에 없어 주문상품 상태로 정함: 모두 취소 → CANCELLED, 수락 대기 상품 → ACCEPT_PENDING,

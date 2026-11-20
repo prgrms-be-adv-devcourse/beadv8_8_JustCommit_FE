@@ -102,7 +102,9 @@ export const SETTLEMENT_FEE_RATE = 0.05;
  * 판매 주문 상태 키(SALES_ORDER_STATUS)를 계산
  * 수락 대기: 주문 상태(OrderStatus)에는 없고, 목록은 acceptPending(boolean),
  *           상세는 items[].status === 'ACCEPT_PENDING'으로 옴 (BE SellerOrderResponse · SellerOrderDetailResponse)
- * TODO: 백엔드 반품 신청 상태가 생기면 필드명을 확인
+ * 반품 신청: 상세는 items[].status === 'RETURN_REQUESTED'(BE OrderItemStatus)로 옴
+ * TODO: 목록 응답(SellerOrderResponse)에는 주문상품 상태 · 반품 여부가 없어 목록에서는 반품 신청을 못 가림.
+ *       BE에 returnRequested(boolean)가 생기면 그대로 쓰임
  */
 export function getSalesOrderStatus(order) {
   if (order.status === 'CANCELLED') return 'CANCELLED';
@@ -114,7 +116,7 @@ export function getSalesOrderStatus(order) {
     return 'ACCEPT_PENDING';
   }
   const items = order.items ?? [];
-  if (order.returnRequested || items.some((item) => item.status === 'REFUND_REQUESTED')) {
+  if (order.returnRequested || items.some((item) => item.status === 'RETURN_REQUESTED')) {
     return 'RETURN_REQUESTED';
   }
   if (order.status === 'COMPLETED' || order.confirmedAt) return 'CONFIRMED';
