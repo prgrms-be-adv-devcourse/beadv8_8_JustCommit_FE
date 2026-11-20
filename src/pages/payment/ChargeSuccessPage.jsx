@@ -79,7 +79,10 @@ function ChargeSuccessPage() {
       .catch((error) => {
         // 응답 없음(타임아웃 · 연결 끊김) · 이미 승인 처리 중(CHARGE_PROCESSING)은 실패가 아니라 결과를 아직 모르는 것
         // → 처리 중 화면 (복구 스케줄러가 토스 조회로 확정)
-        if (!error.response || error.response.data?.code === 'CHARGE_PROCESSING') {
+        const status = error.response?.status;
+        const code = error.response?.data?.code;
+        // 게이트웨이 시간 초과 · 연결 실패(502 · 503 · 504)도 승인이 이미 끝났을 수 있어 결과 불명으로 봄
+        if (!error.response || code === 'CHARGE_PROCESSING' || status === 502 || status === 503 || status === 504) {
           navigate('/deposit/charge/success', { replace: true, state: { chargeResult: { processing: true } } });
           return;
         }

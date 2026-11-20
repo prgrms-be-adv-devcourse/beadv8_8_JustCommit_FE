@@ -15,6 +15,16 @@ const MAX_DIGITS = 9;
 const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
 
 // 시안 07-4-1 인출 · 07-4-2 금액 초과 (인출 가능 금액 = 판매 정산금만, 충전금은 인출 안 됨)
+// 중복 신청 방지 키: crypto.randomUUID는 HTTPS · localhost에서만 있어서 없으면 getRandomValues로 만듦
+function createIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 function WithdrawPage() {
   usePageTitle('예치금 인출');
   const navigate = useNavigate();
@@ -45,7 +55,7 @@ function WithdrawPage() {
     setErrorMessage('');
     try {
       if (idempotencyRef.current?.amount !== amount) {
-        idempotencyRef.current = { amount, key: crypto.randomUUID() };
+        idempotencyRef.current = { amount, key: createIdempotencyKey() };
       }
       await requestCashOut(amount, idempotencyRef.current.key);
       idempotencyRef.current = null;
