@@ -28,7 +28,7 @@ function toViewAddress(address) {
     ...address,
     isDefault: isDefaultAddress(address),
     phoneText: formatPhone(address.recipientPhone),
-    // 삭제 확인 모달(06-5-11): 「배송지 이름 · 주소」 한 줄
+    // 삭제 확인 모달(06-5-12): 「배송지 이름 · 주소」 한 줄
     addressLine: [address.addressName, [address.address1, address.address2].filter(Boolean).join(', ')]
       .filter(Boolean)
       .join(' · '),

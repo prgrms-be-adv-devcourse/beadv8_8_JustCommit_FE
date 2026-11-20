@@ -48,10 +48,10 @@ function PasswordPage() {
     } catch (error) {
       const code = error.response?.data?.code;
       if (code === 'PASSWORD_CHANGE_LOCKED') {
-        // 429: 5번 틀려 24시간 잠김 (06-5-4)
+        // 429: 5번 틀려 24시간 잠김 (06-5-5)
         setIsLocked(true);
       } else if (code === 'INVALID_CURRENT_PASSWORD') {
-        // 400: 현재 비밀번호 틀림 (06-5-3)
+        // 400: 현재 비밀번호 틀림 (06-5-4)
         setCurrentPasswordError('현재 비밀번호가 맞지 않아요');
       } else {
         setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);

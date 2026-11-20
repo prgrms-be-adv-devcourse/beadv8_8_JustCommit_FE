@@ -4,7 +4,7 @@ import ModalButton from '../../../components/common/ModalButton';
 import { CheckBox } from '../account/AccountUi';
 import { inputClass } from '../account/accountStyle';
 
-// 시안 06-5-10 배송지 추가 모달 (화면 모양만)
+// 시안 06-5-11 배송지 추가 모달 (화면 모양만)
 // props: title, form{addressName,recipientName,phoneText,zipcode,address1,address2,isDefault}, onChange(name, value),
 //        onSearchAddress, phoneError, errorMessage, canSubmit, isSubmitting, onSubmit, onClose, showDefaultOption
 function AddressModalView({

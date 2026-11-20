@@ -1,12 +1,14 @@
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import PageBackLink from '../../../components/common/PageBackLink';
+import useAuth from '../../../hooks/useAuth';
 import { AccountMenuContext } from './accountMenuContext';
 
 // 시안 06-5 회원 정보 수정 공통 틀: 왼쪽 메뉴 + 오른쪽 카드
 // active: 메뉴 key / wide: 카드 안 너비 제한 없음 (배송지 관리)
 const ACCOUNT_MENU = [
   { key: 'nickname', to: '/mypage/account', label: '닉네임 변경' },
+  { key: 'intro', to: '/mypage/account/intro', label: '판매자 소개', sellerOnly: true },
   { key: 'password', to: '/mypage/account/password', label: '비밀번호 변경' },
   { key: 'bank', to: '/mypage/account/bank', label: '계좌 변경' },
   { key: 'addresses', to: '/mypage/addresses', label: '배송지 관리' },
@@ -14,9 +16,13 @@ const ACCOUNT_MENU = [
 ];
 
 function AccountLayout({ active, wide = false, children }) {
-  // 카카오 가입 회원은 비밀번호가 없으므로 「비밀번호 변경」 탭을 숨김
+  // 카카오 가입 회원은 비밀번호가 없으므로 「비밀번호 변경」 탭을 숨김, 판매자만 「판매자 소개」 탭 (06-5-2)
   const { isKakao } = useContext(AccountMenuContext);
-  const menu = isKakao ? ACCOUNT_MENU.filter((item) => item.key !== 'password') : ACCOUNT_MENU;
+  const { user } = useAuth();
+  const isSeller = user?.role === 'SELLER';
+  const menu = ACCOUNT_MENU.filter(
+    (item) => !(isKakao && item.key === 'password') && !(item.sellerOnly && !isSeller),
+  );
 
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">

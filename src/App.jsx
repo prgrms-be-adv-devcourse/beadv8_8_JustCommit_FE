@@ -28,6 +28,7 @@ import SocialSignupPage from './pages/member/SocialSignupPage';
 // 06 마이페이지 · 회원 정보 수정 · 알림, 05 리뷰
 import MyPage from './pages/member/MyPage';
 import NicknamePage from './pages/member/account/NicknamePage';
+import IntroPage from './pages/member/account/IntroPage';
 import PasswordPage from './pages/member/account/PasswordPage';
 import BankAccountPage from './pages/member/account/BankAccountPage';
 import AddressesPage from './pages/member/account/AddressesPage';
@@ -102,6 +103,7 @@ function App() {
           {/* 06 마이페이지 · 회원 정보 수정 · 알림, 05 리뷰 작성 · 관리 */}
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/account" element={<NicknamePage />} />
+          <Route path="/mypage/account/intro" element={<IntroPage />} />
           <Route path="/mypage/account/password" element={<PasswordPage />} />
           <Route path="/mypage/account/bank" element={<BankAccountPage />} />
           <Route path="/mypage/addresses" element={<AddressesPage />} />
