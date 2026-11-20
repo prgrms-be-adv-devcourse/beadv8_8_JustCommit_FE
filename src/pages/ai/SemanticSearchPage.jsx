@@ -2,42 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import usePageTitle from '../../hooks/usePageTitle';
 import { searchSpeciesBySentence } from '../../api/aiApi';
-import { getProduct } from '../../api/productApi';
 import {
   SENTENCE_QUERY_MAX,
   SENTENCE_QUERY_MIN,
   getSentenceSearchErrorMessage,
 } from '../../constants/ai';
 import SemanticSearchView from './SemanticSearchView';
+import { loadSpeciesProducts } from './speciesProducts';
 
 // 문장으로 찾기 (품종 의미 검색, BE GET speciesSearches)
 // 검색 문장은 URL(?query=)에 두어 새로고침 · 뒤로 가기 · 링크 공유에도 유지
-
-// 상품 상세 응답 → 목록 카드(ProductCard) 모양
-function toCardProduct(detail) {
-  return {
-    productId: detail.productId,
-    title: detail.title,
-    price: detail.price,
-    thumbnailUrl: detail.imageUrls?.[0] ?? null,
-    status: detail.status,
-    createdAt: detail.createdAt,
-  };
-}
-
-// 품종별 상품 ID를 상품 상세 API로 채움. 그 사이 숨김 · 삭제돼 조회에 실패한 상품은 뺌
-async function loadProducts(items) {
-  const productIds = [...new Set(items.flatMap((item) => item.productIds ?? []))];
-  const results = await Promise.allSettled(productIds.map((productId) => getProduct(productId)));
-  const products = {};
-  results.forEach((result) => {
-    if (result.status !== 'fulfilled') return;
-    const detail = result.value.data.data;
-    if (detail.hidden) return;
-    products[detail.productId] = toCardProduct(detail);
-  });
-  return products;
-}
 
 function SemanticSearchPage() {
   const navigate = useNavigate();
@@ -65,7 +39,7 @@ function SemanticSearchPage() {
         const items = response.data.data?.items ?? [];
         setResult({ query, items, errorMessage: '' });
 
-        const loaded = await loadProducts(items);
+        const loaded = await loadSpeciesProducts(items);
         if (ignore) return;
         setProducts(loaded);
         setProductsQuery(query);
