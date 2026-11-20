@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { updateCartItemPrices } from '../../api/cartApi';
 import { addAddress, getAddresses } from '../../api/memberApi';
 import { createCartOrder, getOrder, payOrder, quoteShippingFee } from '../../api/orderApi';
 import { ACTION_ERROR } from '../../constants/actionError';
@@ -20,6 +21,8 @@ import CheckoutView, { AddressChangeModal, LeaveModal, PriceChangedModal, Shippi
 const PAYMENT_WINDOW_MS = 10 * 60 * 1000; // 결제 대기 10분 (주문 생성 시각부터)
 const MAX_ADDRESSES = 4;
 const UNKNOWN_SELLER = '알 수 없는 판매자';
+// 주문 · 결제가 PAYMENT_FAILED로 끝났을 때 (결제가 안 됐고 상품 예약도 풀림)
+const PAYMENT_FAILED_MESSAGE = '주문을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.';
 const MESSAGE_CLASS = 'flex-1 max-w-[1240px] w-full mx-auto px-5 py-8 text-[14px] text-[#6b7280]';
 
 // ?items=12,13 → [12, 13]
@@ -312,15 +315,20 @@ function CheckoutPage() {
           });
           return;
         }
+        // BE는 장바구니에 저장된 가격(price)과 지금 가격(nowPrice)이 다르면 PRICE_CHANGED를 줌 (OrderService.create)
+        // → 화면에 보여 준 가격과 달라진 상품뿐 아니라, 주문서에 들어올 때 이미 가격이 바뀐 상품(isChangedPrice)도 넣음
         const shown = Object.fromEntries(cartItems.map((item) => [item.cartItemId, Number(item.nowPrice)]));
-        const changed = latest.filter((item) => Number(item.nowPrice) !== shown[item.cartItemId]);
+        const changed = latest.filter(
+          (item) => Number(item.nowPrice) !== shown[item.cartItemId] || item.isChangedPrice,
+        );
         if (code === 'PRICE_CHANGED' || changed.length > 0) {
           setModal({
             type: 'price',
             items: changed.map((item) => ({
               key: item.cartItemId,
               title: item.title,
-              prevPrice: shown[item.cartItemId],
+              prevPrice:
+                Number(item.nowPrice) !== shown[item.cartItemId] ? shown[item.cartItemId] : Number(item.price),
               price: Number(item.nowPrice),
             })),
             latest,
@@ -352,11 +360,18 @@ function CheckoutPage() {
       const order = response.data.data ?? response.data;
       refreshCart().catch(() => {});
       refreshWallet().catch(() => {});
+      // 주문 생성은 결제 결과와 상관없이 200으로 주문 상태를 줌 (BE OrderService.create · OrderPaymentTransactions.targetStatus)
       if (order.status === 'PAID') {
         goToComplete(order);
-      } else {
-        // 결제 대기: 상품은 10분 동안 잡아 두고 충전하러 감
+      } else if (order.status === 'PAYMENT_PENDING') {
+        // 잔액 부족으로 결제 대기: 상품은 10분 동안 잡아 두고 충전하러 감
         goToCharge(order.orderId, Math.max(0, Number(order.totalAmount) - (balance ?? 0)));
+      } else if (order.status === 'PAYMENT_PROCESSING') {
+        // 결제 결과를 아직 모름 (타임아웃 등): 복구가 확정하므로 주문 상세에서 확인
+        navigate(`/orders/${order.orderId}`, { replace: true });
+      } else {
+        // PAYMENT_FAILED: 상품 예약 결과 불명 · 결제 거절 · 지갑 없음 · 결제 서버 연결 실패
+        setErrorMessage(PAYMENT_FAILED_MESSAGE);
       }
     } catch (error) {
       await handleOrderError(error, (fee) => submitNewOrder(fee));
@@ -372,11 +387,28 @@ function CheckoutPage() {
     try {
       const response = await payOrder(pendingOrderId);
       const order = response.data.data ?? response.data;
-      refreshWallet().catch(() => {});
-      navigate(`/orders/${pendingOrderId}/complete`, {
-        replace: true,
-        state: { order: { ...pendingOrder, ...order, orderId: pendingOrderId } },
-      });
+      // 재결제도 결과와 상관없이 200으로 주문 상태를 줌 (BE OrderService.repayment)
+      if (order.status === 'PAID') {
+        refreshWallet().catch(() => {});
+        navigate(`/orders/${pendingOrderId}/complete`, {
+          replace: true,
+          state: { order: { ...pendingOrder, ...order, orderId: pendingOrderId } },
+        });
+      } else if (order.status === 'PAYMENT_PENDING') {
+        // 잔액 부족: 결제 대기 유지 → 모자란 만큼 충전하러 감
+        const wallet = await refreshWallet().catch(() => null);
+        const nowBalance = wallet?.balance ?? balance ?? 0;
+        const shortAmount = Math.max(0, Number(order.totalAmount ?? pendingOrder?.totalAmount) - nowBalance);
+        navigate(`/deposit/charge?orderId=${pendingOrderId}`, {
+          state: { from: `/checkout?orderId=${pendingOrderId}&pay=1`, shortage: shortAmount },
+        });
+      } else if (order.status === 'PAYMENT_PROCESSING') {
+        refreshWallet().catch(() => {});
+        navigate(`/orders/${pendingOrderId}`, { replace: true });
+      } else {
+        refreshWallet().catch(() => {});
+        setErrorMessage(PAYMENT_FAILED_MESSAGE);
+      }
     } catch (error) {
       if (error.response?.data?.code === 'PAYMENT_WINDOW_EXPIRED') {
         navigate(`/orders/${pendingOrderId}/expired`, { replace: true });
@@ -387,7 +419,7 @@ function CheckoutPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [pendingOrderId, pendingOrder, navigate, refreshWallet]);
+  }, [pendingOrderId, pendingOrder, balance, navigate, refreshWallet]);
 
   // 충전을 마치고 돌아왔고 잔액이 충분하면 한 번만 바로 결제
   useEffect(() => {
@@ -493,14 +525,39 @@ function CheckoutPage() {
       <PriceChangedModal
         items={modal.items}
         onClose={closeModal}
-        onSubmit={() => {
-          // 바뀐 가격을 받아들이면 주문서에 이전 가격을 줄 그어 보여 주고, 다시 결제 버튼을 누르게 함
+        onSubmit={async () => {
+          // 바뀐 가격을 받아들이면 장바구니에 지금 가격을 저장하고(BE는 저장된 가격으로 PRICE_CHANGED를 판단),
+          // 주문서에 이전 가격을 줄 그어 보여 준 뒤 다시 결제 버튼을 누르게 함
+          const { items: changedItems, latest } = modal;
+          setModal(null);
+          setErrorMessage('');
+          const toUpdate = latest
+            .filter((item) => item.isChangedPrice)
+            .map((item) => ({ cartItemId: item.cartItemId, expectedPrice: item.nowPrice }));
+          let nextItems = latest;
+          if (toUpdate.length > 0) {
+            // 저장이 끝나기 전에 결제를 누르면 옛 가격으로 주문돼 다시 PRICE_CHANGED가 나므로 그동안 결제 버튼을 막음
+            setIsSubmitting(true);
+            try {
+              const response = await updateCartItemPrices(toUpdate);
+              const cart = response.data.data ?? response.data;
+              const ids = latest.map((item) => item.cartItemId);
+              nextItems = (cart?.items ?? []).filter((item) => ids.includes(item.cartItemId));
+              refreshCart().catch(() => {});
+            } catch (error) {
+              // 그사이 가격이 또 바뀌었거나(PRICE_CHANGED) 살 수 없게 됨(PRODUCT_UNAVAILABLE)
+              setErrorMessage(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+              refreshCart().catch(() => {});
+              return;
+            } finally {
+              setIsSubmitting(false);
+            }
+          }
           setPrevPrices((prev) => ({
             ...prev,
-            ...Object.fromEntries(modal.items.map((item) => [item.key, item.prevPrice])),
+            ...Object.fromEntries(changedItems.map((item) => [item.key, item.prevPrice])),
           }));
-          setCartItems(modal.latest);
-          setModal(null);
+          setCartItems(nextItems);
         }}
       />
     );

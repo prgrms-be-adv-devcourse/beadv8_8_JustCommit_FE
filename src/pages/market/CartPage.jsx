@@ -17,7 +17,8 @@ const RECOMMEND_SIZE = 4;
 // normal: 주문 가능 / priceChanged: 담을 때와 가격이 달라 확인 필요 / reserved: 다른 회원이 결제 중(거래 중)
 // deleted: 판매자가 삭제했거나 상품 정보가 없음 / hidden: 판매자가 숨김 / soldOut: 판매 완료
 // reviewing: 검수 중 · 반려 (다시 검수 중인 상품, 제목 · 사진을 가림) / unavailable: 그 밖의 구매 불가 (내 상품 등)
-// TODO: 삭제된 상품이 응답에 어떻게 오는지(status DELETED · 상품 필드 null · 항목 제외) BE docs에 없어 둘 다 처리
+// 삭제된 상품은 항목이 그대로 오고 status가 DELETED (제목 등 상품 정보는 유지, BE CartService.toResponse)
+// status · title이 비어 있는 경우는 BE에서 생기지 않지만 화면이 깨지지 않도록 같이 삭제로 봄
 const REVIEW_STATUSES = ['REVIEW_PENDING', 'REJECTED'];
 
 function getItemState(item, memberId, confirmedIds) {
@@ -84,21 +85,21 @@ function CartPage() {
     refreshCart().catch(() => setLoadError(true));
   }, [isLoggedIn, refreshCart]);
 
-  // 장바구니가 비었으면 새로 올라온 식물, 아니면 AI 추천 (추천이 없거나 실패하면 새로 올라온 식물)
+  // AI 추천을 먼저 보여 주고, 추천이 없거나 실패하면 새로 올라온 식물
+  // (장바구니가 비었는지 바뀔 때 다시 부름: 담기 · 비우기에 따라 추천 근거가 바뀜)
   const isCartEmpty = cart ? cart.items.length === 0 : null;
   useEffect(() => {
     if (isCartEmpty === null) return undefined;
     let ignore = false;
 
     async function load() {
-      if (!isCartEmpty) {
-        try {
-          const response = await getCartRecommendations(RECOMMEND_SIZE);
-          const products = toProductList(response.data.data ?? response.data);
-          if (products.length > 0) return { isAi: true, products };
-        } catch {
-          // 추천 실패 → 새로 올라온 식물로
-        }
+      // 장바구니가 비어도 최근 구매 확정 상품으로 추천할 수 있어 항상 먼저 부름 (BE CartRecommendationService, ADR 0029)
+      try {
+        const response = await getCartRecommendations(RECOMMEND_SIZE);
+        const products = toProductList(response.data.data ?? response.data);
+        if (products.length > 0) return { isAi: true, products };
+      } catch {
+        // 추천 실패 → 새로 올라온 식물로
       }
       return { isAi: false, products: await fetchLatestProducts(excludeRef.current) };
     }

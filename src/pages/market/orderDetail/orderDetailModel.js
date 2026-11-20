@@ -429,12 +429,17 @@ export function buildOrderDetailView(order, context = {}) {
 /**
  * 취소 확인 모달 내용: 이 판매자의 남은 상품을 모두 취소하면 배송비도 환불 (BE cancel-refund.md)
  */
+const IN_CANCELLATION_STATUSES = ['CANCEL_PROCESSING', 'CANCELLED', 'REVIEW_REQUIRED'];
+
 export function buildCancelTarget(order, itemId) {
   for (const sellerOrder of order.sellerOrders ?? []) {
     const item = sellerOrder.items.find((candidate) => candidate.id === itemId);
     if (!item) continue;
-    const remaining = sellerOrder.items.filter((candidate) => candidate.status === 'NORMAL');
-    const lastOne = remaining.length === 1 && remaining[0].id === itemId;
+    // BE는 판매자 주문의 모든 상품이 취소 흐름(CANCEL_PROCESSING · CANCELLED · REVIEW_REQUIRED)에 들어가면
+    // 배송비도 환불함 (OrdersItem.isInCancellation, 수락 대기 ACCEPT_PENDING 상품 취소도 같음)
+    const lastOne = sellerOrder.items.every(
+      (candidate) => candidate.id === itemId || IN_CANCELLATION_STATUSES.includes(candidate.status),
+    );
     const fee = Number(sellerOrder.shippingFee ?? 0);
     const refund = Number(item.price) + (lastOne ? fee : 0);
     return {

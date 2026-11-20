@@ -44,8 +44,12 @@ function deadlineText(deadline, startedAt, hours, placeholder) {
   return placeholder;
 }
 
+// 수락 · 거절 대상: 수락 대기(ACCEPT_PENDING) 상품만. 상태 값이 없으면(옛 응답) 모두 대상으로 봄
+const isAcceptPending = (item) => !item.status || item.status === 'ACCEPT_PENDING';
+
 // 수락 대기: 체크한 상품 수에 따라 안내 · 버튼 문구
-function acceptTexts(items, rejectIds) {
+function acceptTexts(allItems, rejectIds) {
+  const items = allItems.filter(isAcceptPending);
   const total = items.length;
   const rejected = items.filter((item) => rejectIds.includes(itemIdOf(item)));
   const n = rejected.length;
@@ -252,17 +256,26 @@ function SalesOrderDetailPage() {
       await load();
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? fallback);
+      // 이미 처리됨(자동 거절 · 구매자 취소 등): 지금 상태를 다시 불러와 보여 줌 (BE 409 SELLER_ORDER_NOT_ACCEPTABLE)
+      if (error.response?.data?.code === 'SELLER_ORDER_NOT_ACCEPTABLE') {
+        setRejectIds([]);
+        load().catch(() => {});
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const pendingIds = (order.items ?? []).filter(isAcceptPending).map(itemIdOf);
   const { summary, submitLabel } = acceptTexts(order.items ?? [], rejectIds);
   const accept = {
-    deadlineText: deadlineText(order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
+    deadlineText: deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
     rejectIds,
     sender: { options: senderOptions, selectedId: senderId, onChange: setSenderId },
-    onToggle: (id) => setRejectIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])),
+    onToggle: (id) => {
+      if (!pendingIds.includes(id)) return; // 수락 대기가 아닌 상품은 체크할 수 없음
+      setRejectIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+    },
     summary,
     submitLabel,
     isSubmitting,

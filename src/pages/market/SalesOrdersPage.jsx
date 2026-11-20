@@ -50,7 +50,7 @@ function toSalesRow(order) {
 
   switch (statusKey) {
     case 'ACCEPT_PENDING':
-      row.statusNote = `${deadlineText(order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}')}까지 수락하지 않으면 자동으로 거절돼요`;
+      row.statusNote = `${deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}')}까지 수락하지 않으면 자동으로 거절돼요`;
       row.action = 'ACCEPT';
       break;
     case 'PICKUP':
