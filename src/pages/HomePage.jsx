@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import usePageTitle from '../hooks/usePageTitle';
 import { getProducts, getSpecies } from '../api/productApi';
+import { searchSpeciesBySentence } from '../api/aiApi';
+import { SENTENCE_QUERY_MAX, SENTENCE_QUERY_MIN } from '../constants/ai';
+import { loadSpeciesProducts, orderSpeciesProducts } from './ai/speciesProducts';
 import { SPECIES_CATEGORIES } from '../constants/product';
 import HomeView from './HomeView';
 
@@ -148,6 +151,45 @@ function HomePage() {
     };
   }, [query]);
 
+  // 검색어로 ai 품종 의미 검색도 함께 (실패하면 줄을 숨김). keyword가 다르면 아직 이 검색어의 결과가 아님
+  // products: 그 품종들의 판매 중 상품 (상품 검색 결과가 없을 때 대신 보여 줌), productsLoaded: 상품까지 다 불러왔는지
+  const [speciesResult, setSpeciesResult] = useState({ keyword: '', items: [], products: [], productsLoaded: false });
+  const canSearchSpecies = keyword.length >= SENTENCE_QUERY_MIN && keyword.length <= SENTENCE_QUERY_MAX;
+
+  useEffect(() => {
+    if (!canSearchSpecies) return undefined;
+
+    let ignore = false;
+    async function searchSpecies() {
+      try {
+        const response = await searchSpeciesBySentence(keyword);
+        if (ignore) return;
+        const items = response.data.data?.items ?? [];
+        setSpeciesResult({ keyword, items, products: [], productsLoaded: false });
+
+        const loaded = await loadSpeciesProducts(items);
+        if (ignore) return;
+        setSpeciesResult({ keyword, items, products: orderSpeciesProducts(items, loaded), productsLoaded: true });
+      } catch {
+        if (!ignore) setSpeciesResult({ keyword, items: [], products: [], productsLoaded: true });
+      }
+    }
+
+    searchSpecies();
+
+    return () => {
+      ignore = true;
+    };
+  }, [keyword, canSearchSpecies]);
+
+  const isCurrentSpecies = canSearchSpecies && speciesResult.keyword === keyword;
+  const similarSpecies = {
+    isLoading: canSearchSpecies && !isCurrentSpecies,
+    items: isCurrentSpecies ? speciesResult.items : [],
+    products: isCurrentSpecies ? speciesResult.products : [],
+    isLoadingProducts: canSearchSpecies && !(isCurrentSpecies && speciesResult.productsLoaded),
+  };
+
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
     setErrorMessage('');
@@ -196,6 +238,7 @@ function HomePage() {
       errorMessage={errorMessage}
       hasMore={hasMore}
       isLoadingMore={isLoadingMore}
+      similarSpecies={similarSpecies}
       handlers={handlers}
     />
   );

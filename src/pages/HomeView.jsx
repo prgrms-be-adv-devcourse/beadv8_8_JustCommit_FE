@@ -379,7 +379,33 @@ function EmptyBox({ keyword, isFiltered, onReset }) {
   );
 }
 
-function ProductList({ keyword, isFiltered, products, isLoading, errorMessage, hasMore, isLoadingMore, handlers }) {
+// 이름으로는 맞는 상품이 없을 때(문장 검색 등) AI가 찾은 품종의 판매 중 상품을 대신 보여 줌
+function SimilarSpeciesProducts({ products }) {
+  return (
+    <section data-purpose="similar-species-products">
+      <p className="mb-5 text-[14px] text-[#4b5563]">
+        이름이 맞는 상품은 없어서, 검색한 문장과 비슷한 품종의 판매 중인 식물을 보여 드려요.
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-7">
+        {products.map((product) => (
+          <ProductCard key={product.productId} product={product} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProductList({
+  keyword,
+  isFiltered,
+  products,
+  isLoading,
+  errorMessage,
+  hasMore,
+  isLoadingMore,
+  similarSpecies,
+  handlers,
+}) {
   if (isLoading) {
     return <p className="py-20 text-center text-sm text-gray-400">상품을 불러오는 중...</p>;
   }
@@ -387,6 +413,15 @@ function ProductList({ keyword, isFiltered, products, isLoading, errorMessage, h
     return <ActionErrorBar message={errorMessage} />;
   }
   if (products.length === 0) {
+    // 검색어만 있고 필터는 없을 때: AI 품종의 상품을 기다렸다가 있으면 대신 보여 줌
+    if (keyword && !isFiltered) {
+      if (similarSpecies.isLoadingProducts) {
+        return <p className="py-20 text-center text-sm text-gray-400">비슷한 식물을 찾는 중...</p>;
+      }
+      if (similarSpecies.products.length > 0) {
+        return <SimilarSpeciesProducts products={similarSpecies.products} />;
+      }
+    }
     return <EmptyBox keyword={keyword} isFiltered={isFiltered} onReset={handlers.onReset} />;
   }
 
@@ -417,6 +452,44 @@ function ProductList({ keyword, isFiltered, products, isLoading, errorMessage, h
   );
 }
 
+// 검색어로 ai 품종 의미 검색을 함께 해서, 상품 목록 위에 비슷한 품종을 보여 줌
+// 이름이 아닌 문장(「햇빛 적은 방에서 키우기 쉬운 식물」)으로 검색해도 찾을 거리가 생김
+// similarSpecies: { isLoading, items } — 실패 · 결과 없음이면 줄을 그리지 않음 (상품 검색을 방해하지 않게)
+function SimilarSpeciesRow({ keyword, similarSpecies }) {
+  if (similarSpecies.isLoading) {
+    return <p className="mb-5 text-[13px] text-gray-400">AI가 비슷한 품종을 찾는 중...</p>;
+  }
+  if (similarSpecies.items.length === 0) return null;
+
+  return (
+    <section className="mb-6 border border-[#d1e7dd] bg-[#f4f8f6] px-4 py-3" data-purpose="similar-species">
+      <div className="flex items-center justify-between gap-3 mb-2.5">
+        <h3 className="text-[14px] font-bold text-[#0f4c3a]">✨ AI가 찾은 비슷한 품종</h3>
+        <Link
+          to={`/search/semantic?query=${encodeURIComponent(keyword)}`}
+          className="text-[12px] font-semibold text-[#0f4c3a] hover:underline underline-offset-4 shrink-0"
+        >
+          품종별 상품 자세히 보기 ›
+        </Link>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {similarSpecies.items.map((item) => (
+          <Link
+            key={item.speciesId}
+            to={`/?speciesId=${item.speciesId}`}
+            className="h-8 px-3 flex items-center gap-1.5 border border-[#d1e7dd] bg-white text-[13px] text-[#111827] hover:border-[#0f4c3a] transition-colors"
+          >
+            <span className="font-semibold">{item.name}</span>
+            <span className="text-[12px] text-gray-400">
+              {item.productIds?.length > 0 ? '판매 중' : '판매 중 없음'}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // listTitle: 검색어가 없을 때 목록 제목 (새로 올라온 식물 · 카테고리 · 품종 이름)
 function HomeView({
   keyword,
@@ -432,6 +505,7 @@ function HomeView({
   errorMessage,
   hasMore,
   isLoadingMore,
+  similarSpecies,
   handlers,
 }) {
   return (
@@ -446,6 +520,7 @@ function HomeView({
           handlers={handlers}
         />
         <div className="flex-1 w-full min-w-0" data-purpose="product-listing-main">
+          {keyword && <SimilarSpeciesRow keyword={keyword} similarSpecies={similarSpecies} />}
           <div className="flex items-center justify-between border-b border-gray-200/80 pb-3 mb-6">
             {keyword ? (
               <div className="flex items-baseline gap-2">
@@ -469,6 +544,7 @@ function HomeView({
             errorMessage={errorMessage}
             hasMore={hasMore}
             isLoadingMore={isLoadingMore}
+            similarSpecies={similarSpecies}
             handlers={handlers}
           />
         </div>

@@ -8,6 +8,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/product/ProductDetailPage';
 import SellerShopPage from './pages/member/SellerShopPage';
+import SemanticSearchPage from './pages/ai/SemanticSearchPage';
 // 03 구매 · 주문
 import CartPage from './pages/market/CartPage';
 import CheckoutPage from './pages/market/CheckoutPage';
@@ -76,6 +77,8 @@ function App() {
           {/* 02 탐색 · 상품. 검색 결과는 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<HomePage />} />
+          {/* 문장으로 찾기 (ai 품종 의미 검색) */}
+          <Route path="/search/semantic" element={<SemanticSearchPage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/sellers/:sellerId" element={<SellerShopPage />} />
 
