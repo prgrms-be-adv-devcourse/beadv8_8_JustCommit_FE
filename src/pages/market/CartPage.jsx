@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { confirmCartItemPrice, getCartRecommendations, removeCartItem } from '../../api/cartApi';
+import { getCartRecommendations, removeCartItem, updateCartItemPrices } from '../../api/cartApi';
 import { getProducts } from '../../api/productApi';
 import { ACTION_ERROR } from '../../constants/actionError';
 import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
@@ -64,7 +64,7 @@ function CartPage() {
   // 기본은 전체 선택 → "선택 해제한 항목"만 기억
   const [unselectedIds, setUnselectedIds] = useState(() => new Set());
   const [removingIds, setRemovingIds] = useState(() => new Set());
-  // 바뀐 가격을 확인한 항목 (TODO: 확인 API가 생기면 서버 값으로)
+  // 바뀐 가격을 확인한 항목 (서버에 저장한 뒤 다시 불러오기 전까지 화면에서 바로 반영)
   const [confirmedIds, setConfirmedIds] = useState(() => new Set());
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -93,7 +93,7 @@ function CartPage() {
     async function load() {
       if (!isCartEmpty) {
         try {
-          const response = await getCartRecommendations();
+          const response = await getCartRecommendations(RECOMMEND_SIZE);
           const products = toProductList(response.data.data ?? response.data);
           if (products.length > 0) return { isAi: true, products };
         } catch {
@@ -207,11 +207,13 @@ function CartPage() {
     }
   };
 
-  // 바뀐 가격 확인 → 선택할 수 있게 되고, 기본처럼 선택된 상태로
+  // 바뀐 가격 확인 → 서버에 지금 가격으로 저장, 선택할 수 있게 되고 기본처럼 선택된 상태로
+  // 그사이 가격이 또 바뀌었거나(PRICE_CHANGED) 살 수 없게 됐으면 장바구니를 다시 불러와 최신 상태로
   const confirmPrice = async (item) => {
     setErrorMessage('');
     try {
-      await confirmCartItemPrice(item.productId);
+      await updateCartItemPrices([{ cartItemId: item.cartItemId, expectedPrice: item.price }]);
+      refreshCart().catch(() => {});
       setConfirmedIds((prev) => new Set(prev).add(item.cartItemId));
       setUnselectedIds((prev) => {
         const next = new Set(prev);
@@ -220,6 +222,7 @@ function CartPage() {
       });
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+      refreshCart().catch(() => {});
     }
   };
 
