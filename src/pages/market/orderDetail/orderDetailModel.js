@@ -358,12 +358,16 @@ function buildGroup(order, sellerOrder, index, context) {
     group.tracking.tag = locked
       ? { tone: 'danger', label: '기사님 근접 · 취소 불가' }
       : { tone: 'default', label: '기사 배정 · 수거 예정' };
-    // TODO: 기사님 거리 API가 생기면 값 교체 (지금은 값이 없어 거리 줄을 숨김)
-    group.distance = {
-      locked,
-      km: sellerOrder.driverDistanceKm != null ? `${sellerOrder.driverDistanceKm}km` : null,
-      checkedAt: sellerOrder.driverCheckedAt ? formatShortDateTime(sellerOrder.driverCheckedAt)?.slice(6) : null,
-    };
+    // TODO: 기사님 거리 API가 생기면 값 교체. 거리 값이 없으면 박스를 숨김(판매자 화면과 같게)
+    //   다만 2km 안 취소 잠금(CANCEL_LOCKED)은 거리 값이 없어도 안내가 필요해 박스를 보임
+    const km = sellerOrder.driverDistanceKm != null ? `${sellerOrder.driverDistanceKm}km` : null;
+    if (km || locked) {
+      group.distance = {
+        locked,
+        km,
+        checkedAt: sellerOrder.driverCheckedAt ? formatShortDateTime(sellerOrder.driverCheckedAt)?.slice(6) : null,
+      };
+    }
   }
   return group;
 }
