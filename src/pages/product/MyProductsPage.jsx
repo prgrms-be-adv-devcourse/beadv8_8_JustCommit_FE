@@ -42,7 +42,6 @@ function matchesTab(product, tab) {
 }
 
 // 상품 응답 → 목록 한 줄. 검수 배지는 응답의 reviewStatus · decidedBy · rejectReason · rejectMessage (BE MyProductResponse)
-// TODO: 주문 취소로 돌아온 상품 여부(returnedFromOrder)는 응답에 없어 안내 문구가 안 보임
 function toRow(product) {
   const { status } = product;
   const row = {
@@ -88,8 +87,9 @@ function toRow(product) {
     };
   } else if (product.hidden) {
     row.badges = [status, 'HIDDEN'];
-    if (product.returnedFromOrder) {
-      row.note = '주문이 취소돼 돌아온 상품이에요. 상태를 확인하고 숨김을 풀면 바로 판매돼요';
+    // 거절 · 반품으로 자동 숨김된 상품과 직접 숨긴 상품을 BE 응답으로 구분하지 않아 같은 문구 (상품 상세와 같음)
+    if (status === 'ACTIVE') {
+      row.note = '판매자가 거절하거나 반품으로 돌아온 상품도 자동으로 숨겨져요. 숨김을 풀면 바로 판매돼요';
     }
   }
   return row;
