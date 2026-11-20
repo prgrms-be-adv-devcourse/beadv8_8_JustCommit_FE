@@ -90,11 +90,11 @@ function toViewOrder(order) {
     let statusText = null;
     let statusTone = 'text-[#6b7280]';
     if (item.status === 'CANCELLED') statusText = SALES_CANCEL_LABEL[item.cancelledBy ?? order.cancelledBy] ?? cancelLabel;
-    if (item.status === 'REFUND_REQUESTED') {
+    if (item.status === 'RETURN_REQUESTED') {
       statusText = '반품 신청';
       statusTone = 'text-[#92400e]';
     }
-    if (item.status === 'REFUNDED') statusText = '반품 완료';
+    if (item.status === 'RETURNED') statusText = '반품 완료';
     return {
       orderItemId: itemIdOf(item),
       name: item.productName,
@@ -174,7 +174,7 @@ function toViewOrder(order) {
     },
     shipment,
     settlement,
-    returnItem: items.find((item) => item.status === 'REFUND_REQUESTED') ?? null,
+    returnItem: items.find((item) => item.status === 'RETURN_REQUESTED') ?? null,
     shippingFee,
   };
 }
