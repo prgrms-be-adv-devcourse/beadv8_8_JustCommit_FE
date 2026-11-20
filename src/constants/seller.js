@@ -105,7 +105,7 @@ export function getSalesOrderStatus(order) {
     return 'ACCEPT_PENDING';
   }
   const items = order.items ?? [];
-  if (order.returnRequested || items.some((item) => item.status === 'RETURN_REQUESTED')) {
+  if (order.returnRequested || items.some((item) => item.status === 'REFUND_REQUESTED')) {
     return 'RETURN_REQUESTED';
   }
   if (order.status === 'COMPLETED' || order.confirmedAt) return 'CONFIRMED';
