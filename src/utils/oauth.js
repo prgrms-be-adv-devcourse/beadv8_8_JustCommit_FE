@@ -1,3 +1,4 @@
+// 빈 값이면 같은 출처(상대 경로). ??라 빈 문자열은 기본값으로 바뀌지 않음
 const OAUTH_BASE_URL = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080';
 
 // 카카오 로그인 시작: 백엔드 OAuth2 진입점으로 페이지 이동

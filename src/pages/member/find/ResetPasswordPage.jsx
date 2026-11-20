@@ -61,8 +61,20 @@ function ResetPasswordPage() {
       await resetPassword({ resetToken, newPassword: password });
       navigate('/login', { replace: true });
     } catch (resetError) {
-      // 토큰 만료 · 이미 사용 → 이메일 인증부터 다시 (토큰은 다시 쓸 수 없음)
-      if (resetError.response?.data?.code === 'INVALID_RESET_TOKEN') {
+      const code = resetError.response?.data?.code;
+      const message = resetError.response?.data?.message;
+      // 503 RESULT_UNKNOWN: 바뀌었는지 모름. 자동으로 다시 보내지 않고 새 비밀번호로 로그인해 확인 (BE 메시지가 그 안내)
+      if (code === 'RESULT_UNKNOWN') {
+        navigate('/login', {
+          replace: true,
+          state: { errorMessage: message ?? '비밀번호 재설정 결과를 확인하지 못했어요. 새 비밀번호로 로그인해 확인해 주세요.' },
+        });
+        return;
+      }
+      // 400 INVALID_RESET_TOKEN(만료 30분 · 이미 사용) · 409 MEMBER_BUSY → 이메일 인증부터 다시
+      // BE가 토큰을 꺼낼 때 지우므로 MEMBER_BUSY 뒤에도 같은 토큰은 다시 쓸 수 없음
+      if (code === 'INVALID_RESET_TOKEN' || code === 'MEMBER_BUSY') {
+        emailCode.reset(message ?? '재설정 요청이 만료됐어요. 인증번호를 다시 받아 주세요.');
         setVerifiedEmail(null);
         setResetToken('');
         setPassword('');

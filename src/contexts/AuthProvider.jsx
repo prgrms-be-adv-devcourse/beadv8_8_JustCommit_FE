@@ -42,12 +42,21 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback(async ({ email, password }) => {
-    const response = await loginApi({ email, password });
-    const { memberId, accessToken, nickname, role } = response.data.data;
+  // 로그인 응답(LoginResponse { memberId, accessToken, nickname, role })으로 로그인 상태 만들기
+  // 일반 로그인 · 카카오 가입(POST /api/v1/users/social도 같은 응답 + Refresh 쿠키)이 함께 씀
+  const loginWithResponse = useCallback((data) => {
+    const { memberId, accessToken, nickname, role } = data;
     setAccessToken(accessToken);
     setUser({ memberId, nickname, role });
   }, []);
+
+  const login = useCallback(
+    async ({ email, password }) => {
+      const response = await loginApi({ email, password });
+      loginWithResponse(response.data.data);
+    },
+    [loginWithResponse],
+  );
 
   // 로컬 회원가입: 응답에 토큰이 없으므로 로그인 상태는 바꾸지 않음 (가입 후 login 호출 필요)
   const signup = useCallback(async (form) => {
@@ -77,11 +86,12 @@ export function AuthProvider({ children }) {
       isLoggedIn: user !== null,
       isInitializing,
       login,
+      loginWithResponse,
       signup,
       refreshUser,
       logout,
     }),
-    [user, isInitializing, login, signup, refreshUser, logout],
+    [user, isInitializing, login, loginWithResponse, signup, refreshUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

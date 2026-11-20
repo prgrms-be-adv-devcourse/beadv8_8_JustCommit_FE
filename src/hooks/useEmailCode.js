@@ -79,6 +79,17 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
     }
   };
 
+  // 처음(보내기 전)으로 되돌리고 이메일 칸 아래에 안내 문구를 띄움. 이메일은 그대로 둠
+  // (비밀번호 재설정 토큰이 만료 · 소모돼 이메일 인증부터 다시 해야 할 때)
+  const reset = (text) => {
+    setStatus('idle');
+    setSendMessage(text ? { type: 'error', text } : null);
+    setCodeValue('');
+    setCodeMessage(null);
+    codeTimer.stop();
+    resendTimer.stop();
+  };
+
   const setCode = (value) => {
     setCodeValue(value.replace(/\D/g, '').slice(0, 6));
   };
@@ -103,6 +114,15 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
       setCodeValue('');
       setSendMessage({ type: 'success', text: sentText });
     } catch (error) {
+      // 429 EMAIL_SEND_COOLDOWN + Retry-After(남은 초): 재발송 대기 중. 이미 받은 인증번호 칸 · 타이머는 그대로 두고
+      // 「다시 받기 (N초)」만 남은 초로 맞춤
+      if (error.response?.data?.code === 'EMAIL_SEND_COOLDOWN') {
+        const seconds = Number(error.response?.headers?.['retry-after']);
+        resendTimer.start(Number.isFinite(seconds) && seconds > 0 ? seconds : 60);
+        if (status !== 'sent' && status !== 'discarded') setStatus('error');
+        setSendMessage({ type: 'error', text: getMessage(error, '인증번호는 잠시 후에 다시 받을 수 있어요.') });
+        return;
+      }
       const { status: nextStatus, text } = toSendError(error);
       setStatus(nextStatus);
       setSendMessage({ type: 'error', text });
@@ -171,6 +191,7 @@ function useEmailCode({ sendCode, verifyCode, initialEmail = '', sentText = SENT
     sendButton,
     send,
     verify,
+    reset,
   };
 }
 

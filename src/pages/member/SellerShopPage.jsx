@@ -97,7 +97,7 @@ function SellerShop({ sellerId }) {
 
   return (
     <SellerShopView
-      seller={toShopSeller(seller, reviews)}
+      seller={toShopSeller(seller, reviews, soldTotal)}
       products={products}
       productCountText={`${productTotal.toLocaleString('ko-KR')}개`}
       // 판매 완료 0개면 줄을 통째로 숨김. 개수를 모르면(API 없음) 줄은 보이고 개수는 자리 문구

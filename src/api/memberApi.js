@@ -77,7 +77,8 @@ export function verifyPasswordResetCode({ email, code }) {
   return client.post('/api/v1/auth/email/verify', { email, code, purpose: 'PASSWORD_RESET' });
 }
 
-// 새 비밀번호 저장 (성공하면 모든 기기 로그아웃). 토큰 오류는 400 INVALID_RESET_TOKEN
+// 새 비밀번호 저장 (성공하면 모든 기기 로그아웃). 토큰 오류는 400 INVALID_RESET_TOKEN,
+// 같은 회원 요청 처리 중 409 MEMBER_BUSY, 결과 모름 503 RESULT_UNKNOWN (토큰은 꺼낼 때 지워져 셋 다 같은 토큰으로 다시 못 씀)
 export function resetPassword({ resetToken, newPassword }) {
   return client.post('/api/v1/auth/passwordResets', { resetToken, newPassword });
 }

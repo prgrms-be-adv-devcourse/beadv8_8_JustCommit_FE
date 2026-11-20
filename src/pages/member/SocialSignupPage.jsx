@@ -59,7 +59,7 @@ function useRemainingSeconds(expiresAt) {
 
 function SocialSignupPage() {
   usePageTitle('카카오 회원가입');
-  const { isLoggedIn, refreshUser } = useAuth();
+  const { isLoggedIn, loginWithResponse } = useAuth();
   const navigate = useNavigate();
   const signupToken = useSignupToken();
   const [claims] = useState(() => (signupToken ? readTokenClaims(signupToken) : { email: '', expiresAt: null }));
@@ -96,9 +96,11 @@ function SocialSignupPage() {
 
     setError('');
     setIsSubmitting(true);
+    let loginData;
     try {
       // TODO(member): 카카오 가입 요청에 이용약관 · 개인정보처리방침 동의 필드가 없음. 생기면 termsAgreed(· 약관 버전)를 함께 보냄
-      await socialSignup(signupToken, info.toProfileRequest());
+      const response = await socialSignup(signupToken, info.toProfileRequest());
+      loginData = response.data.data;
     } catch (signupError) {
       if (signupError.response?.status === 401) {
         goLoginAgain();
@@ -110,16 +112,9 @@ function SocialSignupPage() {
     }
 
     sessionStorage.removeItem(SIGNUP_TOKEN_KEY);
-    try {
-      // 가입 응답의 Refresh 쿠키로 재발급 + 내 정보 조회
-      await refreshUser();
-      navigate('/', { replace: true });
-    } catch {
-      navigate('/login', {
-        replace: true,
-        state: { errorMessage: '가입은 끝났어요. 카카오 로그인을 한 번 더 해 주세요.' },
-      });
-    }
+    // 가입 응답이 로그인 응답과 같음 (Access 토큰은 Body, Refresh는 쿠키) → 재발급 없이 바로 로그인 상태
+    loginWithResponse(loginData);
+    navigate('/', { replace: true });
   };
 
   return (

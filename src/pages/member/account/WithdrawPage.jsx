@@ -149,15 +149,23 @@ function WithdrawPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError('');
+    // 탈퇴 가능 여부 확인 → 막혔으면 사유 모달(또는 오류 문구)을 띄우고 true
+    const showBlockersIfBlocked = async () => {
+      const eligibility = (await getWithdrawalEligibility()).data.data;
+      if (eligibility?.status === 'ALLOWED') return false;
+      // 다른 서비스 확인 실패는 예외가 아니라 200 + status UNAVAILABLE로 옴 → 확인 불가 모달 (06-5-17)
+      if (eligibility?.status === 'UNAVAILABLE') {
+        setIsUnavailable(true);
+        return true;
+      }
+      const rows = toBlockers(toNumberDetails(mergeBlockerDetails(eligibility)));
+      if (rows.length > 0) setBlockers(rows);
+      else setSubmitError(ACTION_ERROR.DEFAULT);
+      return true;
+    };
     try {
       // ① 탈퇴 가능 여부 먼저 (막힌 이유는 이 응답에만 있음, POST의 409 WITHDRAWAL_BLOCKED에는 사유 없음)
-      const eligibility = (await getWithdrawalEligibility()).data.data;
-      if (eligibility?.status !== 'ALLOWED') {
-        const rows = toBlockers(toNumberDetails(mergeBlockerDetails(eligibility)));
-        if (rows.length > 0) setBlockers(rows);
-        else setSubmitError(ACTION_ERROR.DEFAULT);
-        return;
-      }
+      if (await showBlockersIfBlocked()) return;
       // ② 최종 탈퇴: 일반 회원은 password, 카카오 회원은 withdrawalToken 하나만
       await withdraw(isKakao ? { withdrawalToken } : { password });
       await logout().catch(() => {});
@@ -175,6 +183,14 @@ function WithdrawPage() {
       } else if (UNAVAILABLE_CODES.includes(code)) {
         // 탈퇴 확인을 하지 못함 (06-5-17)
         setIsUnavailable(true);
+      } else if (code === 'WITHDRAWAL_BLOCKED') {
+        // 409: 확인 뒤 사이에 막힘 (사유는 사전 확인 GET에만 있음) → 다시 조회해 사유 모달
+        try {
+          if (!(await showBlockersIfBlocked())) setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+        } catch (recheckError) {
+          if (UNAVAILABLE_CODES.includes(recheckError.response?.data?.code)) setIsUnavailable(true);
+          else setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
+        }
       } else {
         setSubmitError(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
       }
