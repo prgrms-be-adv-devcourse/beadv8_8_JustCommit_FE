@@ -14,8 +14,9 @@ export function toTagChips(tagCounts) {
     .map((item) => ({ label: getTagLabel(item.tag), count: item.count }));
 }
 
-// GET sellers/{sellerId} 응답 + 리뷰 요약 → SellerShopBar의 seller
-export function toShopSeller(seller, reviews) {
+// GET sellers/{sellerId} 응답 + 리뷰 요약 + 판매 완료 수 → SellerShopBar의 seller
+// soldCount: GET products?sellerId&status=SOLD_OUT 응답의 totalElements (BE 확정, null = 모름 → 자리 문구)
+export function toShopSeller(seller, reviews, soldCount = null) {
   return {
     nickname: seller.nickname,
     // 소개글 (GET sellers/{sellerId}의 intro, 비었으면 줄을 숨김)
@@ -25,7 +26,6 @@ export function toShopSeller(seller, reviews) {
     // TODO: 평균 별점 · 리뷰 수 API 없음 (리뷰 API docs ⬜)
     ratingText: reviews.averageRating == null ? '{평균 별점}' : reviews.averageRating.toFixed(1),
     reviewCountText: reviews.totalCount == null ? '{리뷰 수}' : reviews.totalCount.toLocaleString('ko-KR'),
-    // TODO: 판매 완료 수가 GET sellers/{sellerId} 응답에 없음 → soldCount 필드 요청
-    soldCountText: seller.soldCount == null ? '{판매 완료 수}' : seller.soldCount.toLocaleString('ko-KR'),
+    soldCountText: soldCount == null ? '{판매 완료 수}' : soldCount.toLocaleString('ko-KR'),
   };
 }

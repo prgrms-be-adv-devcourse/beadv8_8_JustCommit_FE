@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { ACTION_ERROR } from '../../constants/actionError';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { startKakaoLogin } from '../../utils/oauth';
@@ -59,14 +60,17 @@ function LoginPage() {
       navigate(location.state?.from ?? '/', { replace: true });
     } catch (loginError) {
       const code = loginError.response?.data?.code;
-      setError(
-        code === 'LOGIN_FAILED'
-          ? { text: '이메일 또는 비밀번호가 맞지 않아요', highlight: true }
-          : {
-              text: loginError.response?.data?.message ?? '로그인에 실패했어요. 잠시 후 다시 시도해 주세요.',
-              highlight: false,
-            },
-      );
+      if (code === 'LOGIN_FAILED') {
+        setError({ text: '이메일 또는 비밀번호가 맞지 않아요', highlight: true });
+      } else if (code === 'TOO_MANY_REQUESTS') {
+        // Gateway 요청 수 제한 (IP당 1분 5회) → 공통 문구 (시안 01-1-5)
+        setError({ text: ACTION_ERROR.TOO_MANY_REQUESTS, highlight: false });
+      } else {
+        setError({
+          text: loginError.response?.data?.message ?? '로그인에 실패했어요. 잠시 후 다시 시도해 주세요.',
+          highlight: false,
+        });
+      }
       setIsSubmitting(false);
     }
   };

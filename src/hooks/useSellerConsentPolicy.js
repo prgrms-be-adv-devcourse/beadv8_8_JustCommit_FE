@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getSellerConsentPolicy } from '../api/memberApi';
 
 // 판매자 등록 동의 문구 (GET /api/v1/sellers/consent-policy → { version, title, content })
@@ -33,8 +33,10 @@ export function toConsentPolicy(data) {
 }
 
 // enabled가 false면 부르지 않고 기본값만 돌려줌 (로그인 전 가입 화면)
+// reload: 다시 조회 (조회 실패로 version이 없을 때 · 409 REVIEW_CONSENT_VERSION_MISMATCH 때)
 function useSellerConsentPolicy(enabled = true) {
   const [policy, setPolicy] = useState(SELLER_CONSENT_FALLBACK);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -49,9 +51,11 @@ function useSellerConsentPolicy(enabled = true) {
     return () => {
       ignore = true;
     };
-  }, [enabled]);
+  }, [enabled, reloadKey]);
 
-  return policy;
+  const reload = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  return { ...policy, reload };
 }
 
 export default useSellerConsentPolicy;

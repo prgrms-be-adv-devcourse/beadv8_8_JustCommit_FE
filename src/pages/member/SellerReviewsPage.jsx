@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { getSeller } from '../../api/memberApi';
+import { getSellerSoldOutProducts } from '../../api/productApi';
 import { getSellerReviews } from '../../api/reviewApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -18,6 +19,7 @@ function getErrorMessage(error) {
 function SellerReviews({ sellerId }) {
   const location = useLocation();
   const [seller, setSeller] = useState(null);
+  const [soldCount, setSoldCount] = useState(null); // 상단 바 판매 완료 수 (null = 모름 → 자리 문구)
   const [summary, setSummary] = useState(null); // { averageRating, totalCount, tagCounts }
   const [reviews, setReviews] = useState([]);
   const [page, setPage] = useState(0);
@@ -29,11 +31,17 @@ function SellerReviews({ sellerId }) {
 
   useEffect(() => {
     let ignore = false;
-    Promise.all([getSeller(sellerId), getSellerReviews(sellerId, { page: 0, size: PAGE_SIZE })])
-      .then(([sellerResponse, reviewResponse]) => {
+    Promise.all([
+      getSeller(sellerId),
+      getSellerReviews(sellerId, { page: 0, size: PAGE_SIZE }),
+      // 판매 완료 수 = SOLD_OUT 목록의 totalElements. 실패해도 화면은 띄우고 자리 문구로 둠
+      getSellerSoldOutProducts(sellerId, { page: 0, size: 1 }).catch(() => null),
+    ])
+      .then(([sellerResponse, reviewResponse, soldResponse]) => {
         if (ignore) return;
         const data = reviewResponse.data;
         setSeller(sellerResponse.data.data);
+        setSoldCount(soldResponse?.data.totalElements ?? null);
         setSummary({ averageRating: data.averageRating, totalCount: data.totalCount, tagCounts: data.tagCounts });
         setReviews(data.content);
         setTotalElements(data.totalElements);
@@ -71,7 +79,7 @@ function SellerReviews({ sellerId }) {
 
   return (
     <SellerReviewsView
-      seller={toShopSeller(seller, summary)}
+      seller={toShopSeller(seller, summary, soldCount)}
       // TODO: 리뷰 수는 리뷰 API가 생기면 totalCount로 (지금은 자리 문구)
       reviewCountText={summary.totalCount == null ? '{리뷰 수}개' : `${summary.totalCount.toLocaleString('ko-KR')}개`}
       tags={toTagChips(summary.tagCounts)}
