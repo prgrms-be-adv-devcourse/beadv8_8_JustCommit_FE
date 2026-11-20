@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import StepBar from '../../../components/market/StepBar';
 import { ActionErrorLine } from '../../../components/common/ActionError';
 import { ChevronIcon, PinIcon, RefreshIcon, SmallCheckIcon } from './icons';
-import ReviewSection from './ReviewSection';
 import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 03-5 · 04-1 · 04-4 · 05-1 구매자 주문 상세 화면 (데이터는 props로만 받음)
@@ -322,7 +321,6 @@ function OrderDetailView({
             />
           ))}
         </div>
-        <ReviewSection review={view.review} />
       </div>
       {children}
     </main>

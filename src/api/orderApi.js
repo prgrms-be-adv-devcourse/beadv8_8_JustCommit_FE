@@ -1,19 +1,20 @@
 import client from './client';
 
 // 장바구니 항목으로 주문 생성 + 예치금 결제 (서버가 주문 저장·상품 예약·결제를 한 번에 처리)
-// form = { cartItemIds, recipientName, recipientPhone, zipcode, address1, address2, expectedShippingFee }
-// → { orderId, orderNo, totalAmount, itemCount, status, expiresAt, createdAt }
+// form = { cartItemIds, recipientName, recipientPhone, zipcode, address1, address2 } (BE CartOrderCreateRequest)
+// → 200 { orderId, orderNo, totalAmount, itemCount, createdAt, status, expiresAt } (BE OrderCreateResponse, ApiResponse 없음)
 // status: PAID(결제 완료) | PAYMENT_PENDING(잔액 부족으로 결제 대기 10분, 상품은 잠시 예약됨)
-// 실패: SHIPPING_FEE_CHANGED(서버가 배송지로 계산한 배송비가 expectedShippingFee와 다름)
-//       409 PRICE_CHANGED(주문서 가격과 지금 가격이 다름) · 409 그 밖의 구매 불가
-// TODO: 주문서 가격(상품별 expectedPrice)을 보내는 필드 이름이 정해지면 form에 추가 (BE docs/flows/order-payment.md)
-// TODO: SHIPPING_FEE_CHANGED 응답에 바뀐 배송비 · 지역이 들어오는지 확인 (지금은 data.shippingFee · data.regionLabel로 가정)
+//         | PAYMENT_PROCESSING(결제 결과 확인 중, 복구가 확정) | PAYMENT_FAILED(예약 결과 불명 · 결제 거절 · 결제 서버 연결 실패)
+// 실패: 409 PRICE_CHANGED(장바구니에 저장된 가격과 지금 가격이 다름) · 409 PRODUCT_UNAVAILABLE · 400 OWN_PRODUCT
+// TODO: 화면은 expectedShippingFee도 보내지만 BE가 받지 않음(무시됨). SHIPPING_FEE_CHANGED도 BE에 없어
+//  주문서의 배송비 변경 분기는 지금 도달하지 않음. 배송지별 배송비 계산이 BE에 생기면 필드 이름 · 에러 응답을 맞춤
 export function createCartOrder(form) {
   return client.post('/api/v1/orders/cart', form);
 }
 
-// 결제 대기 주문 결제 (충전한 뒤 이어서 결제)
-// 실패: PAYMENT_WINDOW_EXPIRED(주문 시각부터 10분이 지남) · 잔액 부족(결제 대기 유지)
+// 결제 대기 주문 결제 (충전한 뒤 이어서 결제) → 200 주문 생성과 같은 응답
+// 잔액 부족이어도 200 + status PAYMENT_PENDING(결제 대기 유지). PAYMENT_PROCESSING · PAYMENT_FAILED도 200 (BE OrderService.repayment)
+// 실패: PAYMENT_WINDOW_EXPIRED(주문 시각부터 10분이 지남)
 export function payOrder(orderId) {
   return client.post(`/api/v1/orders/${orderId}/pay`);
 }
@@ -54,6 +55,7 @@ export function getSellerOrder(sellerOrderId) {
 
 // 주문 상품 하나 취소 (택배 수거 전까지만 가능, 예치금 환불) → 200 본문 없음
 // 바로 환불되거나, 택배 취소 결과를 기다려야 하면 주문상품이 CANCEL_PROCESSING이 됨 (BE ADR 0026)
+// 이미 취소 중(CANCEL_PROCESSING) · 취소됨(CANCELLED)인 상품을 다시 취소하면 에러 없이 200 (BE OrderCancelTransactions.requestItemCancel)
 // 실패 409: SHIPMENT_NOT_CANCELABLE(기사님 2km 안) · ORDER_ITEM_NOT_CANCELABLE · ORDER_NOT_PAID
 export function cancelOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/cancel`);
@@ -73,11 +75,18 @@ export function confirmOrderItem(orderItemId) {
 // TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · market)
 // 경로 · 요청 형식은 담당이 확정하면 맞춥니다. 버튼을 누르면 부르고, API가 없으면 실패 안내가 보입니다.
 
-// 판매자 수락 · 거절: 체크한 주문상품만 거절(사유 없음), 나머지는 수락
+// 판매자 수락 · 거절: 체크한 주문상품만 거절(사유 없음), 나머지는 수락 → 200 본문 없음
+// BE: 거절할 상품이 없으면 POST …/accept(본문 없음, 남은 수락 대기 상품을 모두 수락),
+//     있으면 POST …/reject { orderItemIds } (고른 상품은 환불, 나머지는 수락) (BE OrderController · SellerOrderRejectRequest)
+// 실패: 409 SELLER_ORDER_NOT_ACCEPTABLE(수락 대기 상품이 없거나 이미 처리됨) · 400 INVALID_REJECT_ITEMS
 // senderAddressId: 보내는 주소로 고른 판매자 배송지 id (시안 08-5-2)
-// TODO(market): BE docs/reference/external-apis.md에 수락 API 요청 필드가 아직 없음. 필드 이름 `senderAddressId`는 임시
+// TODO(market): BE 수락 · 거절 API가 보내는 주소(senderAddressId)를 받지 않음. 생기면 요청에 넣음
+// eslint-disable-next-line no-unused-vars
 export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds, senderAddressId) {
-  return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`, { rejectedOrderItemIds, senderAddressId });
+  if (rejectedOrderItemIds?.length > 0) {
+    return client.post(`/api/v1/orders/seller/${sellerOrderId}/reject`, { orderItemIds: rejectedOrderItemIds });
+  }
+  return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`);
 }
 
 // 반품 승인 · 거절 (판매자)

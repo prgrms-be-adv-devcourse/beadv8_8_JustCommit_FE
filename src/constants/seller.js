@@ -91,11 +91,19 @@ export const SETTLEMENT_FEE_RATE = 0.05;
 
 /**
  * 판매 주문 상태 키(SALES_ORDER_STATUS)를 계산
- * TODO: 백엔드 판매자 수락(ACCEPT_PENDING) · 반품 신청 상태가 생기면 필드명을 확인
+ * 수락 대기: 주문 상태(OrderStatus)에는 없고, 목록은 acceptPending(boolean),
+ *           상세는 items[].status === 'ACCEPT_PENDING'으로 옴 (BE SellerOrderResponse · SellerOrderDetailResponse)
+ * TODO: 백엔드 반품 신청 상태가 생기면 필드명을 확인
  */
 export function getSalesOrderStatus(order) {
   if (order.status === 'CANCELLED') return 'CANCELLED';
-  if (order.status === 'ACCEPT_PENDING') return 'ACCEPT_PENDING';
+  if (
+    order.acceptPending ||
+    order.status === 'ACCEPT_PENDING' ||
+    (order.items ?? []).some((item) => item.status === 'ACCEPT_PENDING')
+  ) {
+    return 'ACCEPT_PENDING';
+  }
   const items = order.items ?? [];
   if (order.returnRequested || items.some((item) => item.status === 'RETURN_REQUESTED')) {
     return 'RETURN_REQUESTED';

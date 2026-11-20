@@ -15,7 +15,6 @@ const FETCH_SIZE = 100;
 // TODO: 거래 응답에 설명(상품명 · 사유 · 계좌)이 생기면 description으로 교체. 지금은 자리 문구
 const REF_TYPE = {
   CHARGE: { badge: '충전', description: '토스페이먼츠 충전' },
-  CHARGE_CANCEL: { badge: '충전 취소', description: '토스페이먼츠로 환불' },
   PAYMENT: { badge: '결제', description: '{대표 상품명} 외 {N}개' },
   SHIPPING_FEE: { badge: '결제', description: '{판매자} 배송비' },
   ORDER_REFUND: { badge: '환불', description: '{상품명} · {환불 사유}' },
@@ -23,6 +22,9 @@ const REF_TYPE = {
   SHIPPING_FEE_REFUND: { badge: '환불', description: '{판매자} 배송비 환불' },
   SETTLEMENT: { badge: '정산', description: '{상품명} 판매 정산' },
   SETTLEMENT_FEE: { badge: '정산', description: '{상품명} 정산 수수료' },
+  // TODO: 시안에 없는 거래 종류 (정산 회수 · 미수금 차감) → 배지 · 문구는 시안 확인 필요
+  SETTLEMENT_COLLECTION: { badge: '정산', description: '정산 회수' },
+  RECEIVABLE_COLLECTION: { badge: '정산', description: '미수금 차감' },
   CASH_OUT: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 계좌로 인출' },
   CASH_OUT_CANCEL: { badge: '인출', description: '{은행} ***{계좌 끝 4자리} 이체 실패로 복원' },
 };
@@ -30,10 +32,10 @@ const REF_TYPE = {
 // 탭: 같은 성격의 거래 종류를 묶음 (결제 = 상품 결제 + 배송비 등)
 const TABS = [
   { key: 'ALL', label: '전체', types: null },
-  { key: 'CHARGE', label: '충전', types: ['CHARGE', 'CHARGE_CANCEL'] },
+  { key: 'CHARGE', label: '충전', types: ['CHARGE'] },
   { key: 'PAYMENT', label: '결제', types: ['PAYMENT', 'SHIPPING_FEE'] },
   { key: 'REFUND', label: '환불', types: ['ORDER_REFUND', 'ORDER_ITEM_CANCEL_REFUND', 'SHIPPING_FEE_REFUND'] },
-  { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE'] },
+  { key: 'SETTLEMENT', label: '정산', types: ['SETTLEMENT', 'SETTLEMENT_FEE', 'SETTLEMENT_COLLECTION', 'RECEIVABLE_COLLECTION'] },
   { key: 'CASH_OUT', label: '인출', types: ['CASH_OUT', 'CASH_OUT_CANCEL'] },
 ];
 
@@ -53,7 +55,7 @@ function toRow(item) {
 function WalletPage() {
   usePageTitle('예치금');
   const { isLoggedIn, isInitializing } = useAuth();
-  const { balance, chargeBalance, withdrawableBalance, refreshWallet } = useWallet();
+  const { balance, refreshWallet } = useWallet();
 
   const [transactions, setTransactions] = useState([]);
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
@@ -98,8 +100,6 @@ function WalletPage() {
   return (
     <WalletView
       balance={balance}
-      chargeBalance={chargeBalance ?? '{충전금}'}
-      withdrawableBalance={withdrawableBalance ?? '{인출 가능 금액}'}
       tabs={TABS}
       tab={tab}
       onTabChange={setTab}

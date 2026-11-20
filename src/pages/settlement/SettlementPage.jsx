@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
+import useWallet from '../../hooks/useWallet';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatPrice } from '../../utils/format';
 import { fetchSettlements, toSettlementRow } from './settlementRows';
 import SettlementView from './SettlementView';
 
 function isThisMonth(value) {
+  if (!value) return false;
   const date = new Date(value);
   const now = new Date();
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
@@ -18,6 +20,7 @@ const sumPayout = (rows) => rows.reduce((total, row) => total + row.payoutAmount
 function SettlementPage() {
   usePageTitle('정산');
   const { user, isLoggedIn, isInitializing } = useAuth();
+  const { balance } = useWallet();
   const canSell = user?.role === 'SELLER' || user?.role === 'ADMIN';
 
   const [rows, setRows] = useState([]);
@@ -48,14 +51,14 @@ function SettlementPage() {
   if (loadState === 'loading') return <main className="flex-1" />;
   if (loadState === 'error') return <ErrorPage type="SERVER_ERROR" />;
 
-  // TODO: 백엔드에 정산 요약 · 인출 가능 금액 API가 생기면 교체 (지금은 내역으로 계산, 인출 가능 금액은 자리 문구)
+  // TODO: 백엔드에 정산 요약 API가 생기면 교체 (지금은 내역으로 계산). 세 번째 칸은 예치금 잔액
   const pending = rows.filter((row) => row.statusKey !== 'COMPLETED');
   const monthPaid = rows.filter((row) => row.statusKey === 'COMPLETED' && isThisMonth(row.date));
   const summary = {
     pendingText: formatPrice(sumPayout(pending)),
     monthPaidText: formatPrice(sumPayout(monthPaid)),
     monthSinceText: `${new Date().getMonth() + 1}월 1일부터`,
-    withdrawableText: '{인출 가능 금액}',
+    balanceText: balance === null || balance === undefined ? '-' : formatPrice(Number(balance)),
   };
 
   return <SettlementView summary={summary} rows={rows} />;

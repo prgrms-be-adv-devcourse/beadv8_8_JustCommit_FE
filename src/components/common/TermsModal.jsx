@@ -1,7 +1,7 @@
 import Modal from './Modal';
 import ModalButton from './ModalButton';
 
-// 이용약관 모달 (01-1-4 「13. 이용약관 보기」, Large 680px). 약관 본문은 아직 준비 중
+// 이용약관 모달 (01-1-4 「11. 이용약관 보기」, Large 680px). 약관 본문은 아직 준비 중
 // 푸터 「이용약관」과 회원가입 동의 칸 「이용약관 보기」가 함께 씁니다.
 function TermsModal({ onClose }) {
   return (

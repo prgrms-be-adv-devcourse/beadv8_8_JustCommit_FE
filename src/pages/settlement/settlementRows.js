@@ -2,8 +2,9 @@ import { getMySettlements } from '../../api/settlementApi';
 import { SETTLEMENT_STATUS } from '../../constants/seller';
 import { formatPrice } from '../../utils/format';
 
-// "2026-10-15" → "2026.10.15"
+// "2026-10-15" → "2026.10.15". 지급 전(PENDING) 정산은 BE가 date를 null로 줘서 "—"
 export function formatSettlementDate(value) {
+  if (!value) return '—';
   return value.slice(0, 10).replaceAll('-', '.');
 }
 
@@ -18,7 +19,8 @@ export async function fetchSettlements() {
 }
 
 // 정산 응답 → 표 한 줄
-// TODO: 주문번호(orderNo) · 상태(status: PENDING · COMPLETED · FAILED) · 판매자 부담금(sellerBurden) ·
+// status는 BE가 COMPLETED · PENDING만 줌 (FAILED는 재시도 중이라 PENDING으로 옴)
+// TODO: 주문번호(orderNo) · 판매자 부담금(sellerBurden) ·
 //       상품 수(itemCount) · 반품 수(returnedCount) · 취소 수(cancelledCount)가 응답에 생기면 그대로 쓰임
 export function toSettlementRow(item) {
   const itemCount = item.itemCount ?? 1;
@@ -35,7 +37,7 @@ export function toSettlementRow(item) {
   const status = SETTLEMENT_STATUS[item.status ?? 'COMPLETED'] ?? SETTLEMENT_STATUS.COMPLETED;
   return {
     id: item.settlementId,
-    date: item.date,
+    date: item.date ?? null, // 지급 완료일. 지급 전이면 null
     dateText: formatSettlementDate(item.date),
     orderNo: item.orderNo ?? '{주문번호}',
     productName: name,

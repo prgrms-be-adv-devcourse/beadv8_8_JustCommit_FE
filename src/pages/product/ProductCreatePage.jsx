@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
   createProduct,
+  getImageReviews,
   getMyProductCounts,
   getProduct,
   issueImageUploadUrls,
@@ -14,6 +15,7 @@ import {
 import ErrorPage from '../../components/common/ErrorPage';
 import { EDITABLE_PRODUCT_STATUSES, toQuota } from '../../constants/seller';
 import ProductFormView, { MAX_PHOTOS } from './ProductFormView';
+import { toReviewStage } from './reviewStatusModel';
 
 // 백엔드 ProductImageService 규칙과 같게 유지 (시안 안내: JPEG · PNG, 10MB 이하)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -21,6 +23,18 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SEARCH_DELAY_MS = 300;
 
 let photoSeq = 0;
+
+// BE ProductErrorCode.RESUBMIT_LIMIT_EXCEEDED 문구
+const RESUBMIT_LIMIT_MESSAGE = '재검수는 2번까지 할 수 있습니다. 상품을 삭제하고 새로 등록해 주세요.';
+
+// 이번 수정이 재검수 1회를 쓰는지 (BE ImageReview.countsAsResubmit와 같은 규칙)
+// 반려(기한 초과 제외) 또는 이의 신청 중(관리자 확인 · 지연 + 이의 신청 메모 있음)
+function countsAsResubmit(review) {
+  if (!review) return false;
+  if (review.status === 'REJECTED') return review.rejectReason !== 'REVIEW_EXPIRED';
+  const awaitingAdmin = review.status === 'ADMIN_CHECK' || review.status === 'ADMIN_CHECK_DELAYED';
+  return awaitingAdmin && Boolean(review.appealMemo);
+}
 
 // 새 파일: { id, file, previewUrl } / 이미 올라간 사진: { id, file: null, url, previewUrl: url }
 function toUploadedPhoto(url) {
@@ -40,6 +54,8 @@ function ProductForm({ productId }) {
   // 수정 모드: 불러온 상품 (판매자 · 상태 확인, 화면에 없는 값 보존용)
   const [loadedProduct, setLoadedProduct] = useState(null);
   const [loadState, setLoadState] = useState(isEdit ? 'loading' : 'done');
+  // 수정 모드: 검수 기록 (GET products/{id}/imageReviews, 남은 재검수 횟수 · 검수 단계). 못 불러오면 null
+  const [reviewHistory, setReviewHistory] = useState(null);
 
   const [photos, setPhotos] = useState([]);
   const [dragIndex, setDragIndex] = useState(null);
@@ -107,6 +123,12 @@ function ProductForm({ productId }) {
       .catch(() => {
         if (!ignore) setLoadState('error');
       });
+    // 검수 기록은 실패해도 양식은 그대로 씀 (최종 확인은 BE가 함)
+    getImageReviews(productId)
+      .then((response) => {
+        if (!ignore) setReviewHistory(response.data.data);
+      })
+      .catch(() => {});
     return () => {
       ignore = true;
     };
@@ -144,6 +166,20 @@ function ProductForm({ productId }) {
   if (isEdit && loadedProduct.sellerId !== user.memberId) return <ErrorPage type="FORBIDDEN" />;
   if (isEdit && !EDITABLE_PRODUCT_STATUSES.includes(loadedProduct.status)) {
     return <Navigate to="/mypage/products" replace />;
+  }
+
+  // 검수 기록의 지금 검수 버전 (최신 버전부터 옴)
+  const currentReview = reviewHistory?.reviews?.[0];
+  // 재검수를 다 쓴 상품은 사진을 올리기 전에 막음 (BE는 409 RESUBMIT_LIMIT_EXCEEDED)
+  const resubmitBlocked =
+    isEdit && reviewHistory?.remainingResubmits === 0 && countsAsResubmit(currentReview);
+
+  // 지금 상태 배지: 검수 중이면 검수 단계(관리자 확인 중 · 확인 지연)까지 나눠 보여 줌 (내 판매 목록과 같은 규칙)
+  let statusBadgeKey = loadedProduct?.status;
+  if (statusBadgeKey === 'REVIEW_PENDING' && reviewHistory) {
+    const latest = reviewHistory.reviews?.find((item) => item.status !== 'REPLACED');
+    const stage = toReviewStage(latest, statusBadgeKey);
+    if (stage === 'MANUAL' || stage === 'DELAYED') statusBadgeKey = stage;
   }
 
   // ── 사진 ──
@@ -238,6 +274,7 @@ function ProductForm({ productId }) {
     title.trim() !== '' &&
     priceNumber > 0 &&
     description.trim() !== '' &&
+    !resubmitBlocked &&
     !isSubmitting;
 
   // 새 파일만 업로드하고, 화면 순서대로 주소 목록을 만듦 (이미 올라간 사진은 주소 그대로)
@@ -304,7 +341,7 @@ function ProductForm({ productId }) {
       <ProductFormView
         isEdit={isEdit}
         quota={toQuota(counts)}
-        status={loadedProduct?.status}
+        status={statusBadgeKey}
         photos={photos}
         photoHandlers={photoHandlers}
         species={speciesProps}
@@ -316,7 +353,7 @@ function ProductForm({ productId }) {
         onDescriptionChange={setDescription}
         canSubmit={canSubmit}
         isSubmitting={isSubmitting}
-        errorMessage={errorMessage}
+        errorMessage={errorMessage || (resubmitBlocked ? RESUBMIT_LIMIT_MESSAGE : '')}
         onCancel={() => navigate(-1)}
         onSubmit={handleSubmit}
       />

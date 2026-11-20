@@ -34,7 +34,7 @@ export function SummaryCard({ label, value, sub, green = false }) {
 }
 
 // 시안 08-6-1 정산 (화면만, 데이터는 props)
-// summary = { pendingText, monthPaidText, monthSinceText, withdrawableText } / rows: settlementRows.toSettlementRow
+// summary = { pendingText, monthPaidText, monthSinceText, balanceText } / rows: settlementRows.toSettlementRow
 function SettlementView({ summary, rows }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
@@ -52,7 +52,7 @@ function SettlementView({ summary, rows }) {
         <div className="grid grid-cols-3 gap-4">
           <SummaryCard green label="지급 대기" value={summary.pendingText} sub="구매 확정돼 곧 들어올 정산금" />
           <SummaryCard label="이번 달 지급 완료" value={summary.monthPaidText} sub={summary.monthSinceText} />
-          <SummaryCard label="인출 가능 금액" value={summary.withdrawableText} sub="예치금에서 계좌로 인출할 수 있어요" />
+          <SummaryCard label="보유 예치금" value={summary.balanceText} sub="결제에 쓰거나 계좌로 인출할 수 있어요" />
         </div>
         <h2 className="pt-2 text-lg font-bold text-[#111827]">정산 내역</h2>
         {rows.length > 0 ? (
@@ -98,12 +98,12 @@ function SettlementView({ summary, rows }) {
           </div>
         )}
         <InfoNote>
-          구매 확정되면 정산이 만들어지고, 정산 금액은 예치금의 인출 가능 금액으로 들어가요. 지급에 실패하면 자동으로 다시
+          구매 확정되면 정산이 만들어지고, 정산 금액은 예치금으로 들어가요. 지급에 실패하면 자동으로 다시
           시도해요.
         </InfoNote>
         <InfoNote>
           수수료는 판매 금액의 5%예요(배송비 제외, 원 단위 미만 버림). 반품이 있으면 판매자 부담금(반품 배송비)이 빠지고,
-          정산 금액이 0원보다 작으면 다음 정산금 · 충전금에서 먼저 빠져요.
+          정산 금액이 0원보다 작으면 다음 정산금 · 예치금에서 먼저 빠져요.
         </InfoNote>
       </div>
     </main>

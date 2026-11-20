@@ -31,6 +31,12 @@ function SellerRegisterPage() {
 
   const handleSubmit = async () => {
     if (!agreed) return;
+    // 동의 문구를 못 받아 버전이 없으면 보내도 400이라 막고 다시 조회
+    if (!consentPolicy.version) {
+      setErrorMessage('동의 내용을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      consentPolicy.reload();
+      return;
+    }
     setIsSubmitting(true);
     setErrorMessage('');
 
@@ -42,6 +48,12 @@ function SellerRegisterPage() {
       setErrorMessage(
         error.response?.data?.message ?? '판매자 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       );
+      // 409 REVIEW_CONSENT_VERSION_MISMATCH: 동의 문구가 바뀜 → 새 문구를 펼쳐 다시 동의받음 (BE 메시지가 안내 문구)
+      if (error.response?.data?.code === 'REVIEW_CONSENT_VERSION_MISMATCH') {
+        consentPolicy.reload();
+        setAgreed(false);
+        setConsentKey((key) => key + 1);
+      }
       setIsSubmitting(false);
     }
   };

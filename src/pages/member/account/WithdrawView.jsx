@@ -154,10 +154,10 @@ function WithdrawView({
           <p className="text-sm font-bold text-[#111827]">이런 경우에는 탈퇴할 수 없어요</p>
           <ul className="space-y-1.5 text-sm text-[#4b5563] leading-relaxed list-disc pl-5">
             <li>구매 확정 전인 주문이 있을 때 (구매 · 판매 모두, 결제 대기 · 판매자 수락 대기 포함)</li>
-            <li>예치금 잔액이 남아 있을 때 · 진행 중인 충전 · 충전 취소 · 인출이 있을 때</li>
+            <li>예치금 잔액이 남아 있을 때 · 진행 중인 충전 · 인출이 있을 때</li>
             <li>아직 지급되지 않은 정산이나 미수금이 있을 때</li>
           </ul>
-          <p className="text-[13px] text-[#6b7280]">예치금은 탈퇴 전에 충전 취소나 계좌 인출로 직접 정리해 주세요.</p>
+          <p className="text-[13px] text-[#6b7280]">예치금은 탈퇴 전에 결제에 쓰거나 계좌로 인출해 정리해 주세요.</p>
         </div>
         {isKakao ? (
           <EmailVerifyFields {...emailVerify} />
@@ -203,7 +203,7 @@ function WithdrawView({
               </li>
             ))}
           </ul>
-          <p className="text-[13px] text-[#6b7280] leading-relaxed">예치금은 충전 취소나 계좌 인출로 정리할 수 있어요.</p>
+          <p className="text-[13px] text-[#6b7280] leading-relaxed">예치금은 계좌 인출로 정리할 수 있어요.</p>
         </Modal>
       )}
       {isUnavailable && (

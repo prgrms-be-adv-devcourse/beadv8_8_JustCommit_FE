@@ -61,8 +61,6 @@ function MyPage() {
       }}
       balanceText={balance === null ? '-' : formatPrice(balance)}
       counts={{
-        // TODO: 쓸 수 있는 리뷰 수 API 없음 (리뷰 API docs ⬜)
-        reviews: '{리뷰 수}',
         notifications: unreadCount,
         // TODO: 수락 대기 판매 주문 수 API 없음
         salesOrders: '{수락 대기 수}',

@@ -13,7 +13,6 @@ import { formatDateTime, formatPrice, maskPhone } from '../../../utils/format';
 // - order.paidAt                           판매자 수락 마감(결제 완료 + 24시간) 계산용
 // - items[].returnRequest                  { status: REQUESTED|APPROVED|SHIPPING|COMPLETED|REJECTED,
 //                                            requestedAt, approvedAt, shippedAt, completedAt, rejectedAt, trackingNo, currentLocation }
-// - sellerOrders[].review                  내가 쓴 리뷰 { rating, ratingLabel, tags[], content, createdAt }
 
 export const SHIPPING_STEP_LABELS = ['판매자 확인 중', '픽업 대기', '수거', '배송 중', '배송 완료', '구매 확정'];
 export const RETURN_STEP_LABELS = ['반품 신청', '판매자 승인', '반품 배송 중', '반품 완료'];
@@ -25,7 +24,6 @@ const RETURN_STEP_INDEX = { REQUESTED: 0, APPROVED: 1, SHIPPING: 2, COMPLETED: 3
 
 const RETURN_WINDOW_HOURS = 72; // 배송 완료 후 반품 신청 기한
 const ACCEPT_WINDOW_HOURS = 24; // 결제 완료 후 판매자 수락 기한
-const REVIEW_WINDOW_DAYS = 3; // 구매 확정 후 리뷰 작성 기한
 
 const pad = (value) => String(value).padStart(2, '0');
 
@@ -136,7 +134,7 @@ function buildItem(order, sellerOrder, item, context) {
   if (returnStatus === 'REJECTED') {
     return {
       ...base,
-      note: { tone: 'success', text: '판매자가 반품을 거절해 바로 구매 확정됐어요 · 리뷰를 쓸 수 있어요' },
+      note: { tone: 'success', text: '판매자가 반품을 거절해 바로 구매 확정됐어요' },
       badge: { tone: 'confirmed', label: '구매 확정' },
     };
   }
@@ -346,55 +344,6 @@ function buildRefundNote(sellerOrders) {
   return `이 중 ${formatPrice(total)}은 ${reason}로 예치금에 환불됐어요`;
 }
 
-function buildReview(order, sellerOrders, now) {
-  const rows = [];
-  const myReviews = [];
-  sellerOrders.forEach((sellerOrder, index) => {
-    if (sellerOrder.items.every((item) => ['CANCELLED', 'REFUNDED'].includes(item.status))) return;
-    const sellerName = getSellerName(sellerOrder, index);
-    const text = itemsText(sellerOrder.items, '건');
-    const row = { key: sellerOrder.id, sellerName, itemsText: text, state: 'locked', deadline: null, writeTo: null };
-
-    // TODO: 리뷰 API가 생기면 작성 여부 · 내 리뷰를 응답 값으로 (지금 응답에는 없음)
-    if (sellerOrder.review) {
-      row.state = 'done';
-      const review = sellerOrder.review;
-      myReviews.push({
-        key: sellerOrder.id,
-        rating: review.rating,
-        ratingLabel: review.ratingLabel ?? `${review.rating}점`,
-        meta: `${formatDateTime(review.createdAt).slice(0, 10)} · ${sellerName}`,
-        tags: review.tags ?? [],
-        content: review.content,
-        itemsText: text,
-      });
-    } else if (sellerOrder.confirmedAt) {
-      const deadline = addHours(sellerOrder.confirmedAt, REVIEW_WINDOW_DAYS * 24);
-      if (now < deadline.getTime()) {
-        row.state = 'ready';
-        row.deadline = `${formatMonthDay(deadline)}까지 작성 가능`;
-        // 리뷰 작성 화면 (시안 05-2): /orders/{orderId}/review?sellerOrderId=
-        row.writeTo = `/orders/${order.orderId}/review?sellerOrderId=${sellerOrder.id}`;
-      } else {
-        row.state = 'expired';
-      }
-    }
-    rows.push(row);
-  });
-
-  const written = rows.filter((row) => row.state === 'done').length;
-  let notice;
-  if (written > 0) notice = { tone: 'success', text: `리뷰 ${rows.length}개 중 ${written}개를 작성했어요` };
-  else if (rows.some((row) => row.state === 'ready')) {
-    notice = { tone: 'success', text: '구매 확정이 끝났어요. 식물은 잘 받으셨나요?' };
-  } else notice = { tone: 'muted', text: '판매자의 상품을 모두 구매 확정하면 그 판매자의 리뷰를 쓸 수 있어요' };
-
-  return { notice, rows, myReviews };
-}
-
-/**
- * context = { errors: {itemId: 문구}, duplicateCancelIds: Set, lockedSellerOrderIds: Set, now: ms }
- */
 export function buildOrderDetailView(order, context = {}) {
   const ctx = {
     errors: context.errors ?? {},
@@ -422,19 +371,23 @@ export function buildOrderDetailView(order, context = {}) {
     },
     itemSummary: `${itemCount}개 · 판매자 ${sellerOrders.length}곳`,
     groups: sellerOrders.map((sellerOrder, index) => buildGroup(order, sellerOrder, index, ctx)),
-    review: buildReview(order, sellerOrders, ctx.now),
   };
 }
 
 /**
  * 취소 확인 모달 내용: 이 판매자의 남은 상품을 모두 취소하면 배송비도 환불 (BE cancel-refund.md)
  */
+const IN_CANCELLATION_STATUSES = ['CANCEL_PROCESSING', 'CANCELLED', 'REVIEW_REQUIRED'];
+
 export function buildCancelTarget(order, itemId) {
   for (const sellerOrder of order.sellerOrders ?? []) {
     const item = sellerOrder.items.find((candidate) => candidate.id === itemId);
     if (!item) continue;
-    const remaining = sellerOrder.items.filter((candidate) => candidate.status === 'NORMAL');
-    const lastOne = remaining.length === 1 && remaining[0].id === itemId;
+    // BE는 판매자 주문의 모든 상품이 취소 흐름(CANCEL_PROCESSING · CANCELLED · REVIEW_REQUIRED)에 들어가면
+    // 배송비도 환불함 (OrdersItem.isInCancellation, 수락 대기 ACCEPT_PENDING 상품 취소도 같음)
+    const lastOne = sellerOrder.items.every(
+      (candidate) => candidate.id === itemId || IN_CANCELLATION_STATUSES.includes(candidate.status),
+    );
     const fee = Number(sellerOrder.shippingFee ?? 0);
     const refund = Number(item.price) + (lastOne ? fee : 0);
     return {

@@ -62,7 +62,10 @@ function SettlementReportPage() {
   if (loadState === 'error') return <ErrorPage type="SERVER_ERROR" />;
 
   const range = getRange(period, custom);
+  // 리포트는 지급 완료일 기준. 지급 전 정산(date null)은 기간 합계에서 뺌
+  // TODO: BE 응답에 정산 생성일(createdAt)이 생기면 지급 전 정산도 기간에 넣을 수 있음
   const inRange = rows.filter((row) => {
+    if (!row.date) return false;
     const day = row.date.slice(0, 10);
     return day >= range.from && day <= range.to;
   });
@@ -85,7 +88,7 @@ function SettlementReportPage() {
   const monthList = Array.from({ length: CHART_MONTHS }, (_, i) => {
     const date = new Date(end.getFullYear(), end.getMonth() - (CHART_MONTHS - 1 - i), 1);
     const key = monthKey(date.getFullYear(), date.getMonth());
-    const amount = rows.filter((row) => row.date.slice(0, 7) === key).reduce((t, row) => t + row.payoutAmount, 0);
+    const amount = rows.filter((row) => row.date?.slice(0, 7) === key).reduce((t, row) => t + row.payoutAmount, 0);
     return { key, label: `${date.getMonth() + 1}월`, amount, selected: key >= fromMonth && key <= toMonth };
   });
   const max = Math.max(...monthList.map((month) => month.amount), 0);

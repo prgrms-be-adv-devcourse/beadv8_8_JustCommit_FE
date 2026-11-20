@@ -5,11 +5,9 @@ import { won } from './chargeUtils';
 
 // 시안 07-4-1 인출 · 07-4-2 인출 금액 초과
 // account: "KB국민은행 ***4567 · 예금주 김*식" 형태 한 줄 (예금주는 응답 값 그대로)
-// isOver: 인출 가능 금액을 넘었을 때 (빨간 테두리 · 안내 · 신청 버튼 비활성)
+// isOver: 보유 예치금을 넘었을 때 (빨간 테두리 · 안내 · 신청 버튼 비활성)
 function WithdrawView({
   balance,
-  chargeBalance,
-  withdrawableBalance,
   account,
   amount,
   onAmountChange,
@@ -22,8 +20,8 @@ function WithdrawView({
   errorMessage,
 }) {
   let after = '—';
-  if (!isOver && typeof withdrawableBalance === 'number') after = won(withdrawableBalance - amount);
-  else if (!isOver) after = '{인출 후 인출 가능 금액}';
+  if (!isOver && typeof balance === 'number') after = won(balance - amount);
+  else if (!isOver) after = '{인출 후 예치금}';
 
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-14 flex justify-center items-start">
@@ -35,19 +33,11 @@ function WithdrawView({
           </Link>
         </div>
         <dl className="border border-[#e5e7eb] divide-y divide-[#e5e7eb] text-sm">
-          <div className="px-4 py-3 flex justify-between">
-            <dt className="text-[#6b7280]">보유 예치금</dt>
-            <dd className="font-semibold text-[#111827] tabular-nums">{balance === null ? '-' : won(balance)}</dd>
-          </div>
-          <div className="px-4 py-3 flex justify-between">
-            <dt className="text-[#6b7280]">
-              충전금 <span className="text-xs">(인출 안 됨)</span>
-            </dt>
-            <dd className="text-[#6b7280] tabular-nums">{won(chargeBalance)}</dd>
-          </div>
           <div className="px-4 py-3 flex justify-between items-baseline bg-[#f4f8f6]">
-            <dt className="font-semibold text-[#0f4c3a]">인출 가능 금액</dt>
-            <dd className="text-xl font-black text-[#0f4c3a] tabular-nums tracking-tight">{won(withdrawableBalance)}</dd>
+            <dt className="font-semibold text-[#0f4c3a]">보유 예치금</dt>
+            <dd className="text-xl font-black text-[#0f4c3a] tabular-nums tracking-tight">
+              {balance === null ? '-' : won(balance)}
+            </dd>
           </div>
         </dl>
         <div className="space-y-2">
@@ -99,16 +89,15 @@ function WithdrawView({
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              {`인출 가능 금액 ${won(withdrawableBalance)}을 넘었어요`}
+              {`보유 예치금 ${won(balance)}을 넘었어요`}
             </p>
           )}
         </div>
         <div className="px-4 py-4 bg-[#f4f8f6] border border-[#d1e7dd] flex justify-between items-baseline">
-          <span className="text-sm text-[#0f4c3a]">인출 후 인출 가능 금액</span>
+          <span className="text-sm text-[#0f4c3a]">인출 후 예치금</span>
           <span className="text-xl font-black text-[#0f4c3a] tabular-nums tracking-tight">{after}</span>
         </div>
-        <InfoNote>충전금은 계좌로 인출할 수 없어요. 충전 내역에서 충전 취소로 돌려받아 주세요.</InfoNote>
-        <InfoNote>신청하면 바로 인출 가능 금액에서 빠지고, 이체에 실패하면 다시 돌려 드려요.</InfoNote>
+        <InfoNote>신청하면 바로 예치금에서 빠지고, 이체에 실패하면 다시 돌려 드려요.</InfoNote>
         <div>
           <button
             type="button"

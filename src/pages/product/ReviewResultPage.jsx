@@ -11,6 +11,14 @@ import { toReviewResult } from './reviewStatusModel';
 // 검수 중일 때 결과를 다시 확인하는 간격
 const POLL_MS = 5000;
 
+// 그사이 상태가 바뀌어 409가 나는 경우 (다른 탭에서 이미 신청 · 수정 등) → 화면을 다시 불러 버튼을 맞춤
+// REVIEW_PENDING_LIMIT_EXCEEDED는 상태가 그대로라 문구만 보여 줌
+const STALE_STATE_CODES = ['APPEAL_ALREADY_USED', 'APPEAL_NOT_ALLOWED', 'RESUBMIT_NOT_ALLOWED'];
+
+function isStaleState(error) {
+  return error.response?.status === 409 && STALE_STATE_CODES.includes(error.response?.data?.code);
+}
+
 function ReviewResultPage() {
   usePageTitle('검수 결과');
   const { productId } = useParams();
@@ -40,6 +48,10 @@ function ReviewResultPage() {
     [productId],
   );
 
+  // 값이 바뀌면 다시 불러오고, 검수 중이면 폴링도 다시 시작 (재요청 · 이의 신청 뒤, 409로 상태가 바뀐 뒤)
+  const [pollKey, setPollKey] = useState(0);
+  const restart = useCallback(() => setPollKey((key) => key + 1), []);
+
   useEffect(() => {
     if (!canSell) return undefined;
     let timer = null;
@@ -58,7 +70,7 @@ function ReviewResultPage() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [canSell, load]);
+  }, [canSell, load, pollKey]);
 
   const closeAppeal = useCallback(() => {
     if (!isAppealing) setAppealOpen(false);
@@ -78,8 +90,11 @@ function ReviewResultPage() {
       await appealProductReview(productId, memo.trim());
       setAppealOpen(false);
       setMemo('');
-      await load();
+      restart();
     } catch (error) {
+      // 이미 신청했거나 신청할 수 없게 됨: 뒤 화면을 지금 상태로 다시 불러옴.
+      // 오류 안내가 모달 안에만 있어 모달은 열어 두고(닫으면 안내가 사라짐), 닫으면 이의 신청 버튼이 없는 화면이 보임
+      if (isStaleState(error)) restart();
       setAppealError(error.response?.data?.message ?? '이의 신청을 하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsAppealing(false);
@@ -92,9 +107,10 @@ function ReviewResultPage() {
     setResubmitError('');
     try {
       await resubmitImageReview(productId);
-      await load();
+      restart();
     } catch (error) {
       setResubmitError(error.response?.data?.message ?? '다시 검수를 요청하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (isStaleState(error)) restart();
     } finally {
       setIsResubmitting(false);
     }

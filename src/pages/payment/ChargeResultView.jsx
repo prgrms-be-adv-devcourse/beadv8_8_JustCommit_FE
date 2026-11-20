@@ -70,12 +70,20 @@ export function ChargeFailView({ retryTo = '/deposit/charge' }) {
   );
 }
 
-// 승인 처리 중 (시안 없음: 충전 완료 카드 자리에 안내 한 줄)
+// 승인 처리 중 (시안 07-2-5: 결과 불명 · 502/503/504면 이 화면, 「예치금 화면으로」)
 export function ChargeProcessingView() {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-16 flex justify-center">
       <section className="w-full max-w-[480px] bg-white border border-[#e5e7eb] p-10 flex flex-col items-center text-center gap-7">
-        <p className="text-[15px] text-[#4b5563] leading-relaxed">충전을 마무리하는 중이에요. 잠시만 기다려 주세요.</p>
+        <p className="text-[15px] text-[#4b5563] leading-relaxed">
+          충전을 마무리하는 중이에요. 결과는 예치금 화면에서 확인할 수 있어요.
+        </p>
+        <Link
+          to="/wallet"
+          className="w-full h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-[15px] font-semibold"
+        >
+          예치금 화면으로
+        </Link>
       </section>
     </main>
   );
