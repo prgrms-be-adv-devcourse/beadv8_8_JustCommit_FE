@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { clearAccessToken, getAccessToken, setAccessToken } from './tokenStore';
+import { clearAccessToken, getAccessToken, notifySessionExpired, setAccessToken } from './tokenStore';
 
 const REISSUE_URL = '/api/v1/auth/reissue';
 
@@ -65,6 +65,11 @@ client.interceptors.response.use(
       return client(originalRequest);
     } catch (reissueError) {
       clearAccessToken();
+      // 401(INVALID_REFRESH_TOKEN: 쿠키 없음 · 만료)일 때만 로그인이 끝난 것으로 봄
+      // 503 · 네트워크 오류 같은 일시 장애는 Refresh 쿠키가 살아 있을 수 있어 로그인 상태를 유지
+      if (reissueError.response?.status === 401) {
+        notifySessionExpired();
+      }
       return Promise.reject(reissueError);
     }
   },
