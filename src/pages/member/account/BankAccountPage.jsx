@@ -75,6 +75,12 @@ function BankAccountPage() {
       setIsVerified(true);
     } catch (error) {
       setVerifyError(toVerifyErrorText(error));
+      // 번호는 맞지만 발송 뒤 회원 정보가 바뀜 → 인증번호부터 다시 받기
+      if (error.response?.data?.code === 'ACCOUNT_VERIFICATION_INVALID') {
+        codeTimer.stop();
+        setCodeSent(false);
+        setCode('');
+      }
     }
   };
 
@@ -90,7 +96,9 @@ function BankAccountPage() {
     setSubmitError('');
   };
 
-  const canSubmit = form.bankCode !== '' && form.accountNo.length >= 8 && form.accountHolder.trim() !== '';
+  // 계좌번호는 하이픈 없이 숫자 10~14자리 (BE AccountChangeRequest)
+  const canSubmit =
+    form.bankCode !== '' && form.accountNo.length >= 10 && form.accountNo.length <= 14 && form.accountHolder.trim() !== '';
 
   const handleSubmit = async () => {
     setIsSubmitting(true);

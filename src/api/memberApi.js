@@ -82,16 +82,16 @@ export function resetPassword({ resetToken, newPassword }) {
   return client.post('/api/v1/auth/passwordResets', { resetToken, newPassword });
 }
 
-// ===== 회원 정보 수정 (시안 06-5) =====
-// BE docs/reference/external-apis.md 「추가할 API」: 닉네임 · 비밀번호 · 계좌 변경, 배송지 수정 · 삭제, 탈퇴는 아직 경로 ⬜
-// TODO: 경로 · 요청 형식이 정해지면 맞춥니다. 지금은 임시 경로로 호출합니다 (API가 생기기 전에는 실패 → 화면에 실패 안내).
+// ===== 회원 정보 수정 (시안 06-5, BE MemberController · AccountController · AddressController · WithdrawalController) =====
 
-// 닉네임 변경 (2~8자, 중복 불가)
+// 닉네임 변경 (2~8자, 중복 불가) → data: { memberId, nickname }. 중복은 409 DUPLICATE_NICKNAME
 export function changeNickname(nickname) {
   return client.patch('/api/v1/users/me/nickname', { nickname });
 }
 
-// 비밀번호 변경 (현재 비밀번호 확인 후, 모든 기기 로그아웃 · 소셜 회원은 없음)
+// 비밀번호 변경 (현재 비밀번호 확인 후, 모든 기기 로그아웃 · 소셜 회원은 없음) → data: { revocationCompleted }
+// 성공하면 서버가 이 기기 Refresh 쿠키를 만료. 실패: 400 INVALID_CURRENT_PASSWORD · SAME_AS_CURRENT_PASSWORD · PASSWORD_NOT_SET,
+// 429 PASSWORD_CHANGE_LOCKED(+ Retry-After), 503 RESULT_UNKNOWN(자동 재요청 금지)
 export function changePassword({ currentPassword, newPassword }) {
   return client.patch('/api/v1/users/me/password', { currentPassword, newPassword });
 }
@@ -103,17 +103,20 @@ export function sendAccountEmailCode() {
 }
 
 // ② 인증번호 확인 → data: { accountChangeToken, expiresIn(600초) }
+//    번호는 맞지만 발송 뒤 회원 정보가 바뀌었으면 400 ACCOUNT_VERIFICATION_INVALID → 인증번호부터 다시
 export function verifyAccountEmailCode(code) {
   return client.post('/api/v1/users/me/account/changeTokens', { code });
 }
 
 // ③ 계좌 변경 form = { accountChangeToken, bankCode(3자리), accountNo, accountHolder }
-//    토큰 오류(만료 · 이미 사용 등)는 400 INVALID_ACCOUNT_CHANGE_TOKEN → 이메일 인증부터 다시
+//    토큰 오류(만료 · 이미 사용 등)는 400 INVALID_ACCOUNT_CHANGE_TOKEN → 이메일 인증부터 다시. 성공 시 data 없음
 export function changeAccount(form) {
   return client.patch('/api/v1/users/me/account', form);
 }
 
-// 배송지 부분 수정 / 삭제 (기본 배송지는 삭제 불가)
+// 배송지 부분 수정: 보낸 항목만 바뀜. 기본 여부(isDefault)는 받지 않음 → setDefaultAddress로
+// 주소(zipcode · address1)를 바꿀 때는 address2도 함께 (없으면 400 ADDRESS_DETAIL_REQUIRED, 비우려면 '')
+// 삭제: 기본 배송지는 409 DEFAULT_ADDRESS_NOT_DELETABLE
 export function updateAddress(addressId, form) {
   return client.patch(`/api/v1/users/me/addresses/${addressId}`, form);
 }
@@ -122,11 +125,32 @@ export function deleteAddress(addressId) {
   return client.delete(`/api/v1/users/me/addresses/${addressId}`);
 }
 
-// 회원 탈퇴. 막히면 409 + 막힌 이유, 확인하지 못하면 결과 UNAVAILABLE (시안 06-5-13 · 06-5-14)
-// TODO(member): 외부 응답 형식이 아직 docs에 없음. 지금은 실패 응답 data = { result, details } 또는 details 그대로를 읽음
-//   details = { pendingOrderCount, activeSellerOrderCount, walletBalance, hasPendingTransactions, incompleteSettlementCount, outstandingDebt }
-export function withdraw() {
-  return client.delete('/api/v1/users/me');
+// ===== 회원 탈퇴 (BE WithdrawalController, docs/flows/signup-and-replica.md 「직접 탈퇴」) =====
+// 탈퇴 가능 여부 (화면 안내용) → data: { status: 'ALLOWED' | 'BLOCKED', blockers: [{ service, reasons[], details }] }
+//   service: market(details activeBuyerOrderCount · activeSellerOrderCount)
+//            payment(walletBalance · hasPendingTransactions · outstandingDebt) · settlement(incompleteSettlementCount)
+//   확인하지 못하면 503 WITHDRAWAL_CHECK_UNAVAILABLE (일부 사유도 주지 않음)
+export function getWithdrawalEligibility() {
+  return client.get('/api/v1/users/me/withdrawal');
+}
+
+// 최종 탈퇴: 로컬 회원은 password, 카카오 회원은 withdrawalToken 하나만 (둘 다 · 둘 다 없음은 400 BAD_REQUEST_DATA)
+// → data: { revocationCompleted }. 성공하면 서버가 이 기기 Refresh 쿠키를 만료
+// 실패: 400 INVALID_CURRENT_PASSWORD · INVALID_WITHDRAWAL_TOKEN, 429 PASSWORD_CHANGE_LOCKED(+ Retry-After),
+//       409 WITHDRAWAL_BLOCKED(사유는 getWithdrawalEligibility로), 503 WITHDRAWAL_CHECK_UNAVAILABLE · SOCIAL_UNLINK_FAILED · RESULT_UNKNOWN
+export function withdraw({ password, withdrawalToken } = {}) {
+  return client.post('/api/v1/users/me/withdrawal', { password, withdrawalToken });
+}
+
+// 카카오 회원 재확인 ① 회원 정보의 이메일로 인증번호 발송 → data: { expiresIn, resendAvailableIn }
+export function sendWithdrawalEmailCode() {
+  return client.post('/api/v1/users/me/withdrawal/verifications');
+}
+
+// 카카오 회원 재확인 ② 인증번호 확인 → data: { withdrawalToken, expiresIn }
+// 번호는 맞지만 발송 뒤 회원 정보가 바뀌었으면 400 WITHDRAWAL_VERIFICATION_INVALID
+export function verifyWithdrawalEmailCode(code) {
+  return client.post('/api/v1/users/me/withdrawal/tokens', { code });
 }
 
 // 판매자 공개 정보 (로그인 없이 조회, 숫자 id만) → { sellerId, nickname, intro, createdAt }
@@ -134,4 +158,11 @@ export function withdraw() {
 // TODO: 판매 완료 수는 응답에 없음 (판매자 상점 B안에 필요) → 필드 추가 요청
 export function getSeller(sellerId) {
   return client.get(`/api/v1/sellers/${sellerId}`);
+}
+
+// 내 판매자 소개글 수정 (판매자만, 500자) → data: { sellerId, nickname, intro, createdAt }
+// intro는 필수: 지우려면 ''를 보냄. 판매자가 아니면 403 NOT_SELLER
+// TODO: 소개글 수정 화면이 아직 없음 (시안 먼저)
+export function changeSellerIntro(intro) {
+  return client.patch('/api/v1/sellers/me/intro', { intro });
 }

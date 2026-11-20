@@ -11,8 +11,8 @@ import { buildCancelTarget, buildConfirmTarget, buildOrderDetailView } from './o
 
 const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로고침은 10초에 한 번
 
-// 백엔드 OrderErrorCode는 SHIPMENT_NOT_CANCELABLE(L 하나). 지시문 표기(LL)도 함께 받음
-const NOT_CANCELABLE_CODES = ['SHIPMENT_NOT_CANCELABLE', 'SHIPMENT_NOT_CANCELLABLE'];
+// 기사님이 수거지 2km 안이라 취소 불가 (BE OrderErrorCode SHIPMENT_NOT_CANCELABLE, 409)
+const NOT_CANCELABLE_CODES = ['SHIPMENT_NOT_CANCELABLE'];
 
 // 주문 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
 async function fetchOrder(orderId) {
@@ -140,7 +140,8 @@ function OrderDetailPage() {
         const code = error.response?.data?.code;
         const fresh = await reload().catch(() => null);
         const sellerOrder = fresh?.sellerOrders?.find((so) => so.items.some((it) => it.id === itemId));
-        if (sellerOrder?.shipmentStatus === 'CANCEL_PENDING') {
+        const freshItem = sellerOrder?.items.find((it) => it.id === itemId);
+        if (sellerOrder?.shipmentStatus === 'CANCEL_PENDING' || freshItem?.status === 'CANCEL_PROCESSING') {
           setDuplicateCancelIds((ids) => new Set(ids).add(itemId));
         } else if (sellerOrder && NOT_CANCELABLE_CODES.includes(code)) {
           setLockedSellerOrderIds((ids) => new Set(ids).add(sellerOrder.id));
