@@ -48,6 +48,10 @@ function ReviewResultPage() {
     [productId],
   );
 
+  // 값이 바뀌면 다시 불러오고, 검수 중이면 폴링도 다시 시작 (재요청 · 이의 신청 뒤, 409로 상태가 바뀐 뒤)
+  const [pollKey, setPollKey] = useState(0);
+  const restart = useCallback(() => setPollKey((key) => key + 1), []);
+
   useEffect(() => {
     if (!canSell) return undefined;
     let timer = null;
@@ -66,7 +70,7 @@ function ReviewResultPage() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [canSell, load]);
+  }, [canSell, load, pollKey]);
 
   const closeAppeal = useCallback(() => {
     if (!isAppealing) setAppealOpen(false);
@@ -86,10 +90,12 @@ function ReviewResultPage() {
       await appealProductReview(productId, memo.trim());
       setAppealOpen(false);
       setMemo('');
-      await load();
+      restart();
     } catch (error) {
+      // 이미 신청했거나 신청할 수 없게 됨: 뒤 화면을 지금 상태로 다시 불러옴.
+      // 오류 안내가 모달 안에만 있어 모달은 열어 두고(닫으면 안내가 사라짐), 닫으면 이의 신청 버튼이 없는 화면이 보임
+      if (isStaleState(error)) restart();
       setAppealError(error.response?.data?.message ?? '이의 신청을 하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      if (isStaleState(error)) load().catch(() => {});
     } finally {
       setIsAppealing(false);
     }
@@ -101,10 +107,10 @@ function ReviewResultPage() {
     setResubmitError('');
     try {
       await resubmitImageReview(productId);
-      await load();
+      restart();
     } catch (error) {
       setResubmitError(error.response?.data?.message ?? '다시 검수를 요청하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      if (isStaleState(error)) load().catch(() => {});
+      if (isStaleState(error)) restart();
     } finally {
       setIsResubmitting(false);
     }
