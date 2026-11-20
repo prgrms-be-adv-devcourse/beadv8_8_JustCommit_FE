@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { changeProductHidden, deleteProduct, getMyProducts } from '../../api/productApi';
-import {
-  EDITABLE_PRODUCT_STATUSES,
-  QUOTA_PLACEHOLDER,
-  REVIEW_REJECT_REASON,
-} from '../../constants/seller';
+import { changeProductHidden, deleteProduct, getMyProductCounts, getMyProducts } from '../../api/productApi';
+import { EDITABLE_PRODUCT_STATUSES, toQuota } from '../../constants/seller';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatPrice } from '../../utils/format';
 import MyListingsView from './MyListingsView';
+import { DECIDED_BY_LABEL, rejectReasonText, toReviewStage } from './reviewStatusModel';
 
 const TABS = [
   { value: '', label: '전체' },
@@ -25,8 +22,8 @@ const TABS = [
 const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
 const MAX_PAGES = 10; // 안전장치: 최대 500개까지
 
-// TODO: 상태별 개수 API(getMyProductCounts) · 상태 조회 조건이 생기면 페이지 단위 조회로 교체
-// 지금은 내 상품을 전부 받아서 탭과 개수를 프론트에서 계산 (삭제된 상품은 백엔드가 제외)
+// 내 상품을 전부 받아서 탭과 탭 개수를 프론트에서 계산 (삭제된 상품은 백엔드가 제외)
+// 숨기기 · 삭제 뒤 개수가 바로 맞도록 목록에서 셈. 오늘 등록 · 사진 검수 횟수만 counts API로 받음
 async function fetchAllMyProducts() {
   const all = [];
   for (let page = 0; page < MAX_PAGES; page += 1) {
@@ -44,9 +41,8 @@ function matchesTab(product, tab) {
   return product.status === tab;
 }
 
-// 상품 응답 → 목록 한 줄
-// TODO: 검수 단계(reviewStage: MANUAL · DELAYED) · 반려 사유(rejectReason) · 판정 주체(decidedBy) ·
-//       주문 취소로 돌아온 상품 여부(returnedFromOrder)가 응답에 생기면 그대로 쓰임. 지금은 없으면 자리 문구
+// 상품 응답 → 목록 한 줄. 검수 배지는 응답의 reviewStatus · decidedBy · rejectReason · rejectMessage (BE MyProductResponse)
+// TODO: 주문 취소로 돌아온 상품 여부(returnedFromOrder)는 응답에 없어 안내 문구가 안 보임
 function toRow(product) {
   const { status } = product;
   const row = {
@@ -66,11 +62,13 @@ function toRow(product) {
   };
   const reviewLink = { label: '결과 보기', to: `/products/${product.productId}/review` };
 
+  const stage = toReviewStage(product, status);
+
   if (status === 'REVIEW_PENDING') {
-    if (product.reviewStage === 'MANUAL') {
+    if (stage === 'MANUAL') {
       row.badges = ['MANUAL'];
       row.note = '관리자가 확인하고 있어요. 결과는 알림으로 알려 드려요';
-    } else if (product.reviewStage === 'DELAYED') {
+    } else if (stage === 'DELAYED') {
       row.badges = ['DELAYED'];
       row.note = '확인에 시간이 걸리고 있어요';
       // 시안 08-4-1: 확인 지연 상품은 수정 · 삭제 버튼을 막아 둠
@@ -81,11 +79,11 @@ function toRow(product) {
     }
     row.link = reviewLink;
   } else if (status === 'REJECTED') {
-    const reason = REVIEW_REJECT_REASON[product.rejectReason] ?? '{반려 사유}';
-    const decidedBy = { AUTO: '자동 판정', ADMIN: '관리자 판정' }[product.decidedBy] ?? '{판정 주체}';
-    row.note = `${reason} · ${decidedBy}`;
+    const decidedBy = DECIDED_BY_LABEL[product.decidedBy];
+    row.note = decidedBy ? `${rejectReasonText(product)} · ${decidedBy}` : rejectReasonText(product);
     row.link = {
-      label: product.decidedBy === 'ADMIN' ? '사유 보기' : '사유 보기 · 이의 신청',
+      // 이의 신청은 자동 반려만 (가능 여부는 결과 화면에서 다시 확인)
+      label: stage === 'REJECTED' ? '사유 보기 · 이의 신청' : '사유 보기',
       to: reviewLink.to,
     };
   } else if (product.hidden) {
@@ -109,6 +107,7 @@ function MyProductsPage() {
   const [busyId, setBusyId] = useState(null); // 숨기기 · 삭제 요청 중인 상품
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [notice, setNotice] = useState(null); // 실패 안내 문구
+  const [counts, setCounts] = useState(null); // 오늘 등록 · 사진 검수 횟수 (GET products/me/counts)
 
   useEffect(() => {
     if (!canSell) return undefined;
@@ -123,6 +122,13 @@ function MyProductsPage() {
       .catch(() => {
         if (!ignore) setLoadState('error');
       });
+
+    // 등록 제한 줄은 실패해도 목록은 보여 줌 (「-」로 표시)
+    getMyProductCounts()
+      .then((response) => {
+        if (!ignore) setCounts(response.data.data);
+      })
+      .catch(() => {});
 
     return () => {
       ignore = true;
@@ -177,7 +183,7 @@ function MyProductsPage() {
 
   return (
     <MyListingsView
-      quota={QUOTA_PLACEHOLDER}
+      quota={toQuota(counts)}
       tabs={tabs}
       tab={tab}
       onTabChange={setTab}

@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
   createProduct,
+  getMyProductCounts,
   getProduct,
   issueImageUploadUrls,
   searchSpecies,
@@ -11,7 +12,7 @@ import {
   uploadToPresignedUrl,
 } from '../../api/productApi';
 import ErrorPage from '../../components/common/ErrorPage';
-import { EDITABLE_PRODUCT_STATUSES, QUOTA_PLACEHOLDER } from '../../constants/seller';
+import { EDITABLE_PRODUCT_STATUSES, toQuota } from '../../constants/seller';
 import ProductFormView, { MAX_PHOTOS } from './ProductFormView';
 
 // 백엔드 ProductImageService 규칙과 같게 유지 (시안 안내: JPEG · PNG, 10MB 이하)
@@ -55,6 +56,7 @@ function ProductForm({ productId }) {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [counts, setCounts] = useState(null); // 등록 제한 줄 (GET products/me/counts)
 
   // 페이지를 떠날 때 새 파일 미리보기 URL만 해제 (이미 올라간 사진 주소는 대상 아님)
   const photosRef = useRef(photos);
@@ -68,6 +70,20 @@ function ProductForm({ productId }) {
       }),
     [],
   );
+
+  // 등록 모드: 등록 제한 줄 (실패하면 「-」로 두고 양식은 그대로 씀)
+  useEffect(() => {
+    if (isEdit || !canSell) return undefined;
+    let ignore = false;
+    getMyProductCounts()
+      .then((response) => {
+        if (!ignore) setCounts(response.data.data);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [isEdit, canSell]);
 
   // 수정 모드: 기존 상품 정보로 양식 채우기
   useEffect(() => {
@@ -287,7 +303,7 @@ function ProductForm({ productId }) {
     <>
       <ProductFormView
         isEdit={isEdit}
-        quota={QUOTA_PLACEHOLDER}
+        quota={toQuota(counts)}
         status={loadedProduct?.status}
         photos={photos}
         photoHandlers={photoHandlers}

@@ -1,6 +1,6 @@
 // 판매자 화면(시안 08 · 04 판매 주문 상세)에서 쓰는 상태 · 문구
 // 판매자 화면(내 판매 목록 · 상품 수정 · 검수 결과)의 상품 상태 배지 (시안 08)
-// tone: 배지 색 클래스. 검수 중은 검수 단계(reviewStage)에 따라 라벨 · 색이 바뀜
+// tone: 배지 색 클래스. 검수 중은 검수 단계(응답의 reviewStatus)에 따라 라벨 · 색이 바뀜
 export const SELLER_PRODUCT_BADGE = {
   ACTIVE: { label: '판매 중', tone: 'bg-[#0f4c3a] text-white' },
   PAYMENT_PENDING: { label: '거래 중', tone: 'bg-[#fffbeb] border border-[#fde68a] text-[#92400e]' },
@@ -36,12 +36,21 @@ export const REVIEW_REJECT_HELP = {
     '판매자 잘못이 아니라서 재검수 횟수와 등록 제한에 세지 않아요. 같은 내용 그대로 다시 검수받을 수 있어요.',
 };
 
-// 등록 제한 줄 (상품 등록 · 내 판매 목록). TODO: 등록 제한 API(getMyProductQuota)가 생기면 교체
-export const QUOTA_PLACEHOLDER = {
-  reviewing: '{검수 중} / 5개',
-  registeredToday: '{오늘 등록} / 20건',
-  reviewedToday: '{오늘 사진 검수} / 30회',
-};
+// 등록 제한 줄 (상품 등록 · 내 판매 목록). 값은 GET products/me/counts
+// 검수 중 한도(5개)는 응답에 없어 BE ProductService.REVIEW_PENDING_LIMIT 값을 그대로 씀
+export const REVIEW_PENDING_LIMIT = 5;
+
+// counts 응답 → QuotaBar 문구. counts가 없으면(불러오기 전 · 실패) 「-」
+export function toQuota(counts) {
+  if (!counts) {
+    return { reviewing: `- / ${REVIEW_PENDING_LIMIT}개`, registeredToday: '- / 20건', reviewedToday: '- / 30회' };
+  }
+  return {
+    reviewing: `${counts.reviewPending} / ${REVIEW_PENDING_LIMIT}개`,
+    registeredToday: `${counts.todayRegistered} / ${counts.dailyRegisterLimit}건`,
+    reviewedToday: `${counts.todayPhotoReviews} / ${counts.dailyPhotoReviewLimit}회`,
+  };
+}
 
 // ── 판매 주문 (시안 08-5 · 04 판매 주문 상세) ──
 

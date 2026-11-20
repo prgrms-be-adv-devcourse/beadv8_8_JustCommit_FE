@@ -7,8 +7,9 @@ function compactParams(params) {
   );
 }
 
+// status는 여러 개를 배열로 넘김 → status=ACTIVE&status=PAYMENT_PENDING (axios 기본 status[]= 대신)
 export function getProducts(params = {}) {
-  return client.get('/api/v1/products', { params: compactParams(params) });
+  return client.get('/api/v1/products', { params: compactParams(params), paramsSerializer: { indexes: null } });
 }
 
 export function searchSpecies(params) {
@@ -64,49 +65,45 @@ export function updateProduct(productId, form) {
   return client.put(`/api/v1/products/${productId}`, form);
 }
 
-// TODO: 백엔드 API가 아직 없음 (docs/reference/external-apis.md 「추가 예정」 · products/me/counts)
-// 경로 · 응답은 담당이 확정하면 맞춥니다. 조회 함수는 아직 부르지 않고 화면에 자리 문구를 씁니다.
-// 이의 신청은 버튼을 누르면 부릅니다 (API가 없으면 실패 안내가 보임).
-
-// 등록 제한 현황 → { reviewingCount, reviewingLimit, registeredToday, registerLimit, reviewedToday, reviewLimit }
-export function getMyProductQuota() {
-  return client.get('/api/v1/products/me/quota');
+// 내 상품 상태별 개수 + 오늘 등록 · 사진 검수 횟수와 하루 한도 (BE MyProductCountResponse)
+// → { total, reviewPending, rejected, active, paymentPending, soldOut,
+//     todayRegistered, dailyRegisterLimit, todayPhotoReviews, dailyPhotoReviewLimit }
+// hidden: true면 숨긴 것만, false면 숨기지 않은 것만, 생략하면 전체
+export function getMyProductCounts(params = {}) {
+  return client.get('/api/v1/products/me/counts', { params: compactParams(params) });
 }
 
-// 내 상품 상태별 개수 (전체 · 판매 중 · 거래 중 · 판매 완료 · 검수 중 · 반려 · 숨김)
-export function getMyProductCounts() {
-  return client.get('/api/v1/products/me/counts');
+// 검수 기록 (판매자 본인, 최신 검수 버전부터, BE SellerImageReviewHistoryResponse)
+// → { productId, productStatus, remainingResubmits, appealable, resubmittable,
+//     reviews: [{ reviewVersion, scope, status: IN_REVIEW|ADMIN_CHECK|ADMIN_CHECK_DELAYED|APPROVED|REJECTED|REPLACED,
+//                 rejectReason, rejectMessage, decidedBy: ENGINE|ADMIN|DEADLINE, appealMemo,
+//                 requestedAt, decidedAt, expiresAt }] }
+export function getImageReviews(productId) {
+  return client.get(`/api/v1/products/${productId}/imageReviews`);
 }
 
-// 검수 결과 → { stage: CHECKING|MANUAL|DELAYED|PASSED|REJECTED, rejectReason, decidedBy: AUTO|ADMIN,
-//              decidedAt, expiresAt, reReviewLeft, appealable }
-export function getProductReview(productId) {
-  return client.get(`/api/v1/products/${productId}/review`);
+// 관리자 확인 기한 초과(REVIEW_EXPIRED)로 반려된 상품을 같은 내용으로 다시 검수 요청
+export function resubmitImageReview(productId) {
+  return client.post(`/api/v1/products/${productId}/imageReviews`);
 }
 
-// 자동 반려 이의 신청 (메모 필수, 200자)
+// 자동 반려 이의 신청 (메모 필수, 200자). BE SellerImageReviewController
 export function appealProductReview(productId, memo) {
-  return client.post(`/api/v1/products/${productId}/review/appeal`, { memo });
+  return client.post(`/api/v1/products/${productId}/appeals`, { memo });
 }
 
 // ===== 판매자 상점 (시안 02-3-1 B안) =====
-// TODO: 판매자별 판매 중 상품 목록 API가 없음. GET products(ProductSearchRequest)에 sellerId 필터가 없고,
-//  BE docs/reference/external-apis.md 「추가할 API」의 market 「확장 화면은 판매자 상점(리뷰 · 판매 상품)」에 해당.
-//  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId= 또는 /api/v1/sellers/{sellerId}/products).
-//  지금은 서버를 부르지 않고 빈 목록을 돌려줍니다 → 화면은 「판매 중 0개」 빈 상태로 보임.
-// 응답 → { content: [{ productId, title, price, thumbnailUrl, status, createdAt }], totalElements }
-// eslint-disable-next-line no-unused-vars
+// 공개 상품 목록(GET products)을 sellerId로 거름. 숨긴 상품은 공개 목록에 나오지 않음
+// 응답 → { data: { content: [ProductSearchResponse], totalElements, page, totalPages } } (ApiResponse를 벗긴 모양)
+
+// 판매 중 칸: 판매 중 + 결제 대기(거래 중)
 export function getSellerProducts(sellerId, params = {}) {
-  return Promise.resolve({ data: { content: [], totalElements: 0 } });
+  return getProducts({ ...params, sellerId, status: ['ACTIVE', 'PAYMENT_PENDING'] }).then((response) => ({
+    data: response.data.data,
+  }));
 }
 
-// TODO: 판매자별 판매 완료 상품 목록 API가 없음 (판매자 상점 B안 「판매 완료」 줄, 시안 02-3-1).
-//  필요한 조건: sellerId 필터 + status=SOLD_OUT 필터 + 숨긴 상품(hidden) 제외, 최신순, page · size(6개씩).
-//  근거: BE docs/services/product.md 「상태」 SOLD_OUT · 「숨김」(판매자 본인만 봄).
-//  경로 · 응답이 정해지면 실제 호출로 바꿉니다 (예: GET /api/v1/products?sellerId=&status=SOLD_OUT&page=&size=).
-//  지금은 서버를 부르지 않고 빈 목록을 돌려줍니다. totalElements = null(모름) → 화면은 개수에 {판매 완료 수} 자리 문구.
-// 응답 → { content: [{ productId, title, price, thumbnailUrl, status: 'SOLD_OUT', createdAt }], totalElements }
-// eslint-disable-next-line no-unused-vars
+// 판매 완료 줄 (최신순, page · size)
 export function getSellerSoldOutProducts(sellerId, params = {}) {
-  return Promise.resolve({ data: { content: [], totalElements: null } });
+  return getProducts({ ...params, sellerId, status: 'SOLD_OUT' }).then((response) => ({ data: response.data.data }));
 }

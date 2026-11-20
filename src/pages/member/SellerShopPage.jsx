@@ -46,7 +46,7 @@ function SellerShop({ sellerId }) {
     let ignore = false;
     Promise.all([
       getSeller(sellerId),
-      getSellerProducts(sellerId, { onSale: true }),
+      getSellerProducts(sellerId),
       getSellerReviews(sellerId, { size: RECENT_REVIEW_SIZE }),
       getSellerSoldOutProducts(sellerId, { page: 0, size: SOLD_PAGE_SIZE }),
     ])

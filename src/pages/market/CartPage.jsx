@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { confirmCartItemPrice, getCartRecommendations, removeCartItem } from '../../api/cartApi';
 import { getProducts } from '../../api/productApi';
@@ -40,10 +40,16 @@ function toProductList(data) {
   return list.slice(0, RECOMMEND_SIZE);
 }
 
-// 새로 올라온 식물 (기본 정렬 = 최신순)
-async function fetchLatestProducts() {
-  const response = await getProducts({ page: 0, size: RECOMMEND_SIZE });
-  return toProductList(response.data.data);
+// 새로 올라온 식물: 판매 중 상품 최신순, 내 상품 · 이미 담은 상품은 뺌 (BE ADR 0029)
+// 빼고 나서도 4개를 채우도록 넉넉히 받음
+const LATEST_FETCH_SIZE = 20;
+
+async function fetchLatestProducts({ memberId, cartProductIds }) {
+  const response = await getProducts({ onSale: true, page: 0, size: LATEST_FETCH_SIZE });
+  const list = response.data.data?.content ?? [];
+  return list
+    .filter((product) => product.sellerId !== memberId && !cartProductIds.has(product.productId))
+    .slice(0, RECOMMEND_SIZE);
 }
 
 const MESSAGE_CLASS = 'flex-1 max-w-[1240px] w-full mx-auto px-5 py-8 text-[14px] text-[#6b7280]';
@@ -63,6 +69,14 @@ function CartPage() {
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [recommend, setRecommend] = useState(null);
+  // 대체 목록에서 뺄 상품 (추천은 장바구니가 비었는지 바뀔 때만 다시 부르므로 최신 값을 ref로 봄)
+  const excludeRef = useRef({ memberId: null, cartProductIds: new Set() });
+  useEffect(() => {
+    excludeRef.current = {
+      memberId: user?.memberId ?? null,
+      cartProductIds: new Set((cart?.items ?? []).map((item) => item.productId)),
+    };
+  }, [cart, user]);
 
   // 페이지에 들어올 때마다 최신 상태로 (그사이 다른 사람이 구매했을 수 있음)
   useEffect(() => {
@@ -86,7 +100,7 @@ function CartPage() {
           // 추천 실패 → 새로 올라온 식물로
         }
       }
-      return { isAi: false, products: await fetchLatestProducts() };
+      return { isAi: false, products: await fetchLatestProducts(excludeRef.current) };
     }
 
     load()
