@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder } from '../../api/orderApi';
+import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder, withSellerNicknames } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -20,9 +20,10 @@ const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로
 const NOT_CANCELABLE_CODES = ['SHIPMENT_NOT_CANCELABLE'];
 
 // 주문 API는 ApiResponse로 감싸지 않고 DTO를 그대로 반환
+// 판매자 닉네임은 주문 응답에 없어 판매자 공개 API로 채움 (실패해도 주문은 보임)
 async function fetchOrder(orderId) {
   const response = await getOrder(orderId);
-  return response.data.data ?? response.data;
+  return withSellerNicknames(response.data.data ?? response.data);
 }
 
 function OrderDetailPage() {

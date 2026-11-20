@@ -5,7 +5,7 @@ import { formatDateTime, formatPrice, maskPhone } from '../../../utils/format';
 // 근거: BE docs/flows/cancel-refund.md · docs/services/market.md 「정책」
 //
 // 응답에 아직 없는 값은 {넣을값} 자리 문구로 둡니다. 백엔드에 추가되면 아래 TODO 필드명을 확인해 바꿔요.
-// - sellerOrders[].sellerNickname          판매자 닉네임
+// - sellerOrders[].sellerNickname          판매자 닉네임 (주문 응답에 없어 화면이 판매자 공개 API로 붙임: orderApi withSellerNicknames)
 // - 판매자 수락 전: BE는 판매자 주문이 아니라 items[].status = ACCEPT_PENDING으로 줌 (없으면 배송이 없을 때 수락 전으로 봄)
 // - sellerOrders[].trackingNo              송장번호
 // - sellerOrders[].currentLocation         택배 현재 위치 한 줄 (예: 서울 성수 ○○대리점 · 배송 완료 · 10.13 11:02)
@@ -56,7 +56,7 @@ export function getReturnDeadline(sellerOrder) {
 }
 
 export function getSellerName(sellerOrder, index) {
-  // TODO: 주문 상세 응답에 판매자 닉네임이 생기면 그 값만 사용
+  // 주문 상세 응답에는 sellerId만 있어 화면이 판매자 공개 API로 sellerNickname을 붙여 넘김 (실패하면 자리 문구)
   return sellerOrder.sellerNickname ?? `{판매자 ${index + 1} 닉네임}`;
 }
 

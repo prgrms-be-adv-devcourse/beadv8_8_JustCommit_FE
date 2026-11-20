@@ -1,4 +1,5 @@
 import client from './client';
+import { getSeller } from './memberApi';
 
 // 장바구니 항목으로 주문 생성 + 예치금 결제 (서버가 주문 저장·상품 예약·결제를 한 번에 처리)
 // form = { cartItemIds, recipientName, recipientPhone, zipcode, address1, address2 } (BE CartOrderCreateRequest)
@@ -108,4 +109,51 @@ export function requestReturn(orderItemId, form) {
 // → { trackingNo, events: [{ occurredAt, status, location }] } (최신순)
 export function getShipmentTracking(shipmentId) {
   return client.get(`/api/v1/shipments/${shipmentId}/tracking`);
+}
+
+// 목록 항목마다 추가 조회를 부를 때 동시에 limit개까지만 부름 (결과 순서 = 입력 순서)
+export async function mapWithLimit(list, limit, fn) {
+  const results = new Array(list.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < list.length) {
+      const index = next;
+      next += 1;
+      results[index] = await fn(list[index], index);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
+  return results;
+}
+
+// 판매자 닉네임: 주문 응답에는 sellerId만 있어서 member 공개 API(GET sellers/{sellerId} → data.nickname)로 채움
+// 같은 판매자는 한 번만 부름. 실패하면 null(화면은 자리 문구 그대로)이고 다음에 다시 부름
+const sellerNicknameCache = new Map();
+export function getSellerNickname(sellerId) {
+  if (sellerId == null) return Promise.resolve(null);
+  if (!sellerNicknameCache.has(sellerId)) {
+    const request = getSeller(sellerId)
+      .then((response) => response.data?.data?.nickname ?? null)
+      .catch(() => {
+        sellerNicknameCache.delete(sellerId);
+        return null;
+      });
+    sellerNicknameCache.set(sellerId, request);
+  }
+  return sellerNicknameCache.get(sellerId);
+}
+
+// 주문 상세 응답의 sellerOrders[]에 판매자 닉네임(sellerNickname · sellerName)을 붙임. 실패해도 주문은 그대로 돌려줌
+export async function withSellerNicknames(order) {
+  const sellerOrders = order?.sellerOrders ?? [];
+  if (sellerOrders.length === 0) return order;
+  const nicknames = await Promise.all(sellerOrders.map((sellerOrder) => getSellerNickname(sellerOrder.sellerId)));
+  return {
+    ...order,
+    sellerOrders: sellerOrders.map((sellerOrder, index) =>
+      nicknames[index] == null
+        ? sellerOrder
+        : { ...sellerOrder, sellerNickname: nicknames[index], sellerName: nicknames[index] },
+    ),
+  };
 }

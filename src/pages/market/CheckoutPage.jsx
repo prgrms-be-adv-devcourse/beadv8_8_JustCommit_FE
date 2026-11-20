@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { updateCartItemPrices } from '../../api/cartApi';
 import { addAddress, getAddresses } from '../../api/memberApi';
-import { createCartOrder, getOrder, payOrder, quoteShippingFee } from '../../api/orderApi';
+import { createCartOrder, getOrder, payOrder, quoteShippingFee, withSellerNicknames } from '../../api/orderApi';
 import { ACTION_ERROR } from '../../constants/actionError';
 import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import useAuth from '../../hooks/useAuth';
@@ -75,7 +75,7 @@ function groupCartItems(items, prevPrices) {
 }
 
 // 결제 대기 주문 상세 → 판매자별 묶음
-// TODO: 주문 상세 응답에 판매자 이름이 없음 → sellerName이 생기면 자리 문구 대신 사용
+// 판매자 이름은 주문 상세 응답에 없어 판매자 공개 API로 채움(withSellerNicknames). 실패하면 자리 문구
 function groupOrderItems(order) {
   return (order.sellerOrders ?? []).map((sellerOrder) => ({
     key: sellerOrder.id,
@@ -175,9 +175,9 @@ function CheckoutPage() {
     let ignore = false;
 
     getOrder(pendingOrderId)
-      .then((response) => {
+      .then((response) => withSellerNicknames(response.data.data ?? response.data))
+      .then((order) => {
         if (ignore) return;
-        const order = response.data.data ?? response.data;
         if (order.status === 'PAYMENT_PENDING') {
           setPendingOrder(order);
         } else if (order.status === 'EXPIRED') {

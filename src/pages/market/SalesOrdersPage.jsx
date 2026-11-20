@@ -12,7 +12,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDateTime, formatPrice } from '../../utils/format';
 import { addHours, formatMonthDayTime } from '../../utils/sellerFormat';
-import { fetchSalesOrders } from './salesOrderLoader';
+import { attachTrackingNos, fetchSalesOrders } from './salesOrderLoader';
 import SalesOrdersView from './SalesOrdersView';
 
 // "몬스테라 델리시오사 외 1개"
@@ -29,7 +29,8 @@ function deadlineText(deadline, startedAt, hours, placeholder) {
 }
 
 // 판매 주문 응답 → 목록 한 줄
-// TODO: 구매자 닉네임(buyerNickname) · 판매액(saleAmount, 배송비 제외) · 송장번호(trackingNo) ·
+// 송장번호(trackingNo)는 목록 응답에 없어 판매 주문 상세로 채움(attachTrackingNos)
+// TODO: 구매자 닉네임(buyerNickname) · 판매액(saleAmount, 배송비 제외) ·
 //       결제 완료 시각(paidAt) · 반품 신청 시각(returnRequestedAt) · 취소 주체(cancelledBy)가 목록 응답에 생기면 그대로 쓰임
 function toSalesRow(order) {
   const statusKey = getSalesOrderStatus(order);
@@ -91,6 +92,10 @@ function SalesOrdersPage() {
         if (ignore) return;
         setOrders(list.map(toSalesRow));
         setLoadState('done');
+        // 송장번호는 판매 주문 상세로 채운 뒤 다시 그림 (실패해도 목록은 그대로)
+        attachTrackingNos(list).then((enriched) => {
+          if (!ignore) setOrders(enriched.map(toSalesRow));
+        });
       })
       .catch(() => {
         if (!ignore) setLoadState('error');
