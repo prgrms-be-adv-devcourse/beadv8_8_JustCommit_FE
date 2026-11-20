@@ -291,7 +291,9 @@ function SidebarFilter({ filters, sorts, selectedSort, selectedSpecies, handlers
 
       <div className="pt-4 space-y-3">
         <h3 className="text-[13px] font-bold text-gray-900">정렬 기준</h3>
-        <div className="grid grid-cols-3 gap-1 p-0.5 bg-gray-100 rounded-md text-xs">
+        <div
+          className={`grid ${sorts.length === 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-1 p-0.5 bg-gray-100 rounded-md text-xs`}
+        >
           {sorts.map((item) =>
             selectedSort === item.value ? (
               <button

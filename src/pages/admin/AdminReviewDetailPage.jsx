@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { decideImageReview, getImageReview } from '../../api/adminApi';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { decideImageReview, getManualImageReviews } from '../../api/adminApi';
 import usePageTitle from '../../hooks/usePageTitle';
 import ErrorPage from '../../components/common/ErrorPage';
 import { ACTION_ERROR } from '../../constants/actionError';
 import AdminReviewDetailView from './AdminReviewDetailView';
 import AdminReviewRejectModal from './AdminReviewRejectModal';
+import { toReviewDetail } from './imageReviewModel';
 
 // 409: 다른 관리자가 먼저 처리했거나 그사이 판매자가 수정 · 삭제함 (docs/flows/image-review.md)
 const CONFLICT_MESSAGE = '이미 처리됐거나 판매자가 상품을 바꿨어요. 목록에서 다시 확인해 주세요.';
@@ -30,12 +31,15 @@ function AdminReviewDetailPage() {
 
   useEffect(() => {
     let ignore = false;
-    getImageReview(imageReviewId)
+    // 한 건 상세 API가 없어 대기 목록에서 찾음. 없으면 이미 처리됐거나 판매자가 수정 · 삭제한 건
+    getManualImageReviews()
       .then((response) => {
-        if (!ignore) setReview(response.data.data);
+        if (ignore) return;
+        const found = response.data.data.content.find((item) => String(item.reviewId) === imageReviewId);
+        if (found) setReview(toReviewDetail(found));
+        else setLoadStatus(404);
       })
       .catch((loadError) => {
-        // TODO: BE 상세 API가 생기기 전에는 실패하므로 자리 문구 화면을 그대로 둠
         if (!ignore) setLoadStatus(loadError.response?.status ?? null);
       });
     return () => {
@@ -57,6 +61,8 @@ function AdminReviewDetailPage() {
   };
 
   if (loadStatus === 403) return <ErrorPage type="FORBIDDEN" />;
+  // 대기 목록에 없음(이미 처리됨 등) → 목록으로
+  if (loadStatus === 404) return <Navigate to="/admin/reviews" replace />;
 
   return (
     <>
@@ -64,7 +70,7 @@ function AdminReviewDetailPage() {
         review={review}
         busy={busy}
         error={rejectOpen ? null : error}
-        onApprove={() => decide({ result: 'APPROVED' })}
+        onApprove={() => decide({ decision: 'APPROVED' })}
         onReject={() => {
           setError(null);
           setRejectOpen(true);
@@ -80,7 +86,7 @@ function AdminReviewDetailPage() {
             setRejectOpen(false);
           }}
           onSubmit={({ reasonCode, reasonText }) =>
-            decide({ result: 'REJECTED', reasonCode, reasonText })
+            decide({ decision: 'REJECTED', rejectReason: reasonCode, memo: reasonText })
           }
         />
       )}

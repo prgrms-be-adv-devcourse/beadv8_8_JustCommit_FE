@@ -174,7 +174,7 @@ function AdminReviewDetailView({ review, onApprove, onReject, busy = false, erro
               <ol className="space-y-1.5 text-sm">
                 {(review?.history ?? []).map((item) => (
                   <li key={`${item.time}-${item.text}`} className="flex gap-3">
-                    <span className="w-12 text-[#6b7280] tabular-nums">{item.time}</span>
+                    <span className="w-24 shrink-0 text-[#6b7280] tabular-nums">{item.time}</span>
                     <span className="text-[#111827]">{item.text}</span>
                   </li>
                 ))}

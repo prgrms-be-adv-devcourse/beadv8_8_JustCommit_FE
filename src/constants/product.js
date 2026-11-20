@@ -8,13 +8,6 @@ export const SPECIES_CATEGORIES = [
   { value: 'SUCCULENT', label: '다육·선인장' },
 ];
 
-// 정렬 (백엔드 ProductSearchRequest.sort)
-export const PRODUCT_SORTS = [
-  { value: '', label: '최신순' },
-  { value: 'priceAsc', label: '낮은 가격순' },
-  { value: 'priceDesc', label: '높은 가격순' },
-];
-
 // 상품 상태 (백엔드 ProductStatus)
 export const PRODUCT_STATUS = {
   ACTIVE: { label: '판매중', tone: 'active' },

@@ -26,8 +26,10 @@ function RejectReason({ review }) {
 
 // 시안 08-3-1 ~ 08-3-8 검수 결과 (화면만, 데이터는 props)
 // review.stage: CHECKING · PASSED · MANUAL · DELAYED · REJECTED · REJECTED_ADMIN · EXPIRED
+// review = { stage, reasonTitle, reasonHelp, decidedByLabel, decidedAt, expiresAt, reReviewLeft, appealable, resubmittable }
 // product = { productId, title, speciesName, priceText, createdAtText, photos: [url] }
-function ReviewResultView({ review, product, appeal }) {
+// resubmit = { onSubmit, isSubmitting, errorMessage } (기한 초과 반려 → 같은 내용으로 다시 검수)
+function ReviewResultView({ review, product, appeal, resubmit }) {
   const { stage } = review;
   const editPath = `/products/${product.productId}/edit`;
   const badgeKey = {
@@ -97,7 +99,7 @@ function ReviewResultView({ review, product, appeal }) {
               </Link>
             </div>
           )}
-          {stage === 'REJECTED' && (
+          {stage === 'REJECTED' && review.appealable && (
             <div className="flex gap-2">
               <button
                 type="button"
@@ -111,7 +113,7 @@ function ReviewResultView({ review, product, appeal }) {
               </Link>
             </div>
           )}
-          {stage === 'REJECTED_ADMIN' && (
+          {(stage === 'REJECTED_ADMIN' || (stage === 'REJECTED' && !review.appealable)) && (
             <div className="flex gap-2">
               <Link to={editPath} className={linkGreen}>
                 수정해서 다시 검수받기
@@ -119,16 +121,33 @@ function ReviewResultView({ review, product, appeal }) {
             </div>
           )}
           {stage === 'EXPIRED' && (
-            <div className="flex gap-2">
-              <Link to={editPath} className={linkGreen}>
-                같은 내용으로 다시 검수받기
-              </Link>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                {review.resubmittable ? (
+                  <button
+                    type="button"
+                    className={linkGreen}
+                    onClick={resubmit.onSubmit}
+                    disabled={resubmit.isSubmitting}
+                  >
+                    같은 내용으로 다시 검수받기
+                  </button>
+                ) : (
+                  <Link to={editPath} className={linkGreen}>
+                    수정해서 다시 검수받기
+                  </Link>
+                )}
+              </div>
+              <ActionErrorBar message={resubmit.errorMessage} />
             </div>
           )}
 
           {(stage === 'MANUAL' || stage === 'DELAYED') && <InfoNote>확인 중에 상품을 고치면 검수를 처음부터 다시 해요.</InfoNote>}
-          {stage === 'REJECTED' && (
+          {stage === 'REJECTED' && review.appealable && (
             <InfoNote>{`재검수는 ${review.reReviewLeft}번 남았어요. 이의 신청은 재검수 횟수를 쓰지 않아요.`}</InfoNote>
+          )}
+          {stage === 'REJECTED' && !review.appealable && (
+            <InfoNote>{`이 결과에는 이의 신청을 할 수 없어요. 재검수는 ${review.reReviewLeft}번 남았어요.`}</InfoNote>
           )}
           {stage === 'REJECTED_ADMIN' && (
             <InfoNote>{`관리자가 확인한 결과라 이의 신청은 할 수 없어요. 재검수는 ${review.reReviewLeft}번 남았어요.`}</InfoNote>
