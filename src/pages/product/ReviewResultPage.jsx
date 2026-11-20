@@ -11,6 +11,14 @@ import { toReviewResult } from './reviewStatusModel';
 // 검수 중일 때 결과를 다시 확인하는 간격
 const POLL_MS = 5000;
 
+// 그사이 상태가 바뀌어 409가 나는 경우 (다른 탭에서 이미 신청 · 수정 등) → 화면을 다시 불러 버튼을 맞춤
+// REVIEW_PENDING_LIMIT_EXCEEDED는 상태가 그대로라 문구만 보여 줌
+const STALE_STATE_CODES = ['APPEAL_ALREADY_USED', 'APPEAL_NOT_ALLOWED', 'RESUBMIT_NOT_ALLOWED'];
+
+function isStaleState(error) {
+  return error.response?.status === 409 && STALE_STATE_CODES.includes(error.response?.data?.code);
+}
+
 function ReviewResultPage() {
   usePageTitle('검수 결과');
   const { productId } = useParams();
@@ -81,6 +89,7 @@ function ReviewResultPage() {
       await load();
     } catch (error) {
       setAppealError(error.response?.data?.message ?? '이의 신청을 하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (isStaleState(error)) load().catch(() => {});
     } finally {
       setIsAppealing(false);
     }
@@ -95,6 +104,7 @@ function ReviewResultPage() {
       await load();
     } catch (error) {
       setResubmitError(error.response?.data?.message ?? '다시 검수를 요청하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (isStaleState(error)) load().catch(() => {});
     } finally {
       setIsResubmitting(false);
     }
