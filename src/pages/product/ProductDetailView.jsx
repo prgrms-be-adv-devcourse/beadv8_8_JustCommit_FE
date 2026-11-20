@@ -14,7 +14,19 @@ const STATUS_BADGE = {
     className: 'inline-flex items-center px-2.5 py-0.5 bg-white border border-[#0f4c3a] text-[#0f4c3a] text-xs font-bold',
   },
   SOLD_OUT: { label: '판매 완료', className: 'inline-flex items-center px-2.5 py-0.5 bg-[#000000] text-white text-xs font-bold' },
+  // 검수 중 · 반려는 본인만 볼 수 있음 (남이 열면 BE가 404)
+  REVIEW_PENDING: {
+    label: '검수 중',
+    className: 'inline-flex items-center px-2.5 py-0.5 bg-[#f4f8f6] border border-[#d1e7dd] text-[#0f4c3a] text-xs font-bold',
+  },
+  REJECTED: {
+    label: '반려',
+    className: 'inline-flex items-center px-2.5 py-0.5 bg-[#fef2f2] border border-[#fecaca] text-[#b91c1c] text-xs font-bold',
+  },
 };
+
+// 검수 결과 화면으로 가는 링크를 보여 줄 상태
+const REVIEW_STATUSES = ['REVIEW_PENDING', 'REJECTED'];
 
 // 큰 사진 위 덮개 (거래 중 · 판매 완료)
 const PHOTO_OVERLAY = {
@@ -155,6 +167,14 @@ function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, on
           </div>
         )}
         <ActionErrorLine message={actionError} className="-mt-4 mb-6" />
+        {REVIEW_STATUSES.includes(status) && (
+          <Link
+            to={`/products/${product.productId}/review`}
+            className="-mt-3 mb-6 inline-flex text-sm font-semibold text-[#0f4c3a] hover:underline"
+          >
+            검수 결과 보기 →
+          </Link>
+        )}
       </>
     );
   }
@@ -203,6 +223,12 @@ function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, on
 // 안내 박스 문구: [제목, 설명]
 function getNotice(product, isOwner) {
   if (!isOwner) return ['예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요', '배송 완료 3일 뒤에는 자동으로 구매 확정돼요.'];
+  if (product.status === 'REVIEW_PENDING') {
+    return ['검수 중인 상품이라 다른 회원에게 보이지 않아요', '검수를 통과하면 바로 판매를 시작해요. 결과는 알림으로도 알려 드려요.'];
+  }
+  if (product.status === 'REJECTED') {
+    return ['검수에서 반려된 상품이라 다른 회원에게 보이지 않아요', '검수 결과에서 사유를 확인하고 상품을 고쳐 다시 검수받을 수 있어요.'];
+  }
   if (OWNER_LOCKED.includes(product.status)) {
     return [
       '내가 올린 상품이에요',
