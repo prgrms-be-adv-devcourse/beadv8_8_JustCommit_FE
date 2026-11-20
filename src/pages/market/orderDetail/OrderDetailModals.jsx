@@ -153,7 +153,7 @@ export function ConfirmModal({ target, confirming, error, onClose, onConfirm }) 
 }
 
 // 시안 03-5-4 배송 조회 모달
-// tracking = { sellerName, invoiceNo, events: [{ time, status, location }] } — 첫 줄이 최신
+// tracking = { sellerName, invoiceNo, events: [{ time, status, location? }] } — 첫 줄이 최신. 위치가 없으면 칸을 숨김
 export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, onClose }) {
   return (
     <Modal
@@ -201,11 +201,11 @@ export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, on
             <span className={index === 0 ? 'flex-1 font-bold text-[#0f4c3a]' : 'flex-1 text-[#111827]'}>
               {event.status}
             </span>
-            <span className="text-[13px] text-[#4b5563]">{event.location}</span>
+            {event.location && <span className="text-[13px] text-[#4b5563]">{event.location}</span>}
           </li>
         ))}
       </ol>
-      <p className="text-xs text-[#6b7280]">조회한 순간 기준이에요. 새로고침은 10초에 한 번 할 수 있어요.</p>
+      <p className="text-xs text-[#6b7280]">배송 단계가 바뀐 시각이에요. 새로고침은 10초에 한 번 할 수 있어요.</p>
     </Modal>
   );
 }

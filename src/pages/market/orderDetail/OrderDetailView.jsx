@@ -61,13 +61,15 @@ function TrackingLine({ tracking, onOpenTracking }) {
             {`${tracking.invoiceLabel} `}
             <span className="font-semibold text-[#111827] tabular-nums">{tracking.invoiceNo}</span>
           </span>
-          <Separator />
+          {tracking.location && <Separator />}
         </>
       )}
-      <span className="flex items-center gap-1 text-[#111827] min-w-0">
-        <PinIcon />
-        <span className="truncate">{tracking.location}</span>
-      </span>
+      {tracking.location && (
+        <span className="flex items-center gap-1 text-[#111827] min-w-0">
+          <PinIcon />
+          <span className="truncate">{tracking.location}</span>
+        </span>
+      )}
       <button
         type="button"
         className="ml-auto shrink-0 flex items-center gap-0.5 text-[13px] font-semibold text-[#0f4c3a]"

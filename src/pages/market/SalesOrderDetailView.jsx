@@ -300,7 +300,62 @@ function ShipmentSteps({ step, stepTimes }) {
 
 // 시안 08-5-2 수락 대기 · 08-5-3 수락 대기 · 배송지 없음 · 08-5-4 판매 주문 상세, 04-2-1 · 04-5-1 ~ 04-5-3 취소 · 반품 상태 (화면만, 데이터는 props)
 // mode: ACCEPT(수락 대기) · NORMAL · CANCEL_RETURN(구매자 취소 반송 중) · RETURN_REQUESTED(반품 신청)
-function SalesOrderDetailView({ order, accept, returnRequest }) {
+// 시안 08-5-5: 픽업 대기일 때 수거지까지 기사님 거리 (값이 없으면 그리지 않음)
+function DistanceBox({ distance, refreshCooldown, onRefresh }) {
+  return (
+    <div className="mx-6 mb-4 px-4 py-3 border bg-[#f9fafb] border-[#e5e7eb] space-y-1">
+      <div className="flex items-center gap-3">
+        <p className="text-sm text-[#111827]">
+          {'수거지까지 기사님 거리 약 '}
+          <b className="tabular-nums">{distance.km}</b>{' '}
+          {distance.checkedAt && (
+            <span className="text-[13px] text-[#6b7280] tabular-nums">{`· ${distance.checkedAt} 기준`}</span>
+          )}
+        </p>
+        <span className="ml-auto">
+          {refreshCooldown > 0 ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-[#9ca3af] tabular-nums">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+              {`${refreshCooldown}초 뒤 새로고침`}
+            </span>
+          ) : (
+            <button type="button" className="flex items-center gap-1 text-xs font-semibold text-[#0f4c3a]" onClick={onRefresh}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+              새로고침
+            </button>
+          )}
+        </span>
+      </div>
+      <p className="text-xs font-medium text-[#92400e]">
+        기사님이 수거지 2km 안으로 들어오면 구매자가 주문을 취소할 수 없어요. 상품을 미리 포장해 두세요.
+      </p>
+      <p className="text-xs text-[#6b7280]">표시된 거리는 조회한 순간 기준이라 실제와 다를 수 있어요.</p>
+    </div>
+  );
+}
+
+function SalesOrderDetailView({
+  order,
+  accept,
+  returnRequest,
+  refreshCooldown = 0,
+  onOpenTracking = () => {},
+  onRefreshDistance = () => {},
+}) {
   const { mode, shipment, settlement } = order;
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
@@ -374,31 +429,35 @@ function SalesOrderDetailView({ order, accept, returnRequest }) {
             </CardHead>
             {shipment.note && <div className="px-6 pt-4 text-[13px] text-[#6b7280]">{shipment.note}</div>}
             {shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />}
+            {shipment.distance && (
+              <DistanceBox distance={shipment.distance} refreshCooldown={refreshCooldown} onRefresh={onRefreshDistance} />
+            )}
             <div className={`px-6 py-3${shipment.step !== null ? ' border-t' : ''} border-[#f3f4f6] flex items-center gap-3`}>
-              <span className="flex items-center gap-1.5 text-[13px] text-[#111827]">
-                <svg className="w-4 h-4 text-[#0f4c3a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {`현재 위치: ${shipment.location}`}
-              </span>
+              {shipment.location && (
+                <span className="flex items-center gap-1.5 text-[13px] text-[#111827]">
+                  <svg className="w-4 h-4 text-[#0f4c3a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {`현재 위치: ${shipment.location}`}
+                </span>
+              )}
               <span className="ml-auto">
-                <a
-                  href={shipment.trackingUrl}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
                   className="shrink-0 flex items-center gap-0.5 text-[13px] font-semibold text-[#0f4c3a]"
+                  onClick={onOpenTracking}
                 >
                   배송 조회
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                </a>
+                </button>
               </span>
             </div>
           </section>

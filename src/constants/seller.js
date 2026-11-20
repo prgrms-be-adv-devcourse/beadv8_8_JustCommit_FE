@@ -40,16 +40,24 @@ export const REVIEW_REJECT_HELP = {
 // 등록 제한 줄 (상품 등록 · 내 판매 목록). 값은 GET products/me/counts
 // 검수 중 한도(5개)는 응답에 없어 BE ProductService.REVIEW_PENDING_LIMIT 값을 그대로 씀
 export const REVIEW_PENDING_LIMIT = 5;
+// 하루 등록 한도 · 하루 사진 검수 한도 (BE MyProductCountResponse dailyRegisterLimit · dailyPhotoReviewLimit의 정책값).
+// 응답에 한도가 없어도 같은 숫자로 보여 줌
+export const DAILY_REGISTER_LIMIT = 20;
+export const DAILY_PHOTO_REVIEW_LIMIT = 30;
 
 // counts 응답 → QuotaBar 문구. counts가 없거나(불러오기 전 · 실패) 필드가 없으면 「-」
 export function toQuota(counts) {
   if (!counts) {
-    return { reviewing: `- / ${REVIEW_PENDING_LIMIT}개`, registeredToday: '- / 20건', reviewedToday: '- / 30회' };
+    return {
+      reviewing: `- / ${REVIEW_PENDING_LIMIT}개`,
+      registeredToday: `- / ${DAILY_REGISTER_LIMIT}건`,
+      reviewedToday: `- / ${DAILY_PHOTO_REVIEW_LIMIT}회`,
+    };
   }
   return {
     reviewing: `${orEmpty(counts.reviewPending)} / ${REVIEW_PENDING_LIMIT}개`,
-    registeredToday: `${orEmpty(counts.todayRegistered)} / ${orEmpty(counts.dailyRegisterLimit)}건`,
-    reviewedToday: `${orEmpty(counts.todayPhotoReviews)} / ${orEmpty(counts.dailyPhotoReviewLimit)}회`,
+    registeredToday: `${orEmpty(counts.todayRegistered)} / ${counts.dailyRegisterLimit ?? DAILY_REGISTER_LIMIT}건`,
+    reviewedToday: `${orEmpty(counts.todayPhotoReviews)} / ${counts.dailyPhotoReviewLimit ?? DAILY_PHOTO_REVIEW_LIMIT}회`,
   };
 }
 

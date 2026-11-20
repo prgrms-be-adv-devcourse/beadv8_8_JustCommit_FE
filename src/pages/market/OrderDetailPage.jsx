@@ -203,11 +203,14 @@ function OrderDetailPage() {
     }
   };
 
-  // TODO: 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록을 받아 씀. 지금은 「조회 전」 한 줄
+  // 배송 조회: 택배사 이벤트 API가 없어 배송 단계 시각으로 목록을 만듦(buildShipmentEvents). 시각이 하나도 없으면 「조회 전」 한 줄
+  // TODO: 택배사 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록 · 위치로 교체
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
     invoiceNo: trackingGroup.tracking?.invoiceNo ?? trackingGroup.invoiceNo,
-    events: [{ time: EMPTY, status: NO_LOCATION, location: EMPTY }],
+    events: trackingGroup.shipmentEvents?.length
+      ? trackingGroup.shipmentEvents
+      : [{ time: EMPTY, status: NO_LOCATION }],
   };
 
   const copyInvoice = () => {

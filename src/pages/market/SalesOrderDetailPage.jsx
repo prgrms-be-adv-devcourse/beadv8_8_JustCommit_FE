@@ -19,6 +19,8 @@ import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/
 import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
 import SalesOrderDetailView from './SalesOrderDetailView';
+import { TrackingModal } from './orderDetail/OrderDetailModals';
+import { buildShipmentEvents } from './orderDetail/orderDetailModel';
 import { EMPTY, NO_TRACKING_NO, NO_LOCATION, CANCELLED_LABEL, orEmpty } from '../../constants/emptyText';
 
 const SHIPPING_FEE_NOTE = '배송비는 플랫폼 매출로 들어가 정산에 포함되지 않아요';
@@ -154,17 +156,33 @@ function toViewOrder(order) {
   }
 
   const step = getSalesShipmentStep(order, salesStatus);
+  const booked = order.shipmentStatus === 'BOOKED' || order.shipmentStatus === 'CANCEL_LOCKED';
   const shipment =
     mode === 'ACCEPT'
       ? null
       : {
           trackingNo: order.trackingNo ?? NO_TRACKING_NO,
-          note: step === 0 && mode === 'NORMAL' ? '수락하면 택배사가 자동으로 예약돼요. 상품을 포장해 두면 택배사가 가지러 가요.' : null,
+          // 시안 08-5-5: 택배 예약이 끝난 픽업 대기(BOOKED · CANCEL_LOCKED)는 예약 완료 안내
+          note:
+            step === 0 && mode === 'NORMAL'
+              ? booked
+                ? '택배 예약이 끝났어요. 상품을 포장해 두면 기사님이 가지러 가요.'
+                : '수락하면 택배사가 자동으로 예약돼요. 상품을 포장해 두면 택배사가 가지러 가요.'
+              : null,
           step: mode === 'CANCEL_RETURN' ? null : step,
           // 시안: 배송 완료 시각만 단계 아래에 보여 줌
           stepTimes: [null, null, null, order.deliveredAt ? formatShortDateTime(order.deliveredAt) : null, null],
-          location: order.currentLocation ?? NO_LOCATION,
-          trackingUrl: order.trackingUrl ?? '#',
+          // 현재 위치: BE에 없으면 칸을 숨김
+          location: order.currentLocation ?? null,
+          // 시안 08-5-5: 픽업 대기일 때 수거지까지 기사님 거리. TODO: BE 기사님 거리 API가 생기면 연결 (값이 없으면 박스 숨김)
+          distance:
+            step === 0 && booked && order.driverDistanceKm != null
+              ? {
+                  km: `${order.driverDistanceKm}km`,
+                  checkedAt: order.driverCheckedAt ? formatShortDateTime(order.driverCheckedAt).slice(6) : null,
+                }
+              : null,
+          events: buildShipmentEvents(order),
         };
 
   return {
@@ -203,6 +221,14 @@ function SalesOrderDetailPage() {
   const [modal, setModal] = useState(null); // 반품 'APPROVE' | 'REJECT'
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trackingOpen, setTrackingOpen] = useState(false); // 배송 조회 모달 (시안 03-5-4와 같은 모달)
+  const [refreshCooldown, setRefreshCooldown] = useState(0); // 새로고침은 10초에 한 번
+
+  useEffect(() => {
+    if (refreshCooldown <= 0) return undefined;
+    const timerId = setTimeout(() => setRefreshCooldown((sec) => sec - 1), 1000);
+    return () => clearTimeout(timerId);
+  }, [refreshCooldown]);
 
   const load = useCallback(
     () =>
@@ -330,7 +356,41 @@ function SalesOrderDetailPage() {
       ),
   };
 
-  return <SalesOrderDetailView order={view} accept={accept} returnRequest={returnRequest} />;
+  const refreshShipment = () => {
+    if (refreshCooldown > 0) return;
+    setRefreshCooldown(10);
+    load().catch(() => {});
+  };
+
+  const { shipment } = view;
+  const tracking = trackingOpen &&
+    shipment && {
+      sellerName: '내 판매 주문',
+      invoiceNo: shipment.trackingNo,
+      events: shipment.events.length ? shipment.events : [{ time: EMPTY, status: NO_LOCATION }],
+    };
+
+  return (
+    <>
+      <SalesOrderDetailView
+        order={view}
+        accept={accept}
+        returnRequest={returnRequest}
+        refreshCooldown={refreshCooldown}
+        onOpenTracking={() => setTrackingOpen(true)}
+        onRefreshDistance={refreshShipment}
+      />
+      {tracking && (
+        <TrackingModal
+          tracking={tracking}
+          refreshCooldown={refreshCooldown}
+          onRefresh={refreshShipment}
+          onCopy={() => navigator.clipboard?.writeText(shipment.trackingNo).catch(() => {})}
+          onClose={() => setTrackingOpen(false)}
+        />
+      )}
+    </>
+  );
 }
 
 export default SalesOrderDetailPage;

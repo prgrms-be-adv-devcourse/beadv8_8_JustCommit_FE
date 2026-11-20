@@ -1,6 +1,6 @@
 import { AUTO_CONFIRM_DAYS } from '../../../constants/order';
 import { formatDateTime, formatPrice, maskPhone, toValidDate } from '../../../utils/format';
-import { EMPTY, NO_TRACKING_NO, NO_LOCATION, orEmpty } from '../../../constants/emptyText';
+import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 
 // 주문 상세 응답(getOrder) → 화면(OrderDetailView) 데이터
 // 근거: BE docs/flows/cancel-refund.md · docs/services/market.md 「정책」
@@ -95,8 +95,23 @@ function itemsText(items, unit) {
   return items.length > 1 ? `${items[0].productName} 외 ${items.length - 1}${unit}` : items[0].productName;
 }
 
+// 현재 위치: BE에 택배 현재 위치가 없으면 null (위치 칸을 숨김)
 function getLocation(source) {
-  return `현재 위치: ${source?.currentLocation ?? NO_LOCATION}`;
+  return source?.currentLocation ? `현재 위치: ${source.currentLocation}` : null;
+}
+
+// 배송 조회 모달 (시안 03-5-4): 택배사 이벤트 조회 API가 없어 배송 단계가 바뀐 시각으로 목록을 만듦. 최신이 위
+// BE OrderDetailResponse.SellerOrderDetail · SellerOrderDetailResponse의 bookedAt · pickedUpAt · inTransitAt · deliveredAt
+export function buildShipmentEvents(source) {
+  if (!source) return [];
+  return [
+    ['deliveredAt', '배송 완료'],
+    ['inTransitAt', '배송 중'],
+    ['pickedUpAt', '수거'],
+    ['bookedAt', '택배 예약'],
+  ]
+    .filter(([key]) => source[key])
+    .map(([key, status]) => ({ time: formatShortDateTime(source[key]), status }));
 }
 
 function buildShippingSteps(order, sellerOrder, current) {
@@ -187,6 +202,14 @@ function buildItem(order, sellerOrder, item, context) {
 
   // 진행 중(ACCEPT_PENDING · NORMAL) · 취소 중(CANCEL_PROCESSING) · 환불 확인 필요(REVIEW_REQUIRED)
   const shipment = sellerOrder.shipmentStatus;
+  // 시안 04-1-6: 환불 결과를 사람이 확인해야 하는 상태(REVIEW_REQUIRED)는 자동으로 끝나지 않으므로 다른 문구
+  if (item.status === 'REVIEW_REQUIRED') {
+    return {
+      ...base,
+      note: { tone: 'pending', text: '환불을 확인하고 있어요. 확인이 끝나면 알림으로 알려 드려요' },
+      badge: { tone: 'pending', label: '환불 확인 중' },
+    };
+  }
   if (CANCELLING_ITEM_STATUSES.includes(item.status) || shipment === 'CANCEL_PENDING') {
     return {
       ...base,
@@ -266,6 +289,7 @@ function buildGroup(order, sellerOrder, index, context) {
     distance: null,
     items,
     invoiceNo: sellerOrder.trackingNo ?? NO_TRACKING_NO,
+    shipmentEvents: buildShipmentEvents(sellerOrder),
   };
 
   // 할 일(버튼) · 진행 중 안내가 있는 묶음만 펼침

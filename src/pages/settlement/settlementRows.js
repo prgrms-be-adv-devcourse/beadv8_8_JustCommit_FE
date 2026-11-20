@@ -4,15 +4,15 @@ import { SETTLEMENT_STATUS } from '../../constants/seller';
 import { formatPrice } from '../../utils/format';
 import { EMPTY } from '../../constants/emptyText';
 
-// "2026-10-15" → "2026.10.15". 지급 전(PENDING) 정산은 BE가 date를 null로 줘서 "—"
+// "2026-10-15" → "2026.10.15". 지급 전(PENDING) 정산은 BE가 date를 null로 줘서 "-"
 export function formatSettlementDate(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   return value.slice(0, 10).replaceAll('-', '.');
 }
 
-// 0이면 "—", 아니면 "−2,400원" (정산 표의 빼는 금액)
+// 0이면 "-", 아니면 "−2,400원" (정산 표의 빼는 금액)
 export function minusText(amount) {
-  return amount > 0 ? `−${formatPrice(amount)}` : '—';
+  return amount > 0 ? `−${formatPrice(amount)}` : '-';
 }
 
 // 정산 응답에는 주문번호가 없어 판매 주문 상세(GET /api/v1/orders/seller/{sellerOrderId})의 orderNo로 채움

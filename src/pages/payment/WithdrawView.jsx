@@ -20,7 +20,7 @@ function WithdrawView({
   disabled,
   errorMessage,
 }) {
-  let after = '—';
+  let after = '-';
   if (!isOver && typeof balance === 'number') after = won(balance - amount);
   else if (!isOver) after = EMPTY;
 
