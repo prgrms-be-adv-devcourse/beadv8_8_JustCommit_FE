@@ -420,7 +420,14 @@ function SalesOrderDetailView({
           </dl>
         </section>
 
-        {shipment && (
+        {shipment?.cancelledNote && (
+          <section className="bg-white border border-[#e5e7eb]">
+            <CardHead title="배송" />
+            <p className="px-6 py-5 text-sm text-[#4b5563]">{shipment.cancelledNote}</p>
+          </section>
+        )}
+
+        {shipment && !shipment.cancelledNote && (
           <section className="bg-white border border-[#e5e7eb]">
             <CardHead title="배송">
               <span className="text-sm text-[#4b5563]">
