@@ -12,20 +12,38 @@ import logo from '../../assets/logo.webp';
 // 로그인해야 볼 수 있는 페이지 (여기서 로그아웃하면 로그인 화면으로 이동)
 const AUTH_REQUIRED_PATHS = ['/mypage', '/seller/register'];
 
+// 검색 방식: 이름(상품 검색, /search?keyword=) · 문장(품종 의미 검색, /search/semantic?query=)
+const SEARCH_MODES = {
+  name: {
+    label: '이름',
+    placeholder: '식물 품종 또는 식물명 검색 (예: 몬스테라 알보, 필로덴드론)',
+    path: (text) => `/search?keyword=${encodeURIComponent(text)}`,
+    clearPath: '/',
+  },
+  sentence: {
+    label: '문장',
+    placeholder: '문장으로 찾기 (예: 햇빛 적은 방에서 키우기 쉬운 식물)',
+    path: (text) => `/search/semantic?query=${encodeURIComponent(text)}`,
+    clearPath: '/search/semantic',
+  },
+};
+
 // 검색창: 입력값은 initialKeyword로 시작 (Header가 URL 검색어를 key로 넘겨서, 검색어가 바뀌면 새로 만들어짐)
-function HeaderSearch({ initialKeyword }) {
+function HeaderSearch({ initialKeyword, initialMode }) {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState(initialKeyword);
+  const [mode, setMode] = useState(initialMode);
+  const searchMode = SEARCH_MODES[mode];
 
   const handleSearch = (event) => {
     event.preventDefault();
     const trimmed = keyword.trim();
     if (!trimmed) {
       // 검색 결과 화면에서 빈 값으로 검색하면 검색 해제
-      if (initialKeyword) navigate('/');
+      if (initialKeyword) navigate(searchMode.clearPath);
       return;
     }
-    navigate(`/search?keyword=${encodeURIComponent(trimmed)}`);
+    navigate(searchMode.path(trimmed));
   };
 
   return (
@@ -36,19 +54,37 @@ function HeaderSearch({ initialKeyword }) {
         className="relative w-full h-9 flex items-center rounded-lg transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-[#1b4332]/30 border border-gray-200 bg-white"
         style={{ backgroundColor: 'rgb(255, 255, 255)' }}
       >
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none flex items-center justify-center">
+        {/* 이름 · 문장 검색 전환 */}
+        <div className="flex h-full shrink-0 border-r border-gray-200" role="group" aria-label="검색 방식">
+          {Object.entries(SEARCH_MODES).map(([value, item]) => (
+            <button
+              key={value}
+              type="button"
+              className={`h-full px-2.5 text-[11px] font-semibold transition-colors ${
+                mode === value ? 'bg-[#0f4c3a] text-white' : 'text-gray-500 hover:text-[#0f4c3a]'
+              }`}
+              aria-pressed={mode === value}
+              title={value === 'name' ? '이름으로 상품 찾기' : '문장으로 비슷한 식물 찾기'}
+              onClick={() => setMode(value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <span className="pl-3 text-gray-500 pointer-events-none flex items-center justify-center">
           <svg className="w-4 h-4 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" x2="16.65" y1="21" y2="16.65" />
           </svg>
         </span>
         <input
-          className="w-full h-9 pl-9 pr-4 bg-transparent border-0 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-0 transition-all"
+          className="w-full h-9 pl-2 pr-4 bg-transparent border-0 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-0 transition-all"
           data-purpose="header-search-input"
-          placeholder="식물 품종 또는 식물명 검색 (예: 몬스테라 알보, 필로덴드론)"
+          placeholder={searchMode.placeholder}
           type="text"
           enterKeyHint="search"
-          aria-label="식물 검색"
+          aria-label={mode === 'name' ? '식물 검색' : '문장으로 식물 찾기'}
+          maxLength={mode === 'sentence' ? 100 : undefined}
           style={{ backgroundColor: 'transparent' }}
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
@@ -67,8 +103,14 @@ function Header() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // 검색 결과 화면일 때만 검색창에 검색어를 채움
-  const searchedKeyword = location.pathname === '/search' ? (searchParams.get('keyword') ?? '').trim() : '';
+  // 검색 결과 화면일 때만 검색창에 검색어를 채움 (문장으로 찾기 화면이면 문장 방식으로 시작)
+  const isSentenceSearch = location.pathname === '/search/semantic';
+  const searchedKeyword = isSentenceSearch
+    ? (searchParams.get('query') ?? '').trim()
+    : location.pathname === '/search'
+      ? (searchParams.get('keyword') ?? '').trim()
+      : '';
+  const searchMode = isSentenceSearch ? 'sentence' : 'name';
   const isSeller = user?.role === 'SELLER';
 
   const handleLogout = async () => {
@@ -93,7 +135,7 @@ function Header() {
         </div>
 
         {/* 가운데: 검색창 */}
-        <HeaderSearch key={searchedKeyword} initialKeyword={searchedKeyword} />
+        <HeaderSearch key={`${searchMode}:${searchedKeyword}`} initialKeyword={searchedKeyword} initialMode={searchMode} />
 
         {/* 오른쪽: 로그인 확인 중에는 비워 둠 */}
         {!isInitializing &&

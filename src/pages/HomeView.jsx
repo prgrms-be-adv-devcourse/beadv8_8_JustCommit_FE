@@ -460,6 +460,13 @@ function HomeView({
                 {!isLoading && <span className="text-sm font-normal text-gray-400">{`${totalElements}개`}</span>}
               </div>
             )}
+            {/* 같은 검색어를 문장으로 찾기 (ai 품종 의미 검색) */}
+            <Link
+              to={keyword ? `/search/semantic?query=${encodeURIComponent(keyword)}` : '/search/semantic'}
+              className="text-[13px] font-semibold text-[#0f4c3a] hover:underline underline-offset-4 shrink-0"
+            >
+              {keyword ? '문장으로 다시 찾기 ›' : '문장으로 찾기 ›'}
+            </Link>
           </div>
           <ProductList
             keyword={keyword}

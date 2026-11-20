@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import ChatbotWidget from '../ai/ChatbotWidget';
 import styles from './Layout.module.css';
 
 // 이 경로로 시작하는 페이지는 푸터를 숨김 (시안 이전 화면용)
@@ -19,6 +20,8 @@ function Layout({ designed = false, hideFooter: forceHideFooter = false }) {
         <Header />
         <Outlet />
         <Footer />
+        {/* 식물 상담 챗봇 (오른쪽 아래 버튼) */}
+        <ChatbotWidget />
       </div>
     );
   }
