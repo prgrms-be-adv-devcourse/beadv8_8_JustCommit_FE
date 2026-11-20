@@ -70,7 +70,7 @@ export function ChargeFailView({ retryTo = '/deposit/charge' }) {
   );
 }
 
-// 승인 처리 중 (시안 없음: 충전 완료 카드 자리에 안내 한 줄)
+// 승인 처리 중 (시안 07-2-5: 결과 불명 · 502/503/504면 이 화면, 「예치금 화면으로」)
 export function ChargeProcessingView() {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 py-16 flex justify-center">

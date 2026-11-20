@@ -62,20 +62,17 @@ function App() {
         {/* Layout 밖: 카카오 로그인 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
-        {/* 시안 이전 화면: 정책 페이지 (준비 중) */}
-        <Route element={<Layout />}>
+        {/* 웹 시안으로 다시 만든 화면 (헤더 · 푸터 모두 보임) */}
+        <Route element={<Layout designed />}>
+          {/* 준비 중 화면 (시안 01-2-3): 정책 페이지 · 05 리뷰(하지 않기로 함, 시안 05 보드는 나중 대비로 남겨 둠) */}
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
-          {/* 05 리뷰: 하지 않기로 함 → 준비 중 화면 (시안 05 보드는 나중 대비로 남겨 둠) */}
           <Route path="/orders/:orderId/review" element={<ComingSoonPage title="리뷰 작성" />} />
           <Route path="/orders/:orderId/review/done" element={<ComingSoonPage title="리뷰 작성" />} />
-          <Route path="/mypage/reviews" element={<ComingSoonPage title="리뷰 관리" backTo="/mypage" />} />
+          <Route path="/mypage/reviews" element={<ComingSoonPage title="리뷰 관리" />} />
           <Route path="/sellers/:sellerId/reviews" element={<ComingSoonPage title="리뷰 전체" />} />
-        </Route>
 
-        {/* 웹 시안으로 다시 만든 화면 (헤더 · 푸터 모두 보임) */}
-        <Route element={<Layout designed />}>
           {/* 02 탐색 · 상품. 검색 결과는 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<HomePage />} />

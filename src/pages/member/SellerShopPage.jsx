@@ -5,7 +5,7 @@ import { getSellerProducts, getSellerSoldOutProducts } from '../../api/productAp
 import ErrorPage from '../../components/common/ErrorPage';
 import usePageTitle from '../../hooks/usePageTitle';
 import SellerShopView from './SellerShopView';
-import { toShopSeller, toTagChips } from './sellerShopFormat';
+import { toShopSeller } from './sellerShopFormat';
 
 const SOLD_PAGE_SIZE = 6;
 
@@ -99,13 +99,7 @@ function SellerShop({ sellerId }) {
               errorMessage: soldErrorMessage,
             }
       }
-      tags={toTagChips(reviews.tagCounts)}
-      reviews={[]}
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
-      // 「리뷰 전체 보기」는 준비 중 화면으로 감
-      reviewsTo={`/sellers/${sellerId}/reviews`}
-      // 리뷰 전체에서 「‹ 상점」으로 돌아와도 처음 들어온 상품으로 갈 수 있게 넘김
-      reviewsState={fromProductId ? { fromProductId } : undefined}
     />
   );
 }

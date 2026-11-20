@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { StarIcon } from '../review/Stars';
 
-// 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 상점 · 02-3-3 리뷰 전체 · 02-3-4 리뷰 없음 공통)
-// seller = { nickname, ratingText, reviewCountText, soldCountText, noReviews(true면 별점 자리에 「아직 리뷰 없음」),
-//           intro(판매자 소개글, 비었으면 줄을 숨김) }
+// 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 · 02-3-2 · 02-3-4 공통). 리뷰는 하지 않기로 해서 별점 칸 없음
+// seller = { nickname, soldCountText, intro(판매자 소개글, 비었으면 줄을 숨김) }
 function SellerShopBar({ seller }) {
   return (
     <section
@@ -19,18 +17,6 @@ function SellerShopBar({ seller }) {
         {seller.nickname.charAt(0)}
       </span>
       <h1 className="text-lg font-bold text-[#111827]">{seller.nickname}</h1>
-      <span aria-hidden="true" className="text-[#d1d5db]">
-        ·
-      </span>
-      {seller.noReviews ? (
-        <span className="text-[#4b5563]">아직 리뷰 없음</span>
-      ) : (
-        <span className="inline-flex items-center gap-1 font-semibold text-[#111827] tabular-nums">
-          <StarIcon className="w-[18px] h-[18px] text-[#0f4c3a]" />
-          {`${seller.ratingText} `}
-          <span className="font-normal text-[#4b5563]">{`(${seller.reviewCountText})`}</span>
-        </span>
-      )}
       <span aria-hidden="true" className="text-[#d1d5db]">
         ·
       </span>

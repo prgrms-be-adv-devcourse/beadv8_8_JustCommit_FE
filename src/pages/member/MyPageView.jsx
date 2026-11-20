@@ -46,7 +46,6 @@ function MenuGroup({ title, items }) {
 function MyPageView({ profile, balanceText, counts, links }) {
   const shopping = [
     { to: '/orders', label: '주문 내역' },
-    { to: '/mypage/reviews', label: '리뷰 관리', count: counts.reviews },
     { to: '/wallet', label: '예치금 내역' },
     { to: '/notifications', label: '알림', count: counts.notifications },
   ];
