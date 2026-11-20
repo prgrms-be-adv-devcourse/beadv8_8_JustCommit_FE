@@ -5,6 +5,7 @@ export const NOTIFICATION_TYPE = {
   // 판매자
   SELLER_ORDER_PAID: { kind: '주문', icon: 'shopping_bag', role: 'seller', badge: '판매' },
   SELLER_ORDER_CANCELLED: { kind: '주문', icon: 'cancel', role: 'seller', badge: '판매' },
+  SELLER_ORDER_AUTO_REJECTED: { kind: '주문', icon: 'cancel', role: 'seller', badge: '판매' },
   SHIPMENT_BOOKED: { kind: '배송', icon: 'inventory_2', role: 'seller', badge: '판매' },
   SELLER_SHIPMENT_PICKED_UP: { kind: '배송', icon: 'package_2', role: 'seller', badge: '판매' },
   SELLER_SHIPMENT_IN_TRANSIT: { kind: '배송', icon: 'local_shipping', role: 'seller', badge: '판매' },
@@ -14,7 +15,10 @@ export const NOTIFICATION_TYPE = {
   SHIPMENT_PICKED_UP: { kind: '배송', icon: 'package_2', role: 'buyer', badge: '구매' },
   SHIPMENT_IN_TRANSIT: { kind: '배송', icon: 'local_shipping', role: 'buyer', badge: '구매' },
   SHIPMENT_DELIVERED: { kind: '배송', icon: 'home', role: 'buyer', badge: '구매' },
-  SELLER_ORDER_CANCELLED_BUYER: { kind: '주문', icon: 'cancel', role: 'buyer', badge: '구매' },
+  SELLER_ORDER_ACCEPTED: { kind: '주문', icon: 'check_circle', role: 'buyer', badge: '구매' },
+  SELLER_ORDER_PARTLY_ACCEPTED: { kind: '주문', icon: 'check_circle', role: 'buyer', badge: '구매' },
+  SELLER_ORDER_REJECTED: { kind: '주문', icon: 'cancel', role: 'buyer', badge: '구매' },
+  SELLER_ORDER_AUTO_CANCELLED: { kind: '주문', icon: 'cancel', role: 'buyer', badge: '구매' },
   // 판매자 (상품 검수 반려) TODO: 백엔드 알림 type 이름이 정해지면 맞춤 (BE docs: ProductRejected 이벤트)
   PRODUCT_REJECTED: { kind: '검수', icon: 'block', role: 'product', badge: '검수' },
   ORDER_ITEM_AUTO_CONFIRMED: { kind: '구매 확정', icon: 'verified', role: 'buyer', badge: '구매' },
