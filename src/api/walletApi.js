@@ -48,7 +48,7 @@ export function requestCashOut(amount, idempotencyKey) {
 
 // 인출 내역 → Spring Page { content: [{ cashOutId, amount, status, accountLast4, requestedAt, completedAt }], ... }
 // 기본 20건, 신청 시각 최신순. 지갑이 없으면 빈 목록
-// TODO: 은행 이름(bankCode)이 응답에 없음 · 이체 실패 상태는 #389에서 추가 예정
+// TODO: 은행 이름(bankCode)이 응답에 없음 (화면은 내 등록 계좌와 끝 4자리가 같을 때만 은행 이름을 씀) · 이체 실패 상태는 #389에서 추가 예정
 export function getCashOuts(params = {}) {
   return client.get('/api/v1/wallet/cashOuts', { params });
 }
@@ -56,7 +56,7 @@ export function getCashOuts(params = {}) {
 // ===== 아래는 백엔드 API가 아직 없는 기능 (docs/reference/external-apis.md 「추가 예정」 payment) =====
 // 경로는 담당이 확정 전이라 임시로 적어 둠. 화면은 지금 이 함수 결과 대신 자리 문구를 보여 줌
 
-// TODO: 충전 내역 (충전 취소는 하지 않기로 함)
+// TODO: 충전 내역 (충전 취소는 하지 않기로 함). 지금 충전 내역 화면은 거래 내역(refType=CHARGE)으로 그림
 // 필요한 응답: { content: [{ chargeId, amount, status, approvedAt }] }
 export function getCharges(params = {}) {
   return client.get('/api/v1/wallet/charges', { params });

@@ -4,6 +4,8 @@ import { getCashOuts } from '../../api/walletApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDateTime } from '../../utils/format';
+import { bankNameForLast4 } from '../../constants/banks';
+import useMyInfo from '../member/account/useMyInfo';
 import WithdrawHistoryView from './WithdrawHistoryView';
 
 // 불러오기 전 · 실패 때 보여 줄 자리 문구
@@ -23,14 +25,13 @@ const PAGE_SIZE = 100;
 // BE 인출 상태 → 화면 상태 (BE는 PENDING · COMPLETED만, 이체 실패는 #389에서 추가 예정)
 const STATUS_MAP = { PENDING: 'REQUESTED', COMPLETED: 'COMPLETED' };
 
-// 인출 응답 → 화면 한 줄
-// TODO: 은행 이름(bankCode)이 응답에 없어 은행 자리는 자리 문구로 둠
-function toRow(item) {
+// 인출 응답 → 화면 한 줄 (은행은 인출 응답에 없어 내 등록 계좌로 찾음, 못 찾으면 자리 문구)
+function toRow(item, myAccount) {
   return {
     cashOutId: item.cashOutId,
     requestedAt: formatDateTime(item.requestedAt),
     amount: Number(item.amount),
-    account: `{은행} ***${item.accountLast4}`,
+    account: `${bankNameForLast4(item.accountLast4, myAccount) ?? '{은행}'} ***${item.accountLast4}`,
     status: STATUS_MAP[item.status] ?? item.status,
   };
 }
@@ -39,6 +40,7 @@ function toRow(item) {
 function WithdrawHistoryPage() {
   usePageTitle('인출 내역');
   const { isLoggedIn, isInitializing } = useAuth();
+  const { myInfo } = useMyInfo();
   const [cashOuts, setCashOuts] = useState(null); // null: 불러오는 중 · 실패
 
   useEffect(() => {
@@ -46,7 +48,7 @@ function WithdrawHistoryPage() {
     let ignore = false;
     getCashOuts({ size: PAGE_SIZE })
       .then((response) => {
-        if (!ignore) setCashOuts((response.data.data?.content ?? []).map(toRow));
+        if (!ignore) setCashOuts(response.data.data?.content ?? []);
       })
       .catch(() => {});
     return () => {
@@ -57,7 +59,8 @@ function WithdrawHistoryPage() {
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/wallet/withdrawals' }} />;
 
-  return <WithdrawHistoryView cashOuts={cashOuts ?? PLACEHOLDER_CASH_OUTS} />;
+  const rows = cashOuts ? cashOuts.map((item) => toRow(item, myInfo?.account)) : PLACEHOLDER_CASH_OUTS;
+  return <WithdrawHistoryView cashOuts={rows} />;
 }
 
 export default WithdrawHistoryPage;
