@@ -5,6 +5,7 @@ import ModalButton from '../../components/common/ModalButton';
 import PageBackLink from '../../components/common/PageBackLink';
 import InfoNote from '../../components/common/InfoNote';
 import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
+import { orEmpty } from '../../constants/emptyText';
 
 export const APPEAL_MEMO_MAX = 200;
 
@@ -144,13 +145,13 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
 
           {(stage === 'MANUAL' || stage === 'DELAYED') && <InfoNote>확인 중에 상품을 고치면 검수를 처음부터 다시 해요.</InfoNote>}
           {stage === 'REJECTED' && review.appealable && (
-            <InfoNote>{`재검수는 ${review.reReviewLeft}번 남았어요. 이의 신청은 재검수 횟수를 쓰지 않아요.`}</InfoNote>
+            <InfoNote>{`재검수는 ${orEmpty(review.reReviewLeft)}번 남았어요. 이의 신청은 재검수 횟수를 쓰지 않아요.`}</InfoNote>
           )}
           {stage === 'REJECTED' && !review.appealable && (
-            <InfoNote>{`이 결과에는 이의 신청을 할 수 없어요. 재검수는 ${review.reReviewLeft}번 남았어요.`}</InfoNote>
+            <InfoNote>{`이 결과에는 이의 신청을 할 수 없어요. 재검수는 ${orEmpty(review.reReviewLeft)}번 남았어요.`}</InfoNote>
           )}
           {stage === 'REJECTED_ADMIN' && (
-            <InfoNote>{`관리자가 확인한 결과라 이의 신청은 할 수 없어요. 재검수는 ${review.reReviewLeft}번 남았어요.`}</InfoNote>
+            <InfoNote>{`관리자가 확인한 결과라 이의 신청은 할 수 없어요. 재검수는 ${orEmpty(review.reReviewLeft)}번 남았어요.`}</InfoNote>
           )}
           {stage === 'EXPIRED' && <InfoNote>이 반려는 횟수에 세지 않아요.</InfoNote>}
         </section>

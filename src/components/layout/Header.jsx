@@ -116,7 +116,7 @@ function Header() {
                     <path d="M7 15h0M2 10h20" />
                   </svg>
                   <Link to="/wallet" className="font-bold text-gray-900 text-[13px]" aria-label="예치금 거래 내역 보기">
-                    {balance === null ? '-' : `${balance.toLocaleString('ko-KR')}원`}
+                    {typeof balance !== 'number' ? '-' : `${balance.toLocaleString('ko-KR')}원`}
                   </Link>
                   <button
                     type="button"

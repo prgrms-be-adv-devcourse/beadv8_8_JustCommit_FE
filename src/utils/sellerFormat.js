@@ -1,16 +1,20 @@
-// 판매자 화면(시안 08 · 04 판매 주문 상세)에서 쓰는 날짜 표기
+// 판매자 화면(시안 08 · 04 판매 주문 상세)에서 쓰는 날짜 표기. 값이 없으면 "-"
+import { EMPTY } from '../constants/emptyText';
+import { toValidDate } from './format';
 
 const pad = (value) => String(value).padStart(2, '0');
 
 /** "10월 17일 14:20" (수락 · 반품 응답 마감) */
 export function formatMonthDayTime(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /** "10.13 09:40" (배송 단계 · 현재 위치 시각) */
 export function formatShortDateTime(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   return `${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 

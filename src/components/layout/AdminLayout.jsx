@@ -6,7 +6,7 @@ import Footer from './Footer';
 
 // 관리자 화면 틀 (시안 09: 관리자 헤더 + 화면 + 공통 푸터)
 // 헤더의 검수 대기 수 = 관리자 확인 대기 목록(GET /api/v1/admin/imageReviews?status=MANUAL)의 totalElements
-// 검수를 처리하고 목록으로 돌아오면 다시 셈. 실패하면 헤더 기본 자리 문구
+// 검수를 처리하고 목록으로 돌아오면 다시 셈. 실패하면 헤더 숫자 배지를 숨김
 function AdminLayout() {
   const { pathname } = useLocation();
   const [pendingReviewCount, setPendingReviewCount] = useState(undefined);

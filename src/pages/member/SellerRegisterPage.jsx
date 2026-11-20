@@ -7,9 +7,9 @@ import { registerSeller } from '../../api/memberApi';
 import { formatBankAccount } from '../../constants/banks';
 import useMyInfo from './account/useMyInfo';
 import SellerRegisterView from './SellerRegisterView';
+import { EMPTY } from '../../constants/emptyText';
 
-// 정산 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 자리 문구
-const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
+// 정산 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 「-」
 
 function SellerRegisterPage() {
   usePageTitle('판매자 등록');
@@ -68,7 +68,7 @@ function SellerRegisterPage() {
 
   return (
     <SellerRegisterView
-      account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
+      account={myInfo?.account ? formatBankAccount(myInfo.account) : EMPTY}
       intro={intro}
       onIntroChange={setIntro}
       agreed={agreed}

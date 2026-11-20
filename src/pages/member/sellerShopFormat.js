@@ -1,4 +1,5 @@
 import { getTagLabel } from '../../constants/review';
+import { EMPTY } from '../../constants/emptyText';
 
 // 판매자 상점 화면(상점 · 리뷰 전체) 데이터 모양 맞추기
 
@@ -15,7 +16,7 @@ export function toTagChips(tagCounts) {
 }
 
 // GET sellers/{sellerId} 응답 + 리뷰 요약 + 판매 완료 수 → SellerShopBar의 seller
-// soldCount: GET products?sellerId&status=SOLD_OUT 응답의 totalElements (BE 확정, null = 모름 → 자리 문구)
+// soldCount: GET products?sellerId&status=SOLD_OUT 응답의 totalElements (BE 확정, null = 모름 → 「-」)
 export function toShopSeller(seller, reviews, soldCount = null) {
   return {
     nickname: seller.nickname,
@@ -24,8 +25,8 @@ export function toShopSeller(seller, reviews, soldCount = null) {
     // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」 (시안 02-3-4)
     noReviews: reviews.totalCount === 0,
     // TODO: 평균 별점 · 리뷰 수 API 없음 (리뷰 API docs ⬜)
-    ratingText: reviews.averageRating == null ? '{평균 별점}' : reviews.averageRating.toFixed(1),
-    reviewCountText: reviews.totalCount == null ? '{리뷰 수}' : reviews.totalCount.toLocaleString('ko-KR'),
-    soldCountText: soldCount == null ? '{판매 완료 수}' : soldCount.toLocaleString('ko-KR'),
+    ratingText: reviews.averageRating == null ? EMPTY : reviews.averageRating.toFixed(1),
+    reviewCountText: reviews.totalCount == null ? EMPTY : reviews.totalCount.toLocaleString('ko-KR'),
+    soldCountText: soldCount == null ? EMPTY : soldCount.toLocaleString('ko-KR'),
   };
 }

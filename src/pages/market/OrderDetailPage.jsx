@@ -13,6 +13,7 @@ import {
   buildConfirmTarget,
   buildOrderDetailView,
 } from './orderDetail/orderDetailModel';
+import { EMPTY, NO_LOCATION } from '../../constants/emptyText';
 
 const REFRESH_COOLDOWN_SECONDS = 10; // 기사님 거리 · 배송 조회 새로고침은 10초에 한 번
 
@@ -189,11 +190,11 @@ function OrderDetailPage() {
     }
   };
 
-  // TODO: 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록을 받아 씀. 지금은 자리 문구
+  // TODO: 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록을 받아 씀. 지금은 「조회 전」 한 줄
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
     invoiceNo: trackingGroup.tracking?.invoiceNo ?? trackingGroup.invoiceNo,
-    events: [{ time: '{시각}', status: '{배송 단계}', location: '{위치}' }],
+    events: [{ time: EMPTY, status: NO_LOCATION, location: EMPTY }],
   };
 
   const copyInvoice = () => {

@@ -6,9 +6,10 @@ import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import { formatDateTime } from '../../utils/format';
 import ChargeHistoryView from './ChargeHistoryView';
+import { EMPTY } from '../../constants/emptyText';
 
-// 불러오기 전 · 실패 때 보여 줄 자리 문구
-const PLACEHOLDER_CHARGES = [{ chargeId: 'placeholder', approvedAt: '{충전일시}', amount: '{충전 금액}', status: 'APPROVED' }];
+// 불러오기 전 · 실패 때 보여 줄 빈 줄 (값은 「-」, 상태 배지는 숨김)
+const PLACEHOLDER_CHARGES = [{ chargeId: 'placeholder', approvedAt: EMPTY, amount: EMPTY, status: null }];
 
 // TODO: 페이지 이동 화면이 없어 한 번에 넉넉히 받음 (BE 기본 20건)
 const PAGE_SIZE = 100;

@@ -38,7 +38,7 @@ const SHIPPING_STATUSES = ['PICKUP', 'SHIPPING', 'DELIVERED']; // 목록에 송�
 
 /**
  * 송장번호: 판매 주문 목록 응답(SellerOrderResponse)에는 없고 상세(trackingNo)에만 있어
- * 배송 단계(픽업 대기 · 배송 중 · 배송 완료)인 주문만 상세를 불러 붙임. 실패한 주문은 그대로 (자리 문구)
+ * 배송 단계(픽업 대기 · 배송 중 · 배송 완료)인 주문만 상세를 불러 붙임. 실패한 주문은 그대로 (송장번호는 「예약 전」)
  */
 export async function attachTrackingNos(orders) {
   return mapWithLimit(orders, DETAIL_CONCURRENCY, async (order) => {

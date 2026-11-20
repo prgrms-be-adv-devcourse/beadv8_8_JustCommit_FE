@@ -4,8 +4,9 @@ import { won } from './chargeUtils';
 const BADGE_DONE = 'h-7 px-2.5 inline-flex items-center text-xs font-semibold bg-[#f4f8f6] border border-[#d1e7dd] text-[#0f4c3a]';
 const BADGE_GRAY = 'h-7 px-2.5 inline-flex items-center text-xs font-semibold bg-[#e5e7eb] text-[#4b5563]';
 
-// 충전 상태 → 배지 (시안에는 충전 완료만 있음, 나머지는 회색으로)
+// 충전 상태 → 배지 (시안에는 충전 완료만 있음, 나머지는 회색으로). 상태가 없으면(불러오기 전 줄) null → 배지 숨김
 function statusBadge(charge) {
+  if (!charge.status) return null;
   if (charge.status === 'PENDING') return { label: '충전 처리 중', className: BADGE_GRAY };
   if (charge.status === 'REVIEW_REQUIRED') return { label: '확인 중', className: BADGE_GRAY };
   return { label: '충전 완료', className: BADGE_DONE };
@@ -39,7 +40,7 @@ function ChargeHistoryView({ charges }) {
                     <span className="text-base font-bold tabular-nums text-[#111827]">{won(charge.amount)}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={badge.className}>{badge.label}</span>
+                    {badge && <span className={badge.className}>{badge.label}</span>}
                   </td>
                 </tr>
               );

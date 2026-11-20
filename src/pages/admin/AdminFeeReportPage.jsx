@@ -5,6 +5,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import ErrorPage from '../../components/common/ErrorPage';
 import { REPORT_PERIODS } from '../../constants/adminReport';
 import AdminFeeReportView from './AdminFeeReportView';
+import ComingSoonPage from '../ComingSoonPage';
 
 const DEFAULT_PERIOD = 'MONTH';
 
@@ -67,7 +68,7 @@ function AdminFeeReportPage() {
         if (!ignore) setResult({ period, report: response.data.data, status: null });
       })
       .catch((error) => {
-        // TODO: BE 리포트 API가 생기기 전에는 실패하므로 자리 문구 화면을 그대로 둠
+        // TODO: BE 리포트 API가 생기기 전에는 실패하므로 「준비 중」 화면을 보여 줌
         if (!ignore) setResult({ period, report: null, status: error.response?.status ?? null });
       });
     return () => {
@@ -76,6 +77,8 @@ function AdminFeeReportPage() {
   }, [period]);
 
   if (result.status === 403) return <ErrorPage type="FORBIDDEN" />;
+  // 조회가 끝났는데 리포트가 없으면(API 없음 · 실패) 빈 값 대신 준비 중 안내
+  if (result.period === period && result.report == null) return <ComingSoonPage title="수수료 · 배송비 리포트" />;
 
   const report = result.period === period ? result.report : null;
 

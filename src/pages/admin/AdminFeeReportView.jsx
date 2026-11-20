@@ -2,10 +2,12 @@ import DailyRevenueChart from '../../components/admin/DailyRevenueChart';
 import InfoNote from '../../components/common/InfoNote';
 import { formatMinus, formatNumber, formatReportDate } from '../../utils/adminFormat';
 import { FEE_RATE_PERCENT, REPORT_PERIODS } from '../../constants/adminReport';
+import { EMPTY, orEmpty } from '../../constants/emptyText';
 
-const won = (value) => `${formatNumber(value)}원`;
+const won = (value) => (value == null ? EMPTY : `${formatNumber(value)}원`);
 
-const sum = (rows, key) => rows.reduce((total, row) => total + row[key], 0);
+// 값이 없는 칸은 0으로 더함 (NaN 방지)
+const sum = (rows, key) => rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
 
 // 순수익 = 수수료 + 판매자 부담금 · 총 입금 = 순수익 + 배송비 수납 − 배송비 환불
 function withTotals(row) {
@@ -18,7 +20,7 @@ function withTotals(row) {
 }
 
 // 시안 09-3-1 이번 달 (AdminFeeReport) · 09-3-2 이번 주 (AdminFeeReportWeek)
-// period: REPORT_PERIODS의 key. report: null이면 자리 문구 (API 응답 모양은 api/adminApi.js 참고)
+// period: REPORT_PERIODS의 key. report: null이면 값 자리에 「-」 (API 응답 모양은 api/adminApi.js 참고)
 // onPeriodChange(key) · onDownloadCsv(): 버튼
 function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
   const daily = (report?.daily ?? []).map(withTotals);
@@ -34,7 +36,7 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
   };
   const rangeText = has
     ? `${formatReportDate(report.from).day} ~ ${formatReportDate(report.to).day}`
-    : '{시작일} ~ {종료일}';
+    : EMPTY;
   const ascending = [...daily].sort((a, b) => a.date.localeCompare(b.date));
   const descending = [...ascending].reverse();
 
@@ -66,7 +68,7 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
           <div className="p-7 bg-[#0f4c3a] text-white space-y-2">
             <p className="text-sm text-white/80">순수익</p>
             <p className="text-[40px] leading-tight font-black tabular-nums tracking-tight">
-              {has ? won(total.netRevenue) : '{순수익}'}
+              {has ? won(total.netRevenue) : EMPTY}
             </p>
             <p className="text-[13px] text-white/80">
               수수료 수입 + 판매자 부담금 · 플랫폼이 실제로 버는 돈
@@ -75,19 +77,19 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
           <div className="p-6 bg-white border border-[#e5e7eb] space-y-1">
             <p className="text-sm text-[#4b5563]">수수료 수입</p>
             <p className="text-[26px] font-black tabular-nums tracking-tight">
-              {has ? won(total.fee) : '{수수료 수입}'}
+              {has ? won(total.fee) : EMPTY}
             </p>
             <p className="text-[13px] text-[#6b7280]">
-              {`거래 금액 ${has ? won(report.tradeAmount) : '{거래 금액}'}의 ${FEE_RATE_PERCENT}%`}
+              {`거래 금액 ${has ? won(report.tradeAmount) : EMPTY}의 ${FEE_RATE_PERCENT}%`}
             </p>
           </div>
           <div className="p-6 bg-white border border-[#e5e7eb] space-y-1">
             <p className="text-sm text-[#4b5563]">판매자 부담금</p>
             <p className="text-[26px] font-black tabular-nums tracking-tight">
-              {has ? won(total.sellerBurden) : '{판매자 부담금}'}
+              {has ? won(total.sellerBurden) : EMPTY}
             </p>
             <p className="text-[13px] text-[#6b7280]">
-              {`반품 ${has ? report.returnCount : '{반품 수}'}건의 반품 배송비`}
+              {`반품 ${has ? orEmpty(report.returnCount) : EMPTY}건의 반품 배송비`}
             </p>
           </div>
         </section>
@@ -95,11 +97,11 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
           {[
             [
               '정산 받은 판매자',
-              has ? `${formatNumber(report.settledSellerCount)}명` : '{판매자 수}',
+              has ? `${formatNumber(report.settledSellerCount)}명` : EMPTY,
             ],
-            ['거래 건수', has ? `${formatNumber(report.tradeCount)}건` : '{거래 건수}'],
-            ['판매자당 평균 정산액', has ? won(report.averagePayout) : '{평균 정산액}'],
-            ['반품률', has ? `${report.returnRate}%` : '{반품률}'],
+            ['거래 건수', has ? `${formatNumber(report.tradeCount)}건` : EMPTY],
+            ['판매자당 평균 정산액', has ? won(report.averagePayout) : EMPTY],
+            ['반품률', has && report.returnRate != null ? `${report.returnRate}%` : EMPTY],
           ].map(([label, value]) => (
             <div key={label} className="px-5 py-4 bg-white border border-[#e5e7eb] space-y-0.5">
               <p className="text-[13px] text-[#6b7280]">{label}</p>
@@ -127,16 +129,16 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
             <div className="px-6 py-4 space-y-1">
               <dt className="text-sm text-[#4b5563]">배송비 수납</dt>
               <dd className="text-xl font-bold tabular-nums">
-                {has ? won(total.shippingCollected) : '{배송비 수납}'}
+                {has ? won(total.shippingCollected) : EMPTY}
               </dd>
               <dd className="text-[13px] text-[#6b7280]">
-                {`구매자가 낸 배송비 · 정산 ${has ? formatNumber(total.settlementCount) : '{정산 건수}'}건`}
+                {`구매자가 낸 배송비 · 정산 ${has ? formatNumber(total.settlementCount) : EMPTY}건`}
               </dd>
             </div>
             <div className="px-6 py-4 space-y-1">
               <dt className="text-sm text-[#4b5563]">배송비 환불</dt>
               <dd className="text-xl font-bold tabular-nums text-[#b91c1c]">
-                {has ? `${formatMinus(total.shippingRefunded)}원` : '{배송비 환불}'}
+                {has ? `${formatMinus(total.shippingRefunded)}원` : EMPTY}
               </dd>
               <dd className="text-[13px] text-[#6b7280]">반품으로 구매자에게 돌려준 배송비</dd>
             </div>
@@ -145,7 +147,7 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
               <dd className="text-xl font-bold tabular-nums">
                 {has
                   ? won(total.shippingCollected - total.shippingRefunded)
-                  : '{택배사에 넘길 금액}'}
+                  : EMPTY}
               </dd>
               <dd className="text-[13px] text-[#6b7280]">배송비 수납 − 배송비 환불</dd>
             </div>

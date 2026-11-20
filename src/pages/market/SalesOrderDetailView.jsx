@@ -95,7 +95,7 @@ function AcceptBanner({ accept, items }) {
     <section className="bg-[#fffbeb] border-2 border-[#fde68a] p-6 space-y-5">
       <BannerHead
         title="주문을 수락해 주세요"
-        desc={`${accept.deadlineText}까지 응답하지 않으면 자동으로 거절되고 구매자에게 환불돼요`}
+        desc={`${accept.deadlineText ? `${accept.deadlineText}까지 ` : ''}응답하지 않으면 자동으로 거절되고 구매자에게 환불돼요`}
         badge="수락 대기"
         tabular
       />
@@ -158,7 +158,7 @@ function ReturnBanner({ returnRequest }) {
     <section className="bg-[#fffbeb] border-2 border-[#fde68a] p-6 space-y-5">
       <BannerHead
         title="반품 신청이 왔어요"
-        desc={`${returnRequest.deadlineText}까지 응답하지 않으면 자동으로 승인돼요 · 신청 ${returnRequest.requestedAtText}`}
+        desc={`${returnRequest.deadlineText ? `${returnRequest.deadlineText}까지 ` : ''}응답하지 않으면 자동으로 승인돼요${returnRequest.requestedAtText ? ` · 신청 ${returnRequest.requestedAtText}` : ''}`}
         badge="반품 신청"
         tabular
       />

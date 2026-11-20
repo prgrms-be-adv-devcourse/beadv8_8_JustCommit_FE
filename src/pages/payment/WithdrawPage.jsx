@@ -9,10 +9,10 @@ import useMyInfo from '../member/account/useMyInfo';
 import { formatPrice } from '../../utils/format';
 import { parseAmount } from './chargeUtils';
 import WithdrawView from './WithdrawView';
+import { EMPTY } from '../../constants/emptyText';
 
 const MAX_DIGITS = 9;
-// 받는 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 자리 문구
-const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
+// 받는 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 「-」
 
 // 중복 신청 방지 키: crypto.randomUUID는 HTTPS · localhost에서만 있어서 없으면 getRandomValues로 만듦
 function createIdempotencyKey() {
@@ -79,7 +79,7 @@ function WithdrawPage() {
   return (
     <WithdrawView
       balance={hasBalance ? balanceNumber : null}
-      account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
+      account={myInfo?.account ? formatBankAccount(myInfo.account) : EMPTY}
       amount={amount}
       onAmountChange={(text) => setAmount(parseAmount(text, MAX_DIGITS))}
       onAll={() => hasBalance && setAmount(balanceNumber)}

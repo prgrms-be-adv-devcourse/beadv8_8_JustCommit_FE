@@ -1,3 +1,4 @@
+import { EMPTY } from './emptyText';
 // 은행 코드 (금융결제원 표준 3자리)
 // name: 화면에 보이는 은행 이름 (회원가입 은행 선택 · 등록 계좌 · 인출 계좌 모두 이 이름 그대로)
 export const BANKS = [
@@ -32,5 +33,6 @@ export function bankNameForLast4(accountLast4, myAccount) {
 // account = { bankCode, maskedAccountNo, accountHolder } (GET /api/v1/users/me 의 account)
 export function formatBankAccount(account) {
   const last4 = String(account.maskedAccountNo ?? '').slice(-4);
-  return `${getBankName(account.bankCode)} ***${last4} · 예금주 ${account.accountHolder}`;
+  // 은행 · 끝 4자리 · 예금주 중 없는 값은 「-」
+  return `${getBankName(account.bankCode) ?? EMPTY} ***${last4 || EMPTY} · 예금주 ${account.accountHolder ?? EMPTY}`;
 }

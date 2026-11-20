@@ -7,15 +7,16 @@ import { formatDateTime } from '../../utils/format';
 import { bankNameForLast4 } from '../../constants/banks';
 import useMyInfo from '../member/account/useMyInfo';
 import WithdrawHistoryView from './WithdrawHistoryView';
+import { EMPTY } from '../../constants/emptyText';
 
-// 불러오기 전 · 실패 때 보여 줄 자리 문구
+// 불러오기 전 · 실패 때 보여 줄 빈 줄 (값은 「-」, 상태 배지는 숨김)
 const PLACEHOLDER_CASH_OUTS = [
   {
     cashOutId: 'placeholder',
-    requestedAt: '{신청일시}',
-    amount: '{인출 금액}',
-    account: '{은행} ***{계좌 끝 4자리}',
-    status: 'REQUESTED',
+    requestedAt: EMPTY,
+    amount: EMPTY,
+    account: EMPTY,
+    status: null,
   },
 ];
 
@@ -25,13 +26,15 @@ const PAGE_SIZE = 100;
 // BE 인출 상태 → 화면 상태 (BE는 PENDING · COMPLETED만, 이체 실패는 #389에서 추가 예정)
 const STATUS_MAP = { PENDING: 'REQUESTED', COMPLETED: 'COMPLETED' };
 
-// 인출 응답 → 화면 한 줄 (은행은 인출 응답에 없어 내 등록 계좌로 찾음, 못 찾으면 자리 문구)
+// 인출 응답 → 화면 한 줄 (은행은 인출 응답에 없어 내 등록 계좌로 찾음, 못 찾으면 계좌 끝 4자리만)
 function toRow(item, myAccount) {
   return {
     cashOutId: item.cashOutId,
     requestedAt: formatDateTime(item.requestedAt),
     amount: Number(item.amount),
-    account: `${bankNameForLast4(item.accountLast4, myAccount) ?? '{은행}'} ***${item.accountLast4}`,
+    account: item.accountLast4
+      ? [bankNameForLast4(item.accountLast4, myAccount), `***${item.accountLast4}`].filter(Boolean).join(' ')
+      : EMPTY,
     status: STATUS_MAP[item.status] ?? item.status,
   };
 }

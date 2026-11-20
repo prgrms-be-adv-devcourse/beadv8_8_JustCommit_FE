@@ -20,10 +20,10 @@ function getMessage(error, fallback) {
   return error.response?.data?.message ?? fallback;
 }
 
-// Retry-After(남은 초) → 시간(올림). 헤더가 없으면 자리 문구
+// Retry-After(남은 초) → 시간(올림). 헤더가 없으면 null
 function toRetryHours(error) {
   const seconds = Number(error.response?.headers?.['retry-after']);
-  if (!Number.isFinite(seconds) || seconds <= 0) return '{N}';
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
   return Math.ceil(seconds / 3600);
 }
 
@@ -37,7 +37,9 @@ export function toSendError(error) {
   if (code === 'EMAIL_SEND_DAILY_LIMIT') {
     return {
       status: 'limit',
-      text: `이 이메일은 인증번호를 5번 받았어요. ${toRetryHours(error)}시간 뒤에 다시 받을 수 있어요.`,
+      text: toRetryHours(error)
+        ? `이 이메일은 인증번호를 5번 받았어요. ${toRetryHours(error)}시간 뒤에 다시 받을 수 있어요.`
+        : '이 이메일은 인증번호를 5번 받았어요. 잠시 후 다시 받을 수 있어요.',
     };
   }
   return { status: 'error', text: getMessage(error, '인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.') };

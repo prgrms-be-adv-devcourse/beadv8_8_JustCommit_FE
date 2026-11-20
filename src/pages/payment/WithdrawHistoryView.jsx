@@ -47,7 +47,8 @@ function WithdrawHistoryView({ cashOuts }) {
               </thead>
               <tbody>
                 {cashOuts.map((cashOut) => {
-                  const status = STATUS[cashOut.status] ?? { label: cashOut.status, className: BADGE_GRAY };
+                  // 상태가 없으면(불러오기 전 줄) 배지 숨김
+                  const status = cashOut.status ? (STATUS[cashOut.status] ?? { label: cashOut.status, className: BADGE_GRAY }) : null;
                   return (
                     <tr key={cashOut.cashOutId} className="border-t border-[#e5e7eb]">
                       <td className="px-6 py-4 text-[#4b5563] tabular-nums">{cashOut.requestedAt}</td>
@@ -56,7 +57,7 @@ function WithdrawHistoryView({ cashOuts }) {
                       </td>
                       <td className="px-6 py-4 text-[#111827] tabular-nums">{cashOut.account}</td>
                       <td className="px-6 py-4">
-                        <span className={status.className}>{status.label}</span>
+                        {status && <span className={status.className}>{status.label}</span>}
                       </td>
                     </tr>
                   );

@@ -1,3 +1,4 @@
+import { orEmpty } from './emptyText';
 // 판매자 화면(시안 08 · 04 판매 주문 상세)에서 쓰는 상태 · 문구
 // 판매자 화면(내 판매 목록 · 상품 수정 · 검수 결과)의 상품 상태 배지 (시안 08)
 // tone: 배지 색 클래스. 검수 중은 검수 단계(응답의 reviewStatus)에 따라 라벨 · 색이 바뀜
@@ -40,15 +41,15 @@ export const REVIEW_REJECT_HELP = {
 // 검수 중 한도(5개)는 응답에 없어 BE ProductService.REVIEW_PENDING_LIMIT 값을 그대로 씀
 export const REVIEW_PENDING_LIMIT = 5;
 
-// counts 응답 → QuotaBar 문구. counts가 없으면(불러오기 전 · 실패) 「-」
+// counts 응답 → QuotaBar 문구. counts가 없거나(불러오기 전 · 실패) 필드가 없으면 「-」
 export function toQuota(counts) {
   if (!counts) {
     return { reviewing: `- / ${REVIEW_PENDING_LIMIT}개`, registeredToday: '- / 20건', reviewedToday: '- / 30회' };
   }
   return {
-    reviewing: `${counts.reviewPending} / ${REVIEW_PENDING_LIMIT}개`,
-    registeredToday: `${counts.todayRegistered} / ${counts.dailyRegisterLimit}건`,
-    reviewedToday: `${counts.todayPhotoReviews} / ${counts.dailyPhotoReviewLimit}회`,
+    reviewing: `${orEmpty(counts.reviewPending)} / ${REVIEW_PENDING_LIMIT}개`,
+    registeredToday: `${orEmpty(counts.todayRegistered)} / ${orEmpty(counts.dailyRegisterLimit)}건`,
+    reviewedToday: `${orEmpty(counts.todayPhotoReviews)} / ${orEmpty(counts.dailyPhotoReviewLimit)}회`,
   };
 }
 

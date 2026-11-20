@@ -13,6 +13,7 @@ import {
   getReturnDeadline,
   getSellerName,
 } from './orderDetail/orderDetailModel';
+import { EMPTY } from '../../constants/emptyText';
 
 // 시안 04-3 반품 신청 (주문상품 하나씩, 배송 완료 후 72시간 안 · BE docs/flows/cancel-refund.md)
 function RefundRequestPage() {
@@ -60,8 +61,11 @@ function RefundRequestPage() {
   const product = {
     name: item.productName,
     imageUrl: item.thumbnailUrl,
-    meta: `판매자 ${getSellerName(sellerOrder, sellerIndex)} · 배송 완료 ${formatShortDateTime(sellerOrder.deliveredAt) ?? '{배송 완료 시각}'}`,
-    deadline: `${deadline ? formatMonthDayTime(deadline) : '{반품 마감 시각}'}까지 반품을 신청할 수 있어요`,
+    // 시각이 없으면 「-」, 마감 시각이 없으면 시각 없는 문장
+    meta: `판매자 ${getSellerName(sellerOrder, sellerIndex)} · 배송 완료 ${formatShortDateTime(sellerOrder.deliveredAt) ?? EMPTY}`,
+    deadline: deadline
+      ? `${formatMonthDayTime(deadline)}까지 반품을 신청할 수 있어요`
+      : '배송 완료 후 72시간 안에 반품을 신청할 수 있어요',
     price: formatPrice(Number(item.price)),
   };
 

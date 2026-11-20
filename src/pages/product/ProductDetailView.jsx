@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import ProductThumbnail from '../../components/product/ProductThumbnail';
 import { ActionErrorLine } from '../../components/common/ActionError';
-import { formatPrice } from '../../utils/format';
+import { formatPrice, toValidDate } from '../../utils/format';
+import { EMPTY } from '../../constants/emptyText';
 
 // 상품 상세 화면 (시안 02-2-1 판매 중 · 02-2-2 거래 중 · 02-2-3 판매 완료 · 02-2-4 내 상품 · 02-2-5 내 상품 숨김 · 02-2-6 내 상품 거래 중)
 // 데이터와 동작은 ProductDetailPage가 props로 넘김
@@ -68,7 +69,8 @@ function CartIcon() {
 
 // 2026-10-13T... → 2026년 10월 13일
 function formatKoreanDate(value) {
-  const date = new Date(value);
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 

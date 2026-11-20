@@ -18,6 +18,7 @@ import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/
 import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
 import SalesOrderDetailView from './SalesOrderDetailView';
+import { EMPTY, NO_TRACKING_NO, NO_LOCATION, CANCELLED_LABEL, orEmpty } from '../../constants/emptyText';
 
 const SHIPPING_FEE_NOTE = '배송비는 플랫폼 매출로 들어가 정산에 포함되지 않아요';
 const GRAY_BADGE = 'bg-[#f3f4f6] border-[#f3f4f6] text-[#6b7280]';
@@ -37,11 +38,11 @@ function toSenderOption(address) {
   };
 }
 
-// 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 자리 문구
-function deadlineText(deadline, startedAt, hours, placeholder) {
+// 마감 시각: 응답에 있으면 그 값, 없으면 시작 시각 + 기한, 그것도 없으면 null (화면 문장에서 시각을 뺌)
+function deadlineText(deadline, startedAt, hours) {
   if (deadline) return formatMonthDayTime(deadline);
   if (startedAt) return formatMonthDayTime(addHours(startedAt, hours));
-  return placeholder;
+  return null;
 }
 
 // 수락 · 거절 대상: 수락 대기(ACCEPT_PENDING) 상품만. 상태 값이 없으면(옛 응답) 모두 대상으로 봄
@@ -75,11 +76,11 @@ function acceptTexts(allItems, rejectIds) {
 // 판매 주문 상세 응답 → 화면 값
 // TODO: 구매자 닉네임(buyerNickname) · 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) ·
 //       배송 조회 주소(trackingUrl) · 반품 사유(returnReason · returnDetail) · 반품 신청 시각(returnRequestedAt) ·
-//       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 자리 문구
+//       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 기본값(emptyText)
 function toViewOrder(order) {
   const salesStatus = getSalesOrderStatus(order);
   const items = order.items ?? [];
-  const cancelLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? '{취소 주체}';
+  const cancelLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? CANCELLED_LABEL;
 
   let mode = 'NORMAL';
   if (salesStatus === 'ACCEPT_PENDING') mode = 'ACCEPT';
@@ -149,19 +150,19 @@ function toViewOrder(order) {
     mode === 'ACCEPT'
       ? null
       : {
-          trackingNo: order.trackingNo ?? '{송장번호}',
+          trackingNo: order.trackingNo ?? NO_TRACKING_NO,
           note: step === 0 && mode === 'NORMAL' ? '수락하면 택배사가 자동으로 예약돼요. 상품을 포장해 두면 택배사가 가지러 가요.' : null,
           step: mode === 'CANCEL_RETURN' ? null : step,
           // 시안: 배송 완료 시각만 단계 아래에 보여 줌
           stepTimes: [null, null, null, order.deliveredAt ? formatShortDateTime(order.deliveredAt) : null, null],
-          location: order.currentLocation ?? '{현재 위치} · {배송 상태} · {시각}',
+          location: order.currentLocation ?? NO_LOCATION,
           trackingUrl: order.trackingUrl ?? '#',
         };
 
   return {
     sellerOrderId: order.sellerOrderId,
     mode,
-    headerText: `주문 번호 ${order.orderNo} · ${formatDateTime(order.createdAt)} · 구매자 ${order.buyerNickname ?? '{구매자 닉네임}'}`,
+    headerText: `주문 번호 ${orEmpty(order.orderNo)} · ${formatDateTime(order.createdAt)} · 구매자 ${order.buyerNickname ?? EMPTY}`,
     items: viewItems,
     saleFooter:
       mode === 'CANCEL_RETURN'
@@ -170,7 +171,7 @@ function toViewOrder(order) {
     recipient: {
       name: order.recipientName,
       phone: maskPhone(order.recipientPhone),
-      address: `(${order.zipcode}) ${order.address1}${order.address2 ? `, ${order.address2}` : ''}`,
+      address: `(${orEmpty(order.zipcode)}) ${orEmpty(order.address1)}${order.address2 ? `, ${order.address2}` : ''}`,
     },
     shipment,
     settlement,
@@ -269,7 +270,7 @@ function SalesOrderDetailPage() {
   const pendingIds = (order.items ?? []).filter(isAcceptPending).map(itemIdOf);
   const { summary, submitLabel } = acceptTexts(order.items ?? [], rejectIds);
   const accept = {
-    deadlineText: deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
+    deadlineText: deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS),
     rejectIds,
     sender: { options: senderOptions, selectedId: senderId, onChange: setSenderId },
     onToggle: (id) => {
@@ -288,21 +289,16 @@ function SalesOrderDetailPage() {
 
   const { returnItem } = view;
   const returnRequest = returnItem && {
-    deadlineText: deadlineText(
-      returnItem.returnDeadlineAt,
-      returnItem.returnRequestedAt,
-      RETURN_RESPONSE_HOURS,
-      '{응답 마감}',
-    ),
-    requestedAtText: returnItem.returnRequestedAt ? formatShortDateTime(returnItem.returnRequestedAt) : '{신청 시각}',
+    deadlineText: deadlineText(returnItem.returnDeadlineAt, returnItem.returnRequestedAt, RETURN_RESPONSE_HOURS),
+    requestedAtText: returnItem.returnRequestedAt ? formatShortDateTime(returnItem.returnRequestedAt) : null,
     item: {
       name: returnItem.productName,
       shortName: returnItem.productName,
       thumbnailUrl: returnItem.thumbnailUrl,
       priceText: formatPrice(Number(returnItem.price)),
     },
-    reason: returnItem.returnReason ?? '{반품 사유}',
-    detail: returnItem.returnDetail ?? '{반품 설명}',
+    reason: returnItem.returnReason ?? EMPTY,
+    detail: returnItem.returnDetail ?? EMPTY,
     shippingFeeText: formatPrice(view.shippingFee),
     modal,
     isSubmitting,

@@ -86,11 +86,15 @@ function DistanceBox({ distance, refreshCooldown, onRefresh }) {
   return (
     <div className={`mx-5 my-3 px-4 py-3 border ${box} space-y-1`}>
       <div className="flex items-center gap-3">
-        <p className="text-sm text-[#111827]">
-          {'수거지까지 기사님 거리 약 '}
-          <b className="tabular-nums">{distance.km}</b>{' '}
-          <span className="text-[13px] text-[#6b7280] tabular-nums">{`· ${distance.checkedAt} 기준`}</span>
-        </p>
+        {distance.km && (
+          <p className="text-sm text-[#111827]">
+            {'수거지까지 기사님 거리 약 '}
+            <b className="tabular-nums">{distance.km}</b>{' '}
+            {distance.checkedAt && (
+              <span className="text-[13px] text-[#6b7280] tabular-nums">{`· ${distance.checkedAt} 기준`}</span>
+            )}
+          </p>
+        )}
         <span className="ml-auto">
           {refreshCooldown > 0 ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-[#9ca3af] tabular-nums">

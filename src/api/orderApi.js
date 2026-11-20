@@ -105,7 +105,7 @@ export function requestReturn(orderItemId, form) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return`, form);
 }
 
-// TODO: 배송 조회 API (택배 이벤트 목록, 경로 미정). 생기기 전까지 화면은 자리 문구를 씀
+// TODO: 배송 조회 API (택배 이벤트 목록, 경로 미정). 생기기 전까지 화면은 「조회 전」 한 줄을 씀
 // → { trackingNo, events: [{ occurredAt, status, location }] } (최신순)
 export function getShipmentTracking(shipmentId) {
   return client.get(`/api/v1/shipments/${shipmentId}/tracking`);
@@ -127,7 +127,7 @@ export async function mapWithLimit(list, limit, fn) {
 }
 
 // 판매자 닉네임: 주문 응답에는 sellerId만 있어서 member 공개 API(GET sellers/{sellerId} → data.nickname)로 채움
-// 같은 판매자는 한 번만 부름. 실패하면 null(화면은 자리 문구 그대로)이고 다음에 다시 부름
+// 같은 판매자는 한 번만 부름. 실패하면 null(화면은 「-」)이고 다음에 다시 부름
 const sellerNicknameCache = new Map();
 export function getSellerNickname(sellerId) {
   if (sellerId == null) return Promise.resolve(null);

@@ -4,12 +4,13 @@ import InfoNote from '../../components/common/InfoNote';
 import { REVIEW_OVERDUE_MINUTES } from '../../constants/imageReview';
 import { formatDuration } from '../../utils/adminFormat';
 import { formatPrice } from '../../utils/format';
+import { EMPTY, orEmpty } from '../../constants/emptyText';
 
 // 시안 09-2-1 사진 검수 목록 (AdminReviews)
-// data: null이면 값 자리에 자리 문구를 보여 줌 (API 응답 모양은 api/adminApi.js 참고)
+// data: null이면 값 자리에 「-」 (API 응답 모양은 api/adminApi.js 참고)
 function AdminReviewsView({ data }) {
   const reviews = data?.reviews ?? [];
-  const count = (value, placeholder) => (value == null ? placeholder : `${value}건`);
+  const count = (value) => (value == null ? EMPTY : `${value}건`);
 
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-8 pb-16">
@@ -24,19 +25,19 @@ function AdminReviewsView({ data }) {
           <div className="p-6 border bg-white border-[#e5e7eb] space-y-1">
             <p className="text-sm text-[#4b5563]">확인 대기</p>
             <p className="text-[26px] font-black text-[#111827] tabular-nums">
-              {count(data?.pendingCount, '{확인 대기 수}')}
+              {count(data?.pendingCount)}
             </p>
           </div>
           <div className="p-6 border bg-[#fffbeb] border-[#fde68a] space-y-1">
             <p className="text-sm text-[#4b5563]">12시간 넘게 기다리는 상품</p>
             <p className="text-[26px] font-black text-[#111827] tabular-nums">
-              {count(data?.overdueCount, '{12시간 넘은 수}')}
+              {count(data?.overdueCount)}
             </p>
           </div>
           <div className="p-6 border bg-white border-[#e5e7eb] space-y-1">
             <p className="text-sm text-[#4b5563]">이의 신청</p>
             <p className="text-[26px] font-black text-[#111827] tabular-nums">
-              {count(data?.appealCount, '{이의 신청 수}')}
+              {count(data?.appealCount)}
             </p>
           </div>
         </div>
@@ -69,11 +70,11 @@ function AdminReviewsView({ data }) {
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-medium text-[#111827]">{review.productName}</p>
-                    <p className="text-xs text-[#6b7280]">{`사진 ${review.photoCount}장 · ${formatPrice(review.price)}`}</p>
+                    <p className="text-xs text-[#6b7280]">{`사진 ${orEmpty(review.photoCount)}장 · ${review.price == null ? EMPTY : formatPrice(review.price)}`}</p>
                   </td>
                   <td className="px-5 py-4">
-                    <p className="text-[#111827]">{review.sellerNickname}</p>
-                    <p className="text-xs text-[#6b7280]">{`선택 품종 · ${review.selectedSpeciesName}`}</p>
+                    <p className="text-[#111827]">{orEmpty(review.sellerNickname)}</p>
+                    <p className="text-xs text-[#6b7280]">{`선택 품종 · ${orEmpty(review.selectedSpeciesName)}`}</p>
                   </td>
                   <td className="px-5 py-4">
                     <ReviewBadge type={review.reason.type}>{review.reason.text}</ReviewBadge>
