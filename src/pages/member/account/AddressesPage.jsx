@@ -81,7 +81,10 @@ function AddressesPage() {
   // 모달에서 호출: 실패하면 에러를 던져서 모달이 메시지를 보여 줌
   const handleSubmit = async (form) => {
     if (modal?.initial) {
-      await updateAddress(modal.initial.addressId, form);
+      // 수정 API는 기본 여부를 받지 않음 → 기본으로 고르면 수정 뒤 기본 배송지 변경을 따로 부름
+      const { isDefault, ...fields } = form;
+      await updateAddress(modal.initial.addressId, fields);
+      if (isDefault) await setDefaultAddress(modal.initial.addressId);
     } else {
       await addAddress(form);
     }
