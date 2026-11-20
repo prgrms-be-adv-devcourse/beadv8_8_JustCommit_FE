@@ -252,6 +252,11 @@ function SalesOrderDetailPage() {
       await load();
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? fallback);
+      // 이미 처리됨(자동 거절 · 구매자 취소 등): 지금 상태를 다시 불러와 보여 줌 (BE 409 SELLER_ORDER_NOT_ACCEPTABLE)
+      if (error.response?.data?.code === 'SELLER_ORDER_NOT_ACCEPTABLE') {
+        setRejectIds([]);
+        load().catch(() => {});
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -259,7 +264,7 @@ function SalesOrderDetailPage() {
 
   const { summary, submitLabel } = acceptTexts(order.items ?? [], rejectIds);
   const accept = {
-    deadlineText: deadlineText(order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
+    deadlineText: deadlineText(order.acceptDeadline ?? order.acceptDeadlineAt, order.paidAt, ACCEPT_HOURS, '{수락 마감}'),
     rejectIds,
     sender: { options: senderOptions, selectedId: senderId, onChange: setSenderId },
     onToggle: (id) => setRejectIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])),
