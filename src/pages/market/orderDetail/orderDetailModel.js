@@ -6,10 +6,10 @@ import { formatDateTime, formatPrice, maskPhone } from '../../../utils/format';
 //
 // 응답에 아직 없는 값은 {넣을값} 자리 문구로 둡니다. 백엔드에 추가되면 아래 TODO 필드명을 확인해 바꿔요.
 // - sellerOrders[].sellerNickname          판매자 닉네임
-// - sellerOrders[].status                  ACCEPT_PENDING (판매자 수락 전). 없으면 배송이 없을 때 수락 전으로 봄
+// - 판매자 수락 전: BE는 판매자 주문이 아니라 items[].status = ACCEPT_PENDING으로 줌 (없으면 배송이 없을 때 수락 전으로 봄)
 // - sellerOrders[].trackingNo              송장번호
 // - sellerOrders[].currentLocation         택배 현재 위치 한 줄 (예: 서울 성수 ○○대리점 · 배송 완료 · 10.13 11:02)
-// - sellerOrders[].driverDistanceKm · driverCheckedAt · cancelLocked   기사님 거리 · 조회 시각 · 2km 안 취소 잠금
+// - sellerOrders[].driverDistanceKm · driverCheckedAt   기사님 거리 · 조회 시각 (2km 안 취소 잠금은 shipmentStatus = CANCEL_LOCKED)
 // - order.paidAt                           판매자 수락 마감(결제 완료 + 24시간) 계산용
 // - items[].returnRequest                  { status: REQUESTED|APPROVED|SHIPPING|COMPLETED|REJECTED,
 //                                            requestedAt, approvedAt, shippedAt, completedAt, rejectedAt, trackingNo, currentLocation }
@@ -19,7 +19,7 @@ export const SHIPPING_STEP_LABELS = ['판매자 확인 중', '픽업 대기', '�
 export const RETURN_STEP_LABELS = ['반품 신청', '판매자 승인', '반품 배송 중', '반품 완료'];
 
 // 배송 상태 → 배송 단계 바의 지금 단계 (CANCEL_PENDING: 택배사 취소 결과를 기다리는 픽업 대기)
-const SHIPPING_STEP_INDEX = { READY: 1, BOOKED: 1, CANCEL_PENDING: 1, PICKED_UP: 2, IN_TRANSIT: 3, DELIVERED: 4 };
+const SHIPPING_STEP_INDEX = { READY: 1, BOOKED: 1, CANCEL_LOCKED: 1, CANCEL_PENDING: 1, PICKED_UP: 2, IN_TRANSIT: 3, DELIVERED: 4 };
 
 const RETURN_STEP_INDEX = { REQUESTED: 0, APPROVED: 1, SHIPPING: 2, COMPLETED: 3 };
 
@@ -62,8 +62,12 @@ export function getSellerName(sellerOrder, index) {
   return sellerOrder.sellerNickname ?? `{판매자 ${index + 1} 닉네임}`;
 }
 
+// 판매자 수락 전: 주문상품 상태 ACCEPT_PENDING (BE OrderItemStatus)
+// 구매자가 취소했고 택배 취소 · 환불 결과를 기다리는 주문상품 (BE ADR 0026)
+const CANCELLING_ITEM_STATUSES = ['CANCEL_PROCESSING', 'REVIEW_REQUIRED'];
+
 function isAcceptPending(sellerOrder) {
-  if (sellerOrder.status) return sellerOrder.status === 'ACCEPT_PENDING';
+  if (sellerOrder.items.some((item) => item.status === 'ACCEPT_PENDING')) return true;
   return !sellerOrder.shipmentStatus;
 }
 
@@ -169,9 +173,9 @@ function buildItem(order, sellerOrder, item, context) {
     return { ...base, dimmed: true, badge: { tone: 'closed', label: '취소됨' } };
   }
 
-  // 진행 중(NORMAL)
+  // 진행 중(ACCEPT_PENDING · NORMAL) · 취소 중(CANCEL_PROCESSING) · 환불 확인 필요(REVIEW_REQUIRED)
   const shipment = sellerOrder.shipmentStatus;
-  if (shipment === 'CANCEL_PENDING') {
+  if (CANCELLING_ITEM_STATUSES.includes(item.status) || shipment === 'CANCEL_PENDING') {
     return {
       ...base,
       note: {
@@ -184,7 +188,8 @@ function buildItem(order, sellerOrder, item, context) {
     };
   }
 
-  const beforePickup = isAcceptPending(sellerOrder) || shipment === 'READY' || shipment === 'BOOKED';
+  const beforePickup =
+    isAcceptPending(sellerOrder) || shipment === 'READY' || shipment === 'BOOKED' || shipment === 'CANCEL_LOCKED';
   if (order.status === 'PAID' && beforePickup) {
     if (context.locked) {
       return {
@@ -215,7 +220,7 @@ function buildItem(order, sellerOrder, item, context) {
 
 function buildGroup(order, sellerOrder, index, context) {
   const sellerName = getSellerName(sellerOrder, index);
-  const locked = Boolean(sellerOrder.cancelLocked) || context.lockedSellerOrderIds.has(sellerOrder.id);
+  const locked = sellerOrder.shipmentStatus === 'CANCEL_LOCKED' || context.lockedSellerOrderIds.has(sellerOrder.id);
   const items = sellerOrder.items.map((item) =>
     buildItem(order, sellerOrder, item, { ...context, locked }),
   );
@@ -301,7 +306,7 @@ function buildGroup(order, sellerOrder, index, context) {
   group.tracking = { invoiceLabel: '송장번호', invoiceNo: group.invoiceNo, location: getLocation(sellerOrder) };
   if (status === 'CANCEL_PENDING') {
     group.tracking.tag = { tone: 'default', label: '취소 처리 중' };
-  } else if (status === 'BOOKED' && !allConfirmed) {
+  } else if ((status === 'BOOKED' || status === 'CANCEL_LOCKED') && !allConfirmed) {
     group.tracking.tag = locked
       ? { tone: 'danger', label: '기사님 근접 · 취소 불가' }
       : { tone: 'default', label: '기사 배정 · 수거 예정' };

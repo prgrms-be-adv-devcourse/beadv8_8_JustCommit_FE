@@ -52,12 +52,21 @@ export function getSellerOrder(sellerOrderId) {
   return client.get(`/api/v1/orders/seller/${sellerOrderId}`);
 }
 
-// 주문 상품 하나 취소 (택배 수거 전까지만 가능, 예치금 환불)
+// 주문 상품 하나 취소 (택배 수거 전까지만 가능, 예치금 환불) → 200 본문 없음
+// 바로 환불되거나, 택배 취소 결과를 기다려야 하면 주문상품이 CANCEL_PROCESSING이 됨 (BE ADR 0026)
+// 실패 409: SHIPMENT_NOT_CANCELABLE(기사님 2km 안) · ORDER_ITEM_NOT_CANCELABLE · ORDER_NOT_PAID
 export function cancelOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/cancel`);
 }
 
-// 주문 상품 구매 확정 (배송 완료 후, 판매자 정산이 시작됨)
+// 구매자 주문 전체 취소 (모든 판매자 주문의 남은 상품) → 200 본문 없음. 실패 코드는 상품 하나 취소와 같음
+// TODO: 주문 전체 취소 버튼이 시안에 없음 (지금 화면은 상품 하나씩 취소)
+export function cancelOrder(orderId) {
+  return client.post(`/api/v1/orders/${orderId}/cancel`);
+}
+
+// 주문 상품 구매 확정 (배송 완료 후, 판매자 정산이 시작됨) → 200 본문 없음
+// 실패 409: SHIPMENT_NOT_DELIVERED · ORDER_ITEM_NOT_CONFIRMABLE
 export function confirmOrderItem(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/confirm`);
 }
