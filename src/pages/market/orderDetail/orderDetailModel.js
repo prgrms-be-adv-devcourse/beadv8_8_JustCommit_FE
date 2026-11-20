@@ -67,6 +67,16 @@ export function getSellerName(sellerOrder) {
 // 구매자가 취소했고 택배 취소 · 환불 결과를 기다리는 주문상품 (BE ADR 0026)
 const CANCELLING_ITEM_STATUSES = ['CANCEL_PROCESSING', 'REVIEW_REQUIRED'];
 
+// 취소가 아직 끝나지 않은 주문: 주문상품 CANCEL_PROCESSING 또는 배송 CANCEL_PENDING (BE ADR 0026)
+// 끝나면 주문상품은 CANCELLED · REVIEW_REQUIRED(사람이 확인) · NORMAL(택배 취소 실패)로 바뀜
+export function isCancelInProgress(order) {
+  return (order?.sellerOrders ?? []).some(
+    (sellerOrder) =>
+      sellerOrder.shipmentStatus === 'CANCEL_PENDING' ||
+      sellerOrder.items.some((item) => item.status === 'CANCEL_PROCESSING'),
+  );
+}
+
 function isAcceptPending(sellerOrder) {
   if (sellerOrder.items.some((item) => item.status === 'ACCEPT_PENDING')) return true;
   return !sellerOrder.shipmentStatus;
