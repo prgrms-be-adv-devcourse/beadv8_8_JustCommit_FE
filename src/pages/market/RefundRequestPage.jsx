@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { getOrder, requestReturn } from '../../api/orderApi';
+import { getOrder, requestReturn, withSellerNicknames } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -32,9 +32,10 @@ function RefundRequestPage() {
     if (!isLoggedIn) return undefined;
     let ignore = false;
     getOrder(orderId)
-      .then((response) => {
+      .then((response) => withSellerNicknames(response.data.data ?? response.data))
+      .then((order) => {
         if (ignore) return;
-        const result = findOrderItem(response.data.data ?? response.data, orderItemId);
+        const result = findOrderItem(order, orderItemId);
         setFound(result);
         setLoadState(result ? 'done' : 'notFound');
       })

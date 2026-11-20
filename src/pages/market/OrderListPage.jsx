@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { getOrders } from '../../api/orderApi';
+import { getOrder, getOrders, mapWithLimit, withSellerNicknames } from '../../api/orderApi';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatDate, formatPrice, formatTime } from '../../utils/format';
@@ -36,6 +36,54 @@ async function fetchAllOrders() {
   return all;
 }
 
+const DETAIL_CONCURRENCY = 4; // 주문 상세를 동시에 부르는 수
+
+const LIVE_ITEM = (item) => !['CANCELLED', 'REFUNDED'].includes(item.status);
+
+// 주문 상세의 판매자 주문 → 목록 카드 한 줄에 쓰는 값 (BE OrderDetailResponse.SellerOrderDetail)
+// 판매자 주문 상태는 응답에 없어 주문상품 상태로 정함: 모두 취소 → CANCELLED, 수락 대기 상품 → ACCEPT_PENDING,
+// 남은 상품이 모두 구매 확정 → CONFIRMED (주문 상세 화면 orderDetailModel과 같은 기준)
+// 취소 사유(판매자 거절 · 자동 취소 · 구매자 취소) · 결제 완료 시각은 응답에 없어 넣지 않음
+function toListSellerOrder(sellerOrder) {
+  const items = sellerOrder.items ?? [];
+  const liveItems = items.filter(LIVE_ITEM);
+  let status = null;
+  if (items.length > 0 && items.every((item) => item.status === 'CANCELLED')) status = 'CANCELLED';
+  else if (items.some((item) => item.status === 'ACCEPT_PENDING')) status = 'ACCEPT_PENDING';
+  else if (liveItems.length > 0 && liveItems.every((item) => item.status === 'CONFIRMED')) status = 'CONFIRMED';
+  const cancelledAmount = items
+    .filter((item) => item.status === 'CANCELLED')
+    .reduce((sum, item) => sum + Number(item.price), 0);
+  return {
+    sellerOrderId: sellerOrder.id,
+    sellerName: sellerOrder.sellerNickname,
+    representativeItemName: items[0]?.productName,
+    itemCount: items.length,
+    thumbnailUrl: items[0]?.thumbnailUrl,
+    status,
+    shipmentStatus: sellerOrder.shipmentStatus,
+    deliveredAt: sellerOrder.deliveredAt,
+    confirmedAt: sellerOrder.confirmedAt,
+    // 환불 금액: 취소된 상품 금액 (+ 모두 취소면 배송비, BE cancel-refund.md)
+    refundAmount: cancelledAmount + (status === 'CANCELLED' ? Number(sellerOrder.shippingFee ?? 0) : 0),
+  };
+}
+
+// 주문 목록 응답에는 판매자 주문이 없어 주문 상세(GET orders/{id}) + 판매자 닉네임으로 채움
+// 상세를 못 불러온 주문은 목록 응답 그대로 (자리 문구)
+async function attachSellerOrders(orders) {
+  return mapWithLimit(orders, DETAIL_CONCURRENCY, async (order) => {
+    try {
+      const response = await getOrder(order.orderId);
+      const detail = await withSellerNicknames(response.data.data ?? response.data);
+      const sellerOrders = (detail.sellerOrders ?? []).map(toListSellerOrder);
+      return { ...order, sellerCount: sellerOrders.length || null, sellerOrders };
+    } catch {
+      return order;
+    }
+  });
+}
+
 // "10월 15일 14:20"
 function formatMonthDayTime(ms) {
   const date = new Date(ms);
@@ -64,9 +112,8 @@ const STAGES = {
 };
 
 // 판매자 주문 → 단계
-// TODO: 주문 목록 응답에 판매자 주문(sellerOrders[])이 아직 없음. 생기면 아래 필드 이름을 확인
-//  { sellerName, representativeItemName, itemCount, thumbnailUrl, status, cancelReason(SELLER · AUTO · BUYER),
-//    shipmentStatus, paidAt, deliveredAt, confirmedAt, cancelledItemCount, refundAmount }
+// 판매자 주문(sellerOrders[])은 주문 목록 응답에 없어 주문 상세로 채움(attachSellerOrders → toListSellerOrder)
+// TODO: 응답에 없는 값 cancelReason(SELLER · AUTO · BUYER) · paidAt · cancelledItemCount(판매자 거절 건수)는 BE에 생기면 넣음
 function getStage(sellerOrder) {
   if (sellerOrder.status === 'CANCELLED') {
     if (sellerOrder.cancelReason === 'AUTO') return 'AUTO_CANCELLED';
@@ -78,6 +125,8 @@ function getStage(sellerOrder) {
   switch (sellerOrder.shipmentStatus) {
     case 'READY':
     case 'BOOKED':
+    case 'CANCEL_LOCKED': // 기사님 근접(취소 불가) · 취소 결과 대기도 픽업 전 단계 (orderDetailModel SHIPPING_STEP_INDEX)
+    case 'CANCEL_PENDING':
       return 'PICKUP';
     case 'PICKED_UP':
     case 'IN_TRANSIT':
@@ -233,6 +282,10 @@ function OrderListPage() {
         if (ignore) return;
         setOrders(list);
         setLoadState('done');
+        // 판매자 이름 · 배송 단계는 주문 상세로 채운 뒤 다시 그림 (실패해도 목록은 그대로)
+        attachSellerOrders(list).then((enriched) => {
+          if (!ignore) setOrders(enriched);
+        });
       })
       .catch(() => {
         if (!ignore) setLoadState('error');

@@ -158,7 +158,7 @@ export function verifyWithdrawalEmailCode(code) {
 
 // 판매자 공개 정보 (로그인 없이 조회, 숫자 id만) → { sellerId, nickname, intro, createdAt }
 // BE docs/reference/external-apis.md member `GET sellers/{sellerId}`
-// TODO: 판매 완료 수는 응답에 없음 (판매자 상점 B안에 필요) → 필드 추가 요청
+// 판매 완료 수는 이 응답에 없고 GET products?sellerId&status=SOLD_OUT의 totalElements로 셈 (getSellerSoldOutProducts)
 export function getSeller(sellerId) {
   return client.get(`/api/v1/sellers/${sellerId}`);
 }
