@@ -7,7 +7,7 @@ import logo from '../../assets/logo.webp';
 // 시안: 캔버스 「replant 웹 시안」 09 관리자 헤더 (AdminHeader)
 // 알림 종 · 안 읽은 수 배지는 일반 Header와 같은 알림 컨텍스트 · 경로(/notifications)를 씀
 
-// pendingReviewCount: 사진 검수 대기 수. 관리자 API가 아직 없어 기본값 자리 문구를 보여 줌
+// pendingReviewCount: 사진 검수 대기 수 (AdminLayout이 관리자 확인 대기 목록의 totalElements로 줌). 불러오기 전 · 실패면 기본값 자리 문구
 function AdminHeader({ pendingReviewCount = '{검수 대기 수}' }) {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotification();

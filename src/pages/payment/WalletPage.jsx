@@ -6,13 +6,15 @@ import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import { formatDate } from '../../utils/format';
 import WalletView from './WalletView';
+import { describeTransaction, loadDescriptionRefs } from './walletDescriptions';
 
 // TODO: 백엔드가 거래 종류를 여러 개 받게 되면 탭별로 서버에서 조회하고 페이지 단위로 불러오기
 // 지금은 최근 거래를 한 번에 받아서 탭별로 화면에서 거름
 const FETCH_SIZE = 100;
 
 // 거래 종류(백엔드 RefType)별 배지 · 설명
-// TODO: 거래 응답에 설명(상품명 · 사유 · 계좌)이 생기면 description으로 교체. 지금은 자리 문구
+// description: 참조 값을 불러오기 전 · 찾지 못했을 때 쓰는 기본 문구 (상품명 등은 walletDescriptions.js가 refId로 채움)
+// TODO: 거래 응답에 설명이 생기면 description으로 교체
 const REF_TYPE = {
   CHARGE: { badge: '충전', description: '토스페이먼츠 충전' },
   PAYMENT: { badge: '결제', description: '{대표 상품명} 외 {N}개' },
@@ -40,13 +42,13 @@ const TABS = [
 ];
 
 // 거래 응답 → 화면 한 줄
-function toRow(item) {
+function toRow(item, refs) {
   const type = REF_TYPE[item.refType] ?? { badge: item.refType, description: '' };
   return {
     id: item.transactionId,
     date: formatDate(item.createdAt),
     badge: type.badge,
-    description: item.description ?? type.description,
+    description: item.description ?? describeTransaction(item, refs) ?? type.description,
     amount: Number(item.amount),
     isIn: item.status === 'IN',
   };
@@ -58,6 +60,7 @@ function WalletPage() {
   const { balance, refreshWallet } = useWallet();
 
   const [transactions, setTransactions] = useState([]);
+  const [refs, setRefs] = useState(null); // 거래 설명용 참조 값 (상품명 · 판매자 · 계좌)
   const [loadState, setLoadState] = useState('loading'); // loading | done | error
   const [tab, setTab] = useState('ALL');
 
@@ -70,8 +73,15 @@ function WalletPage() {
     getWalletTransactions({ size: FETCH_SIZE })
       .then((response) => {
         if (ignore) return;
-        setTransactions(response.data.data.content ?? []);
+        const content = response.data.data.content ?? [];
+        setTransactions(content);
         setLoadState('done');
+        // 설명은 목록을 먼저 보여 준 뒤 채움 (실패한 조회는 기본 문구로 남음)
+        loadDescriptionRefs(content)
+          .then((loaded) => {
+            if (!ignore) setRefs(loaded);
+          })
+          .catch(() => {});
       })
       .catch((error) => {
         if (ignore) return;
@@ -103,7 +113,7 @@ function WalletPage() {
       tabs={TABS}
       tab={tab}
       onTabChange={setTab}
-      rows={filtered.map(toRow)}
+      rows={filtered.map((item) => toRow(item, refs))}
       listState={loadState}
     />
   );

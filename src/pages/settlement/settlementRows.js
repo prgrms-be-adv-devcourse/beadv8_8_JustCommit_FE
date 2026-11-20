@@ -1,3 +1,4 @@
+import { getSellerOrder } from '../../api/orderApi';
 import { getMySettlements } from '../../api/settlementApi';
 import { SETTLEMENT_STATUS } from '../../constants/seller';
 import { formatPrice } from '../../utils/format';
@@ -13,15 +14,34 @@ export function minusText(amount) {
   return amount > 0 ? `−${formatPrice(amount)}` : '—';
 }
 
+// 정산 응답에는 주문번호가 없어 판매 주문 상세(GET /api/v1/orders/seller/{sellerOrderId})의 orderNo로 채움
+// 같은 판매 주문은 한 번만 부르고, 실패하면 주문번호 자리 문구로 남음
+async function loadOrderNos(settlements) {
+  const ids = [...new Set(settlements.map((item) => item.sellerOrderId).filter((id) => id != null))];
+  const results = await Promise.allSettled(ids.map((id) => getSellerOrder(id)));
+  const orderNos = new Map();
+  results.forEach((result, index) => {
+    if (result.status !== 'fulfilled') return;
+    const detail = result.value.data.data ?? result.value.data;
+    if (detail?.orderNo) orderNos.set(ids[index], detail.orderNo);
+  });
+  return orderNos;
+}
+
 export async function fetchSettlements() {
   const response = await getMySettlements();
-  return response.data.data ?? [];
+  const settlements = response.data.data ?? [];
+  const orderNos = await loadOrderNos(settlements);
+  return settlements.map((item) =>
+    item.orderNo || !orderNos.has(item.sellerOrderId) ? item : { ...item, orderNo: orderNos.get(item.sellerOrderId) },
+  );
 }
 
 // 정산 응답 → 표 한 줄
 // status는 BE가 COMPLETED · PENDING만 줌 (FAILED는 재시도 중이라 PENDING으로 옴)
-// TODO: 주문번호(orderNo) · 판매자 부담금(sellerBurden) ·
-//       상품 수(itemCount) · 반품 수(returnedCount) · 취소 수(cancelledCount)가 응답에 생기면 그대로 쓰임
+// 주문번호(orderNo)는 fetchSettlements가 판매 주문 상세로 채움
+// TODO: 판매자 부담금(sellerBurden) · 상품 수(itemCount) · 반품 수(returnedCount) · 취소 수(cancelledCount)가
+//       응답에 생기면 그대로 쓰임
 export function toSettlementRow(item) {
   const itemCount = item.itemCount ?? 1;
   const name = itemCount > 1 ? `${item.productName} 외 ${itemCount - 1}개` : item.productName;
