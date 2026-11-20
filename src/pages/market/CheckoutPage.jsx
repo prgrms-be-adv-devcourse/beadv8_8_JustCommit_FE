@@ -536,6 +536,8 @@ function CheckoutPage() {
             .map((item) => ({ cartItemId: item.cartItemId, expectedPrice: item.nowPrice }));
           let nextItems = latest;
           if (toUpdate.length > 0) {
+            // 저장이 끝나기 전에 결제를 누르면 옛 가격으로 주문돼 다시 PRICE_CHANGED가 나므로 그동안 결제 버튼을 막음
+            setIsSubmitting(true);
             try {
               const response = await updateCartItemPrices(toUpdate);
               const cart = response.data.data ?? response.data;
@@ -547,6 +549,8 @@ function CheckoutPage() {
               setErrorMessage(error.response?.data?.message ?? ACTION_ERROR.DEFAULT);
               refreshCart().catch(() => {});
               return;
+            } finally {
+              setIsSubmitting(false);
             }
           }
           setPrevPrices((prev) => ({
