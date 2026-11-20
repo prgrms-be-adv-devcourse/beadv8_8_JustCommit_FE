@@ -8,7 +8,6 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/product/ProductDetailPage';
 import SellerShopPage from './pages/member/SellerShopPage';
-import SellerReviewsPage from './pages/member/SellerReviewsPage';
 // 03 구매 · 주문
 import CartPage from './pages/market/CartPage';
 import CheckoutPage from './pages/market/CheckoutPage';
@@ -25,7 +24,7 @@ import LoginPage from './pages/member/LoginPage';
 import ResetPasswordPage from './pages/member/find/ResetPasswordPage';
 import SignupPage from './pages/member/SignupPage';
 import SocialSignupPage from './pages/member/SocialSignupPage';
-// 06 마이페이지 · 회원 정보 수정 · 알림, 05 리뷰
+// 06 마이페이지 · 회원 정보 수정 · 알림
 import MyPage from './pages/member/MyPage';
 import NicknamePage from './pages/member/account/NicknamePage';
 import IntroPage from './pages/member/account/IntroPage';
@@ -34,9 +33,6 @@ import BankAccountPage from './pages/member/account/BankAccountPage';
 import AddressesPage from './pages/member/account/AddressesPage';
 import AccountWithdrawPage from './pages/member/account/WithdrawPage';
 import NotificationPage from './pages/notification/NotificationPage';
-import ReviewsPage from './pages/review/ReviewsPage';
-import ReviewWritePage from './pages/review/ReviewWritePage';
-import ReviewDonePage from './pages/review/ReviewDonePage';
 // 07 예치금
 import WalletPage from './pages/payment/WalletPage';
 import ChargePage from './pages/payment/ChargePage';
@@ -71,6 +67,11 @@ function App() {
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
+          {/* 05 리뷰: 하지 않기로 함 → 준비 중 화면 (시안 05 보드는 나중 대비로 남겨 둠) */}
+          <Route path="/orders/:orderId/review" element={<ComingSoonPage title="리뷰 작성" />} />
+          <Route path="/orders/:orderId/review/done" element={<ComingSoonPage title="리뷰 작성" />} />
+          <Route path="/mypage/reviews" element={<ComingSoonPage title="리뷰 관리" backTo="/mypage" />} />
+          <Route path="/sellers/:sellerId/reviews" element={<ComingSoonPage title="리뷰 전체" />} />
         </Route>
 
         {/* 웹 시안으로 다시 만든 화면 (헤더 · 푸터 모두 보임) */}
@@ -80,7 +81,6 @@ function App() {
           <Route path="/search" element={<HomePage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/sellers/:sellerId" element={<SellerShopPage />} />
-          <Route path="/sellers/:sellerId/reviews" element={<SellerReviewsPage />} />
 
           {/* 03 구매 · 주문 */}
           <Route path="/cart" element={<CartPage />} />
@@ -90,7 +90,7 @@ function App() {
           <Route path="/orders/:orderId/complete" element={<OrderCompletePage />} />
           <Route path="/orders/:orderId/expired" element={<OrderExpiredPage />} />
 
-          {/* 03-5 주문 상세 · 04 취소 · 반품 · 05-1 리뷰 영역 */}
+          {/* 03-5 주문 상세 · 04 취소 · 반품 */}
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/orders/:orderId/items/:orderItemId/return" element={<RefundRequestPage />} />
 
@@ -100,7 +100,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/social" element={<SocialSignupPage />} />
 
-          {/* 06 마이페이지 · 회원 정보 수정 · 알림, 05 리뷰 작성 · 관리 */}
+          {/* 06 마이페이지 · 회원 정보 수정 · 알림 */}
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/account" element={<NicknamePage />} />
           <Route path="/mypage/account/intro" element={<IntroPage />} />
@@ -108,10 +108,7 @@ function App() {
           <Route path="/mypage/account/bank" element={<BankAccountPage />} />
           <Route path="/mypage/addresses" element={<AddressesPage />} />
           <Route path="/mypage/account/withdraw" element={<AccountWithdrawPage />} />
-          <Route path="/mypage/reviews" element={<ReviewsPage />} />
           <Route path="/notifications" element={<NotificationPage />} />
-          <Route path="/orders/:orderId/review" element={<ReviewWritePage />} />
-          <Route path="/orders/:orderId/review/done" element={<ReviewDonePage />} />
 
           {/* 07 예치금 */}
           <Route path="/wallet" element={<WalletPage />} />

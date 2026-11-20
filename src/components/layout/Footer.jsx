@@ -4,7 +4,7 @@ import TermsModal from '../common/TermsModal';
 import logo from '../../assets/logo.png';
 
 // 시안: 캔버스 「replant 웹 시안」 01-2-2 공통 푸터
-// 이용약관은 모달(01-1-4 「13. 이용약관 보기」, Large 680px)로 열고, 약관 본문은 아직 준비 중
+// 이용약관은 모달(01-1-4 「11. 이용약관 보기」, Large 680px)로 열고, 약관 본문은 아직 준비 중
 function Footer() {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
 

@@ -4,17 +4,12 @@ import useAuth from '../hooks/useAuth';
 import { WalletContext } from './WalletContext';
 
 // 예치금 잔액 공유 (헤더·충전 화면 등에서 같은 값 사용)
-// 예치금 = 충전금(chargeBalance) + 인출 가능 금액(withdrawableBalance, 판매 정산금)
-// TODO: 백엔드 GET /wallet 응답에 chargeBalance · withdrawableBalance가 생기면 그대로 쓰임 (지금은 balance만 옴 → null)
+// 예치금은 잔액 하나 (충전금 · 정산금을 나누지 않음, 인출 한도 = 잔액 전체)
 function toWallet(data) {
-  return {
-    balance: data.balance,
-    chargeBalance: data.chargeBalance ?? null,
-    withdrawableBalance: data.withdrawableBalance ?? null,
-  };
+  return { balance: data.balance };
 }
 
-const EMPTY_WALLET = { balance: null, chargeBalance: null, withdrawableBalance: null };
+const EMPTY_WALLET = { balance: null };
 
 export function WalletProvider({ children }) {
   const { isLoggedIn } = useAuth();
@@ -38,7 +33,7 @@ export function WalletProvider({ children }) {
     };
   }, [isLoggedIn]);
 
-  // 충전·결제·취소 후, 정산 알림을 받았을 때 호출해서 잔액 갱신 (갱신한 값을 돌려줌)
+  // 충전·결제·인출 후, 정산 알림을 받았을 때 호출해서 잔액 갱신 (갱신한 값을 돌려줌)
   const refreshWallet = useCallback(async () => {
     const response = await getWalletBalance();
     const next = toWallet(response.data.data);

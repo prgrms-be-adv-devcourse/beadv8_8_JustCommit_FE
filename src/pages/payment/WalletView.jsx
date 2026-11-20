@@ -4,7 +4,7 @@ import { won } from './chargeUtils';
 // 시안 07-1-1 예치금 · 07-1-2 예치금 빈 상태
 // rows: [{ id, date, badge, description, amount, isIn }] (이미 탭으로 거른 목록)
 // listState: loading | error | done
-function WalletView({ balance, chargeBalance, withdrawableBalance, tabs, tab, onTabChange, rows, listState }) {
+function WalletView({ balance, tabs, tab, onTabChange, rows, listState }) {
   const renderList = () => {
     if (listState !== 'done' || rows.length === 0) {
       let title = '아직 거래 내역이 없어요';
@@ -69,32 +69,16 @@ function WalletView({ balance, chargeBalance, withdrawableBalance, tabs, tab, on
               </Link>
             </div>
           </div>
-          <dl className="grid grid-cols-2 border-t border-[#e5e7eb] divide-x divide-[#e5e7eb]">
-            <div className="px-8 py-5 space-y-1">
-              <dt className="text-sm font-semibold text-[#111827]">
-                충전금 <span className="font-normal text-[#6b7280]">· 토스로 충전한 돈</span>
-              </dt>
-              <dd className="text-xl font-bold text-[#111827] tabular-nums">{won(chargeBalance)}</dd>
-              <dd className="text-[13px] text-[#6b7280]">
-                결제에 쓰고, 남은 금액은 충전 취소로 돌려받아요 ·{' '}
-                <Link to="/wallet/charges" className="font-semibold text-[#0f4c3a] underline">
-                  충전 내역
-                </Link>
-              </dd>
-            </div>
-            <div className="px-8 py-5 space-y-1">
-              <dt className="text-sm font-semibold text-[#111827]">
-                인출 가능 금액 <span className="font-normal text-[#6b7280]">· 판매 정산금</span>
-              </dt>
-              <dd className="text-xl font-bold text-[#111827] tabular-nums">{won(withdrawableBalance)}</dd>
-              <dd className="text-[13px] text-[#6b7280]">
-                결제에 쓰거나 계좌로 인출할 수 있어요 ·{' '}
-                <Link to="/wallet/withdrawals" className="font-semibold text-[#0f4c3a] underline">
-                  인출 내역
-                </Link>
-              </dd>
-            </div>
-          </dl>
+          <p className="px-8 py-5 border-t border-[#e5e7eb] text-[13px] text-[#6b7280]">
+            결제에 쓰거나 계좌로 인출할 수 있어요 ·{' '}
+            <Link to="/wallet/charges" className="font-semibold text-[#0f4c3a] underline">
+              충전 내역
+            </Link>{' '}
+            ·{' '}
+            <Link to="/wallet/withdrawals" className="font-semibold text-[#0f4c3a] underline">
+              인출 내역
+            </Link>
+          </p>
         </section>
         <h2 className="pt-2 text-lg font-bold text-[#111827]">거래 내역</h2>
         <div role="tablist" aria-label="거래 종류" className="flex border-b border-[#e5e7eb]">

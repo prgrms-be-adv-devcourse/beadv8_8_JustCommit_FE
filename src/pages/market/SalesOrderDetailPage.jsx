@@ -125,7 +125,7 @@ function toViewOrder(order) {
     let note = `구매 확정 후 정산돼요 · ${SHIPPING_FEE_NOTE}`;
     if (mode === 'ACCEPT') note = `수락하면 배송이 시작되고, 구매 확정 후 정산돼요 · ${SHIPPING_FEE_NOTE}`;
     if (mode === 'RETURN_REQUESTED') note = `반품 처리가 끝난 뒤 정산돼요 · ${SHIPPING_FEE_NOTE}`;
-    if (pending) note = `곧 예치금의 인출 가능 금액으로 들어가요 · ${SHIPPING_FEE_NOTE}`;
+    if (pending) note = `곧 예치금으로 들어가요 · ${SHIPPING_FEE_NOTE}`;
     if (settled) note = `${order.settledAt ? `${formatDate(order.settledAt)}에 ` : ''}정산됐어요 · ${SHIPPING_FEE_NOTE}`;
     let badgeText = '정산 전';
     if (pending) badgeText = '지급 대기';

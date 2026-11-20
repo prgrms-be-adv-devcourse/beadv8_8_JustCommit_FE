@@ -14,7 +14,6 @@ const MAX_DIGITS = 9;
 // 받는 계좌는 내 정보(GET /api/v1/users/me)의 account. 불러오기 전 · 실패 · 미등록이면 자리 문구
 const ACCOUNT_PLACEHOLDER = '{은행} ***{계좌 끝 4자리} · 예금주 {예금주}';
 
-// 시안 07-4-1 인출 · 07-4-2 금액 초과 (인출 가능 금액 = 판매 정산금만, 충전금은 인출 안 됨)
 // 중복 신청 방지 키: crypto.randomUUID는 HTTPS · localhost에서만 있어서 없으면 getRandomValues로 만듦
 function createIdempotencyKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -25,11 +24,12 @@ function createIdempotencyKey() {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+// 시안 07-4-1 인출 · 07-4-2 금액 초과 (예치금 잔액 하나, 인출 한도 = 잔액 전체)
 function WithdrawPage() {
   usePageTitle('예치금 인출');
   const navigate = useNavigate();
   const { isLoggedIn, isInitializing } = useAuth();
-  const { balance, chargeBalance, withdrawableBalance, refreshWallet } = useWallet();
+  const { balance, refreshWallet } = useWallet();
   const { myInfo } = useMyInfo();
 
   const [amount, setAmount] = useState(0);
@@ -45,8 +45,9 @@ function WithdrawPage() {
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace state={{ from: '/wallet/withdraw' }} />;
 
-  const hasWithdrawable = typeof withdrawableBalance === 'number';
-  const isOver = hasWithdrawable && amount > withdrawableBalance;
+  const balanceNumber = balance === null || balance === undefined ? null : Number(balance);
+  const hasBalance = balanceNumber !== null && !Number.isNaN(balanceNumber);
+  const isOver = hasBalance && amount > balanceNumber;
   const canSubmit = amount > 0 && !isOver && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -77,13 +78,11 @@ function WithdrawPage() {
 
   return (
     <WithdrawView
-      balance={balance === null ? null : Number(balance)}
-      chargeBalance={chargeBalance ?? '{충전금}'}
-      withdrawableBalance={withdrawableBalance ?? '{인출 가능 금액}'}
+      balance={hasBalance ? balanceNumber : null}
       account={myInfo?.account ? formatBankAccount(myInfo.account) : ACCOUNT_PLACEHOLDER}
       amount={amount}
       onAmountChange={(text) => setAmount(parseAmount(text, MAX_DIGITS))}
-      onAll={() => hasWithdrawable && setAmount(withdrawableBalance)}
+      onAll={() => hasBalance && setAmount(balanceNumber)}
       isOver={isOver}
       canSubmit={canSubmit}
       onSubmit={handleSubmit}

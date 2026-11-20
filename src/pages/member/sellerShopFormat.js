@@ -5,7 +5,7 @@ import { getTagLabel } from '../../constants/review';
 const TAG_CHIP_MAX = 5;
 
 // 리뷰 요약의 tagCounts → 태그 칩 (많은 순, 최대 5개, 0개인 태그 제외)
-// TODO: tagCounts는 리뷰 API(getSellerReviews) 응답에 있다고 가정한 임시 필드 (리뷰 API docs ⬜)
+// 리뷰는 하지 않기로 해서(준비 중) tagCounts · 평균 별점 · 리뷰 수는 빈 값으로 들어옴 (나중에 리뷰 API가 생기면 연결)
 export function toTagChips(tagCounts) {
   return (tagCounts ?? [])
     .filter((item) => item.count > 0)
