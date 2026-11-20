@@ -75,6 +75,11 @@ function WithdrawPage() {
     const showBlockersIfBlocked = async () => {
       const eligibility = (await getWithdrawalEligibility()).data.data;
       if (eligibility?.status === 'ALLOWED') return false;
+      // 다른 서비스 확인 실패는 예외가 아니라 200 + status UNAVAILABLE로 옴 → 확인 불가 모달 (06-5-14)
+      if (eligibility?.status === 'UNAVAILABLE') {
+        setIsUnavailable(true);
+        return true;
+      }
       const rows = toBlockers(toNumberDetails(mergeBlockerDetails(eligibility)));
       if (rows.length > 0) setBlockers(rows);
       else setSubmitError(ACTION_ERROR.DEFAULT);

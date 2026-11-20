@@ -46,7 +46,9 @@ function useSellerConsentPolicy(enabled = true) {
         if (!ignore) setPolicy(toConsentPolicy(response.data.data));
       })
       .catch(() => {
-        // 기본값 그대로
+        // 처음 조회 실패: 기본값 그대로. 다시 조회(reload) 실패: 옛 version을 다시 보내 409가 반복되지 않게 version을 비움
+        //   → 판매자 등록 화면은 version이 없으면 보내지 않고 다시 조회함
+        if (!ignore && reloadKey > 0) setPolicy((prev) => ({ ...prev, version: null }));
       });
     return () => {
       ignore = true;
