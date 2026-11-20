@@ -55,6 +55,9 @@ function toNumberDetails(details) {
 
 const UNAVAILABLE_CODES = ['WITHDRAWAL_CHECK_UNAVAILABLE'];
 
+// 응답 전에 타임아웃이면 탈퇴가 됐는지 알 수 없음 → BE 503 RESULT_UNKNOWN과 같은 안내 (자동 재요청 안 함)
+const RESULT_UNKNOWN_MESSAGE = '처리 결과를 확인하지 못했습니다. 잠시 후 확인해 주세요.';
+
 function WithdrawPage() {
   usePageTitle('회원 탈퇴');
   const navigate = useNavigate();
@@ -89,7 +92,9 @@ function WithdrawPage() {
       navigate('/', { replace: true });
     } catch (error) {
       const code = error.response?.data?.code;
-      if (UNAVAILABLE_CODES.includes(code)) {
+      if (error.code === 'ECONNABORTED' && error.config?.method === 'post') {
+        setSubmitError(RESULT_UNKNOWN_MESSAGE);
+      } else if (UNAVAILABLE_CODES.includes(code)) {
         // 탈퇴 확인을 하지 못함 (06-5-14)
         setIsUnavailable(true);
       } else {

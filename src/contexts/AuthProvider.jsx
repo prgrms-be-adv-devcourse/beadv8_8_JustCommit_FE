@@ -6,7 +6,7 @@ import {
   logout as logoutApi,
   signup as signupApi,
 } from '../api/memberApi';
-import { clearAccessToken, setAccessToken } from '../api/tokenStore';
+import { clearAccessToken, onSessionExpired, setAccessToken } from '../api/tokenStore';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
@@ -41,6 +41,9 @@ export function AuthProvider({ children }) {
       ignore = true;
     };
   }, []);
+
+  // 요청 중 재발급이 401로 실패하면 로그인 안 된 상태로 바꿈 (헤더 등이 로그인 상태로 남지 않게)
+  useEffect(() => onSessionExpired(() => setUser(null)), []);
 
   const login = useCallback(async ({ email, password }) => {
     const response = await loginApi({ email, password });

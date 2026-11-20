@@ -138,8 +138,10 @@ export function getWithdrawalEligibility() {
 // → data: { revocationCompleted }. 성공하면 서버가 이 기기 Refresh 쿠키를 만료
 // 실패: 400 INVALID_CURRENT_PASSWORD · INVALID_WITHDRAWAL_TOKEN, 429 PASSWORD_CHANGE_LOCKED(+ Retry-After),
 //       409 WITHDRAWAL_BLOCKED(사유는 getWithdrawalEligibility로), 503 WITHDRAWAL_CHECK_UNAVAILABLE · SOCIAL_UNLINK_FAILED · RESULT_UNKNOWN
+// Gateway가 이 경로만 응답 타임아웃 20초(카카오 연결 해제 등)라 기본 10초보다 길게 기다림
+export const WITHDRAW_TIMEOUT_MS = 25000;
 export function withdraw({ password, withdrawalToken } = {}) {
-  return client.post('/api/v1/users/me/withdrawal', { password, withdrawalToken });
+  return client.post('/api/v1/users/me/withdrawal', { password, withdrawalToken }, { timeout: WITHDRAW_TIMEOUT_MS });
 }
 
 // 카카오 회원 재확인 ① 회원 정보의 이메일로 인증번호 발송 → data: { expiresIn, resendAvailableIn }
