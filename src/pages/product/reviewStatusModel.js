@@ -35,8 +35,10 @@ export function rejectReasonText({ rejectReason, rejectMessage }) {
 }
 
 // 검수 기록 응답(GET products/{id}/imageReviews) → ReviewResultView의 review
+// 최신 버전이 REPLACED(판매 중 글 검사 도중 예약 등으로 반영 안 됨)면 건너뛰고 그 전 버전으로 고름.
+// 남은 버전이 없으면 상품 상태로 고름 (REPLACED를 CHECKING으로 두면 끝나지 않는 검수 중 화면 · 폴링이 됨)
 export function toReviewResult(history, productStatus) {
-  const latest = history?.reviews?.[0] ?? {};
+  const latest = history?.reviews?.find((item) => item.status !== 'REPLACED') ?? {};
   const stage = toReviewStage(latest, history?.productStatus ?? productStatus);
   return {
     stage,
