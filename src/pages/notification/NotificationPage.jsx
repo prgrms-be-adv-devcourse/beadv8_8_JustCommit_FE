@@ -44,8 +44,9 @@ function toViewItem(item) {
     badgeClass: NOTIFICATION_BADGE_CLASS[type.badge],
     unread: !item.isRead,
     title: item.message,
-    // TODO: 둘째 줄(상품명 · 보조 문구) 응답 필드가 없음 → 백엔드에 subMessage 같은 필드 요청 필요
-    sub: item.itemSummary ?? '{상품명 · 보조 문구}',
+    // 둘째 줄은 응답의 itemSummary (상품 요약). 없으면 비워 둠
+    // TODO: 주문 쪽 알림은 BE가 market 배송 조회를 아직 임시 구현(UnavailableShipmentClient)으로 둬서 itemSummary가 null
+    sub: item.itemSummary ?? '',
     timeText: formatNotificationTime(item.createdAt),
   };
 }
@@ -125,7 +126,12 @@ function NotificationPage() {
   const handleOpen = (viewItem) => {
     if (!viewItem.unread) return;
     readNotification(viewItem.id)
-      .then(() => setUnreadCount((count) => Math.max(0, count - 1)))
+      .then(() => {
+        setItems((prev) =>
+          prev.map((item) => (item.notificationId === viewItem.id ? { ...item, isRead: true } : item)),
+        );
+        setUnreadCount((count) => Math.max(0, count - 1));
+      })
       .catch(() => {});
   };
 
