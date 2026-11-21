@@ -106,6 +106,7 @@ function toViewOrder(order) {
       statusTone = 'text-[#92400e]';
     }
     if (item.status === 'RETURNED') statusText = '반품 완료';
+    if (salesStatus === 'UNPAID') statusText = '결제 미완료';
     return {
       orderItemId: itemIdOf(item),
       name: item.productName,
@@ -117,13 +118,22 @@ function toViewOrder(order) {
   });
 
   const shippingFee = Number(order.shippingFee ?? SHIPPING_FEE_PER_SELLER);
-  const liveItems = items.filter((item) => item.status !== 'CANCELLED');
+  // 결제 미완료 주문은 판매액 0원 (시안 08-5-8)
+  const liveItems = salesStatus === 'UNPAID' ? [] : items.filter((item) => item.status !== 'CANCELLED');
   const sale = liveItems.reduce((sum, item) => sum + Number(item.price), 0);
   const fee = Math.floor(sale * SETTLEMENT_FEE_RATE);
   const burden = Number(order.sellerBurden ?? 0);
 
   let settlement;
-  if (salesStatus === 'CANCELLED') {
+  if (salesStatus === 'UNPAID') {
+    // 시안 08-5-8: 결제가 끝나지 않은 주문 (목록에서는 빠지지만 주소로 직접 들어온 경우)
+    settlement = {
+      badgeText: '결제 미완료',
+      badgeTone: GRAY_BADGE,
+      amounts: null,
+      note: '결제가 완료되지 않은 주문이에요. 정산하지 않아요.',
+    };
+  } else if (salesStatus === 'CANCELLED') {
     settlement = {
       badgeText: cancelLabel,
       badgeTone: GRAY_BADGE,
@@ -168,7 +178,9 @@ function toViewOrder(order) {
   const shipment =
     mode === 'ACCEPT'
       ? null
-      : cancelledOnly
+      : salesStatus === 'UNPAID'
+        ? { cancelledNote: '결제가 완료되지 않은 주문이에요. 배송하지 않아요.' }
+        : cancelledOnly
         ? { cancelledNote: '취소된 주문이라 배송하지 않아요.' }
         : {
           trackingNo: order.trackingNo ?? NO_TRACKING_NO,

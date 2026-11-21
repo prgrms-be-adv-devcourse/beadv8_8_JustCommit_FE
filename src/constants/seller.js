@@ -76,6 +76,7 @@ export const SALES_ORDER_STATUS = {
   RETURN_REQUESTED: { label: '반품 신청', tone: AMBER, noteTone: 'text-[#92400e]' },
   CONFIRMED: { label: '구매 확정', tone: GRAY, noteTone: 'text-[#6b7280]' },
   CANCELLED: { label: '취소', tone: GRAY, noteTone: 'text-[#6b7280]' },
+  UNPAID: { label: '결제 미완료', tone: GRAY, noteTone: 'text-[#6b7280]' },
 };
 
 // 취소 주체 (백엔드 cancelledBy: BUYER · SELLER · AUTO) → 배지 라벨
@@ -107,6 +108,8 @@ export const SETTLEMENT_FEE_RATE = 0.05;
  *       BE에 returnRequested(boolean)가 생기면 그대로 쓰임
  */
 export function getSalesOrderStatus(order) {
+  // 결제가 끝나지 않은 주문 (BE OrderStatus): 목록에서는 로더가 거르고, 상세로 직접 오면 「결제 미완료」
+  if (['PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAYMENT_FAILED', 'EXPIRED'].includes(order.status)) return 'UNPAID';
   if (order.status === 'CANCELLED') return 'CANCELLED';
   if (
     order.acceptPending ||
