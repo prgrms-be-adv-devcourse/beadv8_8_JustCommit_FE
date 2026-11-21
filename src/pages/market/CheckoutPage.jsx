@@ -93,7 +93,8 @@ function groupOrderItems(order) {
   }));
 }
 
-// 배송비 계산 결과(quote)를 판매자 묶음에 붙임. quote가 없으면 판매자별 기본 요금
+// 배송비 계산 결과(quote, orderApi.quoteShippingFee)를 판매자 묶음에 붙임. quote가 없으면 판매자별 기본 요금
+// 제주 · 도서산간(extraFee > 0)이면 「(기본 3,000원 + 제주 3,000원)」 줄 (시안 OrderJeju)
 function applyShippingFee(groups, quote) {
   return groups.map((group) => {
     const fee = quote?.sellers?.find((seller) => seller.sellerId === group.sellerId);
@@ -212,19 +213,19 @@ function CheckoutPage() {
     }
   }, [expiresAt, remainingSeconds, pendingOrderId, navigate]);
 
-  // 배송지가 정해지면 배송비 계산 (TODO: 계산 API가 생기기 전까지는 판매자별 기본 요금)
+  // 배송지가 정해지거나 바뀌면 배송비 계산 (BE #618). 실패하면 null → 판매자별 기본 요금
   const selectedAddress = addresses?.find((address) => address.addressId === selectedAddressId) ?? null;
-  const sellerIdsKey = cartItems ? [...new Set(cartItems.map((item) => item.sellerId))].join(',') : '';
+  const sellerIdsKey = cartItems
+    ? [...new Set(cartItems.map((item) => item.sellerId).filter((id) => id != null))].join(',')
+    : '';
   useEffect(() => {
     if (!selectedAddress || !sellerIdsKey) return undefined;
     let ignore = false;
-    quoteShippingFee({ zipcode: selectedAddress.zipcode, sellerIds: sellerIdsKey.split(',').map(Number) })
-      .then((result) => {
+    quoteShippingFee({ zipcode: selectedAddress.zipcode, sellerIds: sellerIdsKey.split(',').map(Number) }).then(
+      (result) => {
         if (!ignore) setQuote(result);
-      })
-      .catch(() => {
-        if (!ignore) setQuote(null);
-      });
+      },
+    );
     return () => {
       ignore = true;
     };
@@ -256,6 +257,8 @@ function CheckoutPage() {
   const itemCount = groups.reduce((sum, group) => sum + group.items.length, 0);
   const subtotal = groups.reduce((sum, group) => sum + group.items.reduce((s, item) => s + item.price, 0), 0);
   const shippingTotal = groups.reduce((sum, group) => sum + group.shippingFee, 0);
+  // 주문 생성에 보내는 expectedShippingFee: 판매자 주문 1건의 배송비 (배송비는 우편번호로만 정해져 판매자마다 같음)
+  const shippingFeePerSeller = groups[0]?.shippingFee ?? SHIPPING_FEE_PER_SELLER;
   const total = pendingOrder ? Number(pendingOrder.totalAmount) : subtotal + shippingTotal;
   const shortage = balance != null ? Math.max(0, total - balance) : 0;
   const hasUnavailable = cartItems?.some((item) => !item.isPurchasable) ?? false;
@@ -282,12 +285,21 @@ function CheckoutPage() {
   const handleOrderError = async (error, retry) => {
     const code = error.response?.data?.code;
     if (code === 'SHIPPING_FEE_CHANGED') {
-      const data = error.response?.data?.data ?? {};
+      // 409 응답에는 새 금액이 없어 배송비를 다시 계산해 주문서를 갱신하고, 바뀐 금액(판매자 전체 합계)을 모달로 보여 줌
+      // 다시 계산도 실패하면 바뀐 배송비 「-」 + 결제 버튼 막힘
+      const latest = await quoteShippingFee({
+        zipcode: selectedAddress.zipcode,
+        sellerIds: sellerIdsKey.split(',').map(Number),
+      });
+      if (latest) setQuote(latest);
+      const latestGroups = latest ? applyShippingFee(groupCartItems(cartItems, prevPrices), latest) : [];
       setModal({
         type: 'shipping',
         prevFee: shippingTotal,
-        newFee: data.shippingFee ?? null,
-        regionLabel: data.regionLabel ?? null,
+        newFee: latest ? latestGroups.reduce((sum, group) => sum + group.shippingFee, 0) : null,
+        newFeePerSeller: latestGroups[0]?.shippingFee ?? null,
+        // 일반 지역으로 바뀌면 괄호 없이 (시안은 제주만 있음)
+        regionLabel: latest && latest.region !== 'GENERAL' ? latest.regionLabel : null,
         retry,
       });
       return;
@@ -344,7 +356,7 @@ function CheckoutPage() {
   };
 
   // 새 주문 만들기 (잔액이 모자라면 결제 대기 주문이 만들어지고 충전 화면으로)
-  const submitNewOrder = async (expectedShippingFee = shippingTotal) => {
+  const submitNewOrder = async (expectedShippingFee = shippingFeePerSeller) => {
     if (!selectedAddress || hasUnavailable || isSubmitting) return;
     setIsSubmitting(true);
     setErrorMessage('');
@@ -572,7 +584,7 @@ function CheckoutPage() {
         onClose={closeModal}
         onSubmit={() => {
           setModal(null);
-          modal.retry(modal.newFee);
+          modal.retry(modal.newFeePerSeller);
         }}
       />
     );

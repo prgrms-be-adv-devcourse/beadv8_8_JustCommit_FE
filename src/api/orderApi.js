@@ -2,13 +2,13 @@ import client from './client';
 import { getSeller } from './memberApi';
 
 // 장바구니 항목으로 주문 생성 + 예치금 결제 (서버가 주문 저장·상품 예약·결제를 한 번에 처리)
-// form = { cartItemIds, recipientName, recipientPhone, zipcode, address1, address2 } (BE CartOrderCreateRequest)
+// form = { cartItemIds, recipientName, recipientPhone, zipcode, address1, address2, expectedShippingFee? } (BE CartOrderCreateRequest)
+// expectedShippingFee: 주문서에 보여 준 판매자 주문 1건의 배송비(합계 아님). 보내면 서버 계산과 비교 (BE #618)
 // → 200 { orderId, orderNo, totalAmount, itemCount, createdAt, status, expiresAt } (BE OrderCreateResponse, ApiResponse 없음)
 // status: PAID(결제 완료) | PAYMENT_PENDING(잔액 부족으로 결제 대기 10분, 상품은 잠시 예약됨)
 //         | PAYMENT_PROCESSING(결제 결과 확인 중, 복구가 확정) | PAYMENT_FAILED(예약 결과 불명 · 결제 거절 · 결제 서버 연결 실패)
 // 실패: 409 PRICE_CHANGED(장바구니에 저장된 가격과 지금 가격이 다름) · 409 PRODUCT_UNAVAILABLE · 400 OWN_PRODUCT
-// TODO: 화면은 expectedShippingFee도 보내지만 BE가 받지 않음(무시됨). SHIPPING_FEE_CHANGED도 BE에 없어
-//  주문서의 배송비 변경 분기는 지금 도달하지 않음. 배송지별 배송비 계산이 BE에 생기면 필드 이름 · 에러 응답을 맞춤
+//       409 SHIPPING_FEE_CHANGED(expectedShippingFee가 서버 계산과 다름, 주문 안 만듦. 응답에 새 금액은 없어 다시 계산 API를 부름)
 export function createCartOrder(form) {
   return client.post('/api/v1/orders/cart', form);
 }
@@ -20,11 +20,30 @@ export function payOrder(orderId) {
   return client.post(`/api/v1/orders/${orderId}/pay`);
 }
 
-// TODO: 배송지별 배송비 계산 API가 아직 없음 (백엔드 docs에도 없음, 서버는 결제 때만 배송지로 계산).
-//  생기면 { zipcode, sellerIds } → { sellers: [{ sellerId, fee, baseFee, extraFee }], regionLabel }처럼 받아
-//  제주 · 도서산간 추가 요금을 주문서에 미리 보여 줍니다. 지금은 null(= 판매자별 기본 요금)을 돌려줍니다.
-export function quoteShippingFee() {
-  return Promise.resolve(null);
+// 배송지별 배송비 미리 계산 (BE #618 ShippingFeeQuoteController, ApiResponse 없음)
+// GET /api/v1/orders/shippingFees?zipcode=63100&sellerIds=1,2 (로그인 필요)
+// → { region: GENERAL | JEJU | REMOTE, regionLabel: 일반 | 제주 | 도서산간, sellers: [{ sellerId, fee, baseFee, extraFee }] }
+// 금액은 BigDecimal이라 숫자로 바꿔 돌려줌. 실패하면 null(= 주문서는 판매자별 기본 요금)
+export function toShippingFeeQuote(body) {
+  const quote = body?.data ?? body;
+  if (!quote || !Array.isArray(quote.sellers)) return null;
+  return {
+    region: quote.region ?? null,
+    regionLabel: quote.regionLabel ?? null,
+    sellers: quote.sellers.map((seller) => ({
+      sellerId: Number(seller.sellerId),
+      fee: Number(seller.fee),
+      baseFee: Number(seller.baseFee),
+      extraFee: Number(seller.extraFee ?? 0),
+    })),
+  };
+}
+
+export function quoteShippingFee({ zipcode, sellerIds }) {
+  return client
+    .get('/api/v1/orders/shippingFees', { params: { zipcode, sellerIds: sellerIds.join(',') } })
+    .then((response) => toShippingFeeQuote(response.data))
+    .catch(() => null);
 }
 
 // 구매자 주문 목록 (최신순) params = { page, size }
