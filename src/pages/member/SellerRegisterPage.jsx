@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useSellerConsentPolicy from '../../hooks/useSellerConsentPolicy';
@@ -15,6 +15,7 @@ function SellerRegisterPage() {
   usePageTitle('판매자 등록');
   const { user, isLoggedIn, isInitializing, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { myInfo } = useMyInfo();
   const consentPolicy = useSellerConsentPolicy(isLoggedIn);
 
@@ -44,8 +45,8 @@ function SellerRegisterPage() {
     try {
       await registerSeller(intro.trim(), consentPolicy.version);
       await refreshUser();
-      // 등록이 끝나면 새로 생긴 판매 메뉴를 바로 볼 수 있게 마이페이지로
-      navigate('/mypage', { replace: true });
+      // 등록이 끝나면 들어오기 전에 보던 페이지로 (헤더 버튼이 넘겨 준 주소). 없으면 판매 메뉴가 있는 마이페이지로
+      navigate(location.state?.from ?? '/mypage', { replace: true });
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ?? '판매자 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
