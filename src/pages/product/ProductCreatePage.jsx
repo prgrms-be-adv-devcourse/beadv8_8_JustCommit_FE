@@ -17,9 +17,10 @@ import { EDITABLE_PRODUCT_STATUSES, toQuota } from '../../constants/seller';
 import ProductFormView, { MAX_PHOTOS } from './ProductFormView';
 import { toReviewStage } from './reviewStatusModel';
 
-// 백엔드 ProductImageService 규칙과 같게 유지 (시안 안내: JPEG · PNG, 10MB 이하)
+// 백엔드 ProductImageService 규칙과 같게 유지 (JPEG · PNG · WebP, 7.5MB 이하)
+// 7.5MB: 검수 때 사진을 base64(4/3배)로 AI에 보내 한도 10MB 안에 들게 (BE #594)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 7_864_320; // 7.5MB
 const SEARCH_DELAY_MS = 300;
 
 let photoSeq = 0;
@@ -189,7 +190,7 @@ function ProductForm({ productId }) {
 
     const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
     if (valid.length < files.length) {
-      setErrorMessage('JPEG · PNG 형식의 10MB 이하 사진만 올릴 수 있어요.');
+      setErrorMessage('JPEG · PNG · WebP 형식의 7.5MB 이하 사진만 올릴 수 있어요.');
     } else {
       setErrorMessage('');
     }

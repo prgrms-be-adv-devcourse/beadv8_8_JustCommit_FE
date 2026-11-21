@@ -137,7 +137,7 @@ function ProductFormView({
               )}
             </div>
             <p className="text-[13px] text-[#6b7280]">
-              첫 번째 사진이 대표 사진이 돼요. 끌어서 순서를 바꿀 수 있어요. JPEG · PNG, 한 장에 10MB 이하, 1~10장
+              첫 번째 사진이 대표 사진이 돼요. 끌어서 순서를 바꿀 수 있어요. JPEG · PNG · WebP, 한 장에 7.5MB 이하, 1~10장
             </p>
           </div>
           <div className="space-y-2">
