@@ -69,15 +69,39 @@ export function isReturnShipping(item) {
   return item.returnShipmentStatus != null || item.returnTrackingNo != null || RETURN_SHIPPING_ITEM_STATUSES.includes(item.status);
 }
 
-// 배송 조회 모달용 반품 택배 단계 목록 (최신이 먼저, 시각이 있는 단계만)
-// TODO: 반품 택배 현재 위치 · 기사님 거리 API가 생기면 location을 채움 (지금은 없어 칸을 숨김)
+// 반품 택배의 가장 최근 단계 (현재 위치 줄 · 배송 조회 모달 첫 줄)
+function latestReturnStep(item) {
+  if (item.returnArrivedAt) return ['판매자 도착', item.returnArrivedAt];
+  if (item.returnInTransitAt) return ['반품 배송 중', item.returnInTransitAt];
+  if (item.returnPickedUpAt) return ['반품 수거 완료', item.returnPickedUpAt];
+  return ['기사 배정', item.returnBookedAt ?? item.returnDriverCheckedAt];
+}
+
+// 반품 송장 줄의 「현재 위치: 지점 · 단계 · 시각」 (시안 04-4-2 · 04-4-5 · 04-5-4 · 04-5-5). 지점을 모르면 null → 숨김
+export function buildReturnLocation(item) {
+  if (!item?.returnCurrentLocation) return null;
+  const [status, at] = latestReturnStep(item);
+  return [item.returnCurrentLocation, status, shortTime(at)].filter(Boolean).join(' · ');
+}
+
+// 반품 수거 전 기사님 거리 (반품 택배 조회 #621, 수거 전에만 값). 없으면 null → 박스를 숨김
+export function buildReturnDistance(item) {
+  if (item?.returnDriverDistanceKm == null) return null;
+  const checked = shortTime(item.returnDriverCheckedAt);
+  return { km: `${item.returnDriverDistanceKm}km`, checkedAt: checked ? checked.slice(6) : null };
+}
+
+// 배송 조회 모달용 반품 택배 단계 목록 (최신이 먼저, 시각이 있는 단계만). 첫 줄에 현재 위치(있으면)
 export function buildReturnShipmentEvents(item) {
   if (!item) return [];
-  return [
+  const events = [
     ['returnArrivedAt', '판매자 도착'],
     ['returnInTransitAt', '반품 배송 중'],
     ['returnPickedUpAt', '반품 수거'],
+    ['returnBookedAt', '반품 택배 예약'],
   ]
     .filter(([key]) => shortTime(item[key]))
     .map(([key, status]) => ({ time: shortTime(item[key]), status, location: null }));
+  if (events.length && item.returnCurrentLocation) events[0].location = item.returnCurrentLocation;
+  return events;
 }

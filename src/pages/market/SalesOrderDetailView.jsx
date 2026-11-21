@@ -444,6 +444,9 @@ function SalesOrderDetailView({
                 steps={shipment.returnTimeline.steps}
                 tracking={shipment.returnTimeline.tracking}
                 onOpenTracking={onOpenTracking}
+                side="seller"
+                refreshCooldown={refreshCooldown}
+                onRefresh={onRefreshDistance}
               />
             ) : (
               shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />

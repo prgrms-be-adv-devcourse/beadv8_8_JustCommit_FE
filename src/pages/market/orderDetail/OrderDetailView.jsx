@@ -226,6 +226,9 @@ function SellerGroup({ group, busyItemId, refreshCooldown, onAction, onOpenTrack
               steps={group.returnTimeline.steps}
               tracking={group.returnTimeline.tracking}
               onOpenTracking={() => onOpenTracking(group)}
+              side="buyer"
+              refreshCooldown={refreshCooldown}
+              onRefresh={onRefreshDistance}
             />
           )}
           {group.headline && <Headline headline={group.headline} />}

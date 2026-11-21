@@ -158,6 +158,54 @@ export async function withShipmentTracking(target, fetchTracking) {
   }
 }
 
+// 반품 택배 조회 (BE #617 · PR #621): 가는 배송 조회와 같은 칸, 맨 앞만 orderItemId
+// 승인 전(반품 배송 없음)이면 404 SHIPMENT_TRACKING_NOT_FOUND, 택배사 실패면 택배사 4칸만 null(200)
+export function getBuyerReturnShipmentTracking(orderId, orderItemId) {
+  return client.get(`/api/v1/orders/${orderId}/items/${orderItemId}/returnShipment`);
+}
+
+export function getSellerReturnShipmentTracking(sellerOrderId, orderItemId) {
+  return client.get(`/api/v1/orders/seller/${sellerOrderId}/items/${orderItemId}/returnShipment`);
+}
+
+// 반품 택배가 예약 뒤 · 판매자 도착 전일 때만 조회 (주문상품 RETURN_IN_TRANSIT, 반품 택배 상태가 오면 그 기준)
+export function isTrackableReturn(item) {
+  if (!item || item.status !== 'RETURN_IN_TRANSIT') return false;
+  return item.returnShipmentStatus == null || TRACKABLE_SHIPMENT_STATUSES.includes(item.returnShipmentStatus);
+}
+
+/**
+ * 반품 택배 조회 응답을 주문상품에 합침 (구매자 sellerOrders[].items[] · 판매자 items[] 같은 모양)
+ * - 거리: 수거 전(RESERVED · NEAR_5KM · CANCEL_LOCKED)일 때만 returnDriverDistanceKm · returnDriverCheckedAt (기사님 → 구매자)
+ * - 현재 위치: locationName → returnCurrentLocation
+ * - 송장 · 단계 시각은 주문상품 응답에 없을 때만 채움
+ * 실패(404 · #621 배포 전 등)하면 원래 값을 그대로 돌려줌
+ */
+export async function withReturnShipmentTracking(item, fetchTracking) {
+  if (!isTrackableReturn(item)) return item;
+  try {
+    const response = await fetchTracking();
+    const t = response.data?.data ?? response.data;
+    if (!t) return item;
+    const beforePickup = BEFORE_PICKUP_COURIER_STATUSES.includes(t.courierStatus);
+    return {
+      ...item,
+      returnShipmentStatus: item.returnShipmentStatus ?? t.status ?? null,
+      returnTrackingNo: item.returnTrackingNo ?? t.trackingNo ?? null,
+      returnBookedAt: item.returnBookedAt ?? t.bookedAt ?? null,
+      returnPickedUpAt: item.returnPickedUpAt ?? t.pickedUpAt ?? null,
+      returnInTransitAt: item.returnInTransitAt ?? t.inTransitAt ?? null,
+      returnArrivedAt: item.returnArrivedAt ?? t.deliveredAt ?? null,
+      returnCourierStatus: t.courierStatus ?? null,
+      returnDriverDistanceKm: beforePickup && t.driverDistanceKm != null ? Number(t.driverDistanceKm.toFixed(1)) : null,
+      returnDriverCheckedAt: beforePickup ? (t.driverCheckedAt ?? null) : null,
+      returnCurrentLocation: t.locationName ?? null,
+    };
+  } catch {
+    return item;
+  }
+}
+
 // 목록 항목마다 추가 조회를 부를 때 동시에 limit개까지만 부름 (결과 순서 = 입력 순서)
 export async function mapWithLimit(list, limit, fn) {
   const results = new Array(list.length);
