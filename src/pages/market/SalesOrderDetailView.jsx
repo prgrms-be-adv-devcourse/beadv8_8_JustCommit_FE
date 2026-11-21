@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ReturnTimeline from '../../components/order/ReturnTimeline';
 import { ActionErrorBar, ActionErrorLine } from '../../components/common/ActionError';
 import Modal from '../../components/common/Modal';
 import ModalButton from '../../components/common/ModalButton';
@@ -435,11 +436,15 @@ function SalesOrderDetailView({
               </span>
             </CardHead>
             {shipment.note && <div className="px-6 pt-4 text-[13px] text-[#6b7280]">{shipment.note}</div>}
-            {shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />}
+            {shipment.returnTimeline ? (
+              <ReturnTimeline deliveredTime={shipment.returnTimeline.deliveredTime} steps={shipment.returnTimeline.steps} />
+            ) : (
+              shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />
+            )}
             {shipment.distance && (
               <DistanceBox distance={shipment.distance} refreshCooldown={refreshCooldown} onRefresh={onRefreshDistance} />
             )}
-            <div className={`px-6 py-3${shipment.step !== null ? ' border-t' : ''} border-[#f3f4f6] flex items-center gap-3`}>
+            <div className={`px-6 py-3${shipment.step !== null && !shipment.returnTimeline ? ' border-t' : ''} border-[#f3f4f6] flex items-center gap-3`}>
               {shipment.location && (
                 <span className="flex items-center gap-1.5 text-[13px] text-[#111827]">
                   <svg className="w-4 h-4 text-[#0f4c3a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
