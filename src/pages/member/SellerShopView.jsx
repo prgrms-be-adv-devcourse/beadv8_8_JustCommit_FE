@@ -10,12 +10,13 @@ import SellerShopBar from '../../components/seller/SellerShopBar';
 // backTo = 「< 상품 상세」 이동할 곳
 // sold = 판매 완료 줄 (null이면 줄을 통째로 숨김 = 판매 완료 0개, 시안에 없는 상태)
 //   { products: [ ProductCard의 product(status SOLD_OUT) ], countText: "41개", hasMore, isLoadingMore, onLoadMore, errorMessage }
-function SellerShopView({ seller, products, productCountText, sold, backTo }) {
+// introEditTo = 내 상점일 때 소개글 수정 화면 주소 (남의 상점이면 null)
+function SellerShopView({ seller, products, productCountText, sold, backTo, introEditTo }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
         <PageBackLink to={backTo} label="상품 상세" />
-        <SellerShopBar seller={seller} />
+        <SellerShopBar seller={seller} introEditTo={introEditTo} />
         <div className="flex flex-wrap items-start gap-6">
           <section aria-labelledby="b-sale" className="flex-[999_1_640px] min-w-0 space-y-4">
             <h2 id="b-sale" className="text-xl font-bold text-[#111827]">

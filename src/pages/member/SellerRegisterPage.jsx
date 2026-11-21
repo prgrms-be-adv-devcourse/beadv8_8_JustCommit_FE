@@ -27,7 +27,8 @@ function SellerRegisterPage() {
   // 로그인 상태 복구가 끝나기 전에는 판단하지 않음
   if (isInitializing) return null;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
-  if (user.role === 'SELLER' && !isSubmitting) return <Navigate to="/" replace />;
+  // 이미 판매자면 등록할 것이 없으므로 판매 메뉴가 있는 마이페이지로
+  if (user.role === 'SELLER' && !isSubmitting) return <Navigate to="/mypage" replace />;
 
   const handleSubmit = async () => {
     if (!agreed) return;
@@ -43,7 +44,8 @@ function SellerRegisterPage() {
     try {
       await registerSeller(intro.trim(), consentPolicy.version);
       await refreshUser();
-      navigate('/', { replace: true });
+      // 등록이 끝나면 새로 생긴 판매 메뉴를 바로 볼 수 있게 마이페이지로
+      navigate('/mypage', { replace: true });
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ?? '판매자 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',

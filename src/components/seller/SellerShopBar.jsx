@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 · 02-3-2 · 02-3-4 공통). 리뷰는 하지 않기로 해서 별점 칸 없음
 // seller = { nickname, soldCountText, intro(판매자 소개글, 비었으면 줄을 숨김) }
-function SellerShopBar({ seller }) {
+// introEditTo = 내 상점일 때만 주는 소개글 수정 화면 주소 (있으면 「소개 수정」 링크를 보임)
+function SellerShopBar({ seller, introEditTo }) {
   return (
     <section
       aria-label="판매자 정보"
@@ -24,6 +26,11 @@ function SellerShopBar({ seller }) {
         {'판매 완료 '}
         <strong className="font-semibold text-[#111827] tabular-nums">{seller.soldCountText}</strong>
       </span>
+      {introEditTo && (
+        <Link to={introEditTo} className="ml-auto text-[13px] font-semibold text-[#0f4c3a] underline">
+          소개 수정
+        </Link>
+      )}
       {seller.intro && <SellerIntro key={seller.intro} intro={seller.intro} />}
     </section>
   );
