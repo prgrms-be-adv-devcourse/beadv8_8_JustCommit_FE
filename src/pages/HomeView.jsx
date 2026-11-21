@@ -504,12 +504,9 @@ function SimilarSpeciesRow({ keyword, similarSpecies }) {
           <Link
             key={item.speciesId}
             to={`/?speciesId=${item.speciesId}`}
-            className="h-8 px-3 flex items-center gap-1.5 border border-[#d1e7dd] bg-white text-[13px] text-[#111827] hover:border-[#0f4c3a] transition-colors"
+            className="h-8 px-3 flex items-center border border-[#d1e7dd] bg-white text-[13px] font-semibold text-[#111827] hover:border-[#0f4c3a] transition-colors"
           >
-            <span className="font-semibold">{item.name}</span>
-            <span className="text-[12px] text-gray-400">
-              {item.productIds?.length > 0 ? '판매 중' : '판매 중 없음'}
-            </span>
+            {item.name}
           </Link>
         ))}
       </div>
