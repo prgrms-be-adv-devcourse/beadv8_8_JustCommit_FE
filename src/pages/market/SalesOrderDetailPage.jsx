@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RETURN_ITEM_STATUSES, buildReturnTimeline } from '../../components/order/returnSteps';
 import { Navigate, useParams } from 'react-router-dom';
 import { getAddresses } from '../../api/memberApi';
 import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
@@ -88,6 +89,16 @@ function acceptTexts(allItems, rejectIds) {
 // 구매자 닉네임은 최상위 buyerNickname (#604, 배포 전. 탈퇴 회원이면 「탈퇴한 회원」, 모르면 「알 수 없는 회원」)
 // TODO: 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) · 배송 조회 주소(trackingUrl) ·
 //       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 기본값(emptyText)
+// 반품 중인 주문상품(BE RETURN_*)이 있으면 반품 타임라인 데이터 (components/order/returnSteps)
+function returnTimelineOf(items, deliveredAt) {
+  const returnItem = items.find((item) => RETURN_ITEM_STATUSES.includes(item.status));
+  if (!returnItem) return null;
+  return {
+    deliveredTime: deliveredAt ? formatShortDateTime(deliveredAt) : null,
+    steps: buildReturnTimeline(returnItem),
+  };
+}
+
 function toViewOrder(order) {
   const salesStatus = getSalesOrderStatus(order);
   const items = order.items ?? [];
@@ -194,6 +205,8 @@ function toViewOrder(order) {
                   '택배 예약을 기다리고 있어요. 예약되면 송장번호가 나와요. 상품을 미리 포장해 두세요.'
               : null,
           step: mode === 'CANCEL_RETURN' ? null : step,
+          // 시안 04-5-1: 반품 중인 상품이 있으면 배송 단계 대신 구매자 상세와 같은 반품 타임라인
+          returnTimeline: returnTimelineOf(items, order.deliveredAt),
           // 시안: 배송 완료 시각만 단계 아래에 보여 줌
           stepTimes: [null, null, null, order.deliveredAt ? formatShortDateTime(order.deliveredAt) : null, null],
           // 현재 위치: BE에 없으면 칸을 숨김

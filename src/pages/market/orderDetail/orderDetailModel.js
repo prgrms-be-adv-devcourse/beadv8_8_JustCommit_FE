@@ -1,4 +1,5 @@
 import { AUTO_CONFIRM_DAYS } from '../../../constants/order';
+import { RETURN_ITEM_STATUSES, buildReturnTimeline } from '../../../components/order/returnSteps';
 import { formatDateTime, formatPrice, maskPhone, toValidDate } from '../../../utils/format';
 import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 
@@ -16,12 +17,10 @@ import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 //                                            requestedAt, approvedAt, shippedAt, completedAt, rejectedAt, trackingNo, currentLocation }
 
 export const SHIPPING_STEP_LABELS = ['판매자 확인 중', '픽업 대기', '수거', '배송 중', '배송 완료', '구매 확정'];
-export const RETURN_STEP_LABELS = ['반품 신청', '판매자 승인', '반품 배송 중', '반품 완료'];
 
 // 배송 상태 → 배송 단계 바의 지금 단계 (CANCEL_PENDING: 택배사 취소 결과를 기다리는 픽업 대기)
 const SHIPPING_STEP_INDEX = { READY: 1, BOOKED: 1, CANCEL_LOCKED: 1, CANCEL_PENDING: 1, PICKED_UP: 2, IN_TRANSIT: 3, DELIVERED: 4 };
 
-const RETURN_STEP_INDEX = { REQUESTED: 0, APPROVED: 1, SHIPPING: 2, COMPLETED: 3 };
 
 const RETURN_WINDOW_HOURS = 72; // 배송 완료 후 반품 신청 기한
 const ACCEPT_WINDOW_HOURS = 24; // 결제 완료 후 판매자 수락 기한
@@ -131,20 +130,26 @@ function buildShippingSteps(order, sellerOrder, current) {
   };
 }
 
-function buildReturnSteps(returnRequest, status) {
-  const current = RETURN_STEP_INDEX[status] ?? 0;
-  const times = [
-    // 시각이 없으면 null → 단계 아래 시각을 숨김
-    formatShortDateTime(returnRequest?.requestedAt),
-    formatShortDateTime(returnRequest?.approvedAt),
-    formatShortDateTime(returnRequest?.shippedAt),
-    formatShortDateTime(returnRequest?.completedAt),
-  ];
-  return {
-    label: '반품 단계',
-    current,
-    items: RETURN_STEP_LABELS.map((label, index) => ({ label, time: index <= current ? times[index] : null })),
-  };
+// 반품 단계 바: 판매자 상세와 같은 6단계 (components/order/returnSteps)
+// 주문상품 상태가 반품 상태가 아니고 returnRequest.status만 있으면 그 상태를 주문상품 상태로 바꿔 씀
+const ITEM_STATUS_BY_RETURN_STATUS = {
+  REQUESTED: 'RETURN_REQUESTED',
+  APPROVED: 'RETURN_IN_TRANSIT',
+  SHIPPING: 'RETURN_IN_TRANSIT',
+  COMPLETED: 'RETURNED',
+};
+
+function buildReturnSteps(returnItem, status) {
+  const returnRequest = returnItem.returnRequest;
+  const item = RETURN_ITEM_STATUSES.includes(returnItem.status)
+    ? returnItem
+    : { ...returnItem, status: ITEM_STATUS_BY_RETURN_STATUS[status] };
+  return buildReturnTimeline(item, {
+    returnRequestedAt: returnRequest?.requestedAt,
+    returnDecidedAt: returnRequest?.approvedAt,
+    returnInTransitAt: returnRequest?.shippedAt,
+    returnedAt: returnRequest?.completedAt,
+  });
 }
 
 // 상품 한 줄: 안내 문구 · 배지 · 버튼
@@ -290,6 +295,7 @@ function buildGroup(order, sellerOrder, index, context) {
     location: allCancelled || acceptPending ? null : getLocation(sellerOrder),
     headline: null,
     steps: null,
+    returnTimeline: null,
     acceptNotice: null,
     tracking: null,
     distance: null,
@@ -310,8 +316,7 @@ function buildGroup(order, sellerOrder, index, context) {
     const returnRequest = returnItem.returnRequest;
     const deliveredTime = formatShortDateTime(sellerOrder.deliveredAt);
     // 배송 완료 시각이 없으면 그 한 줄을 숨김
-    group.headline = deliveredTime ? { kind: 'delivered', time: deliveredTime } : null;
-    group.steps = buildReturnSteps(returnRequest, returnStatus);
+    group.returnTimeline = { deliveredTime, steps: buildReturnSteps(returnItem, returnStatus) };
     if (returnStatus === 'SHIPPING' || returnStatus === 'COMPLETED') {
       group.tracking = {
         invoiceLabel: '반품 송장번호',
