@@ -8,6 +8,7 @@ import { SELLER_PRODUCT_BADGE } from '../../constants/seller';
 export const MAX_PHOTOS = 10;
 
 // 품종 드롭다운 목록: 개수 안내(목록이 일부처럼 보이지 않게) · 키보드로 고른 줄이 보이게 스크롤
+// 검색어에 맞는 품종이 없으면(isEmptyResult) 목록 대신 「기타」 안내 한 줄
 function SpeciesOptionList({ species }) {
   const listRef = useRef(null);
 
@@ -22,11 +23,17 @@ function SpeciesOptionList({ species }) {
       className="absolute left-0 right-0 top-full z-20 bg-white border border-t-0 border-[#d1d5db] shadow-lg"
       onMouseDown={(event) => event.preventDefault()}
     >
-      <p className="px-4 py-2 text-[13px] text-[#6b7280] border-b border-[#f3f4f6]">
-        {species.query.trim()
-          ? `검색 결과 ${species.options.length}개`
-          : `전체 ${species.options.length}개 · 내려서 보거나 이름으로 검색할 수 있어요`}
-      </p>
+      {species.isEmptyResult ? (
+        <p className="px-4 py-3 text-[13px] text-[#6b7280]">
+          검색 결과가 없어요. 목록에 없는 식물이면 "기타"를 골라 주세요
+        </p>
+      ) : (
+        <p className="px-4 py-2 text-[13px] text-[#6b7280] border-b border-[#f3f4f6]">
+          {species.query.trim()
+            ? `검색 결과 ${species.options.length}개`
+            : `전체 ${species.options.length}개 · 내려서 보거나 이름으로 검색할 수 있어요`}
+        </p>
+      )}
       <ul ref={listRef} id="pf-species-list" role="listbox" className="max-h-[264px] overflow-y-auto">
         {species.options.map((option, index) => (
           <li
@@ -87,7 +94,7 @@ function ProductFormView({
         ) : (
           <QuotaBar quota={quota} />
         )}
-        <form className="bg-white border border-[#e5e7eb] p-8 space-y-7" onSubmit={onSubmit}>
+        <form className="bg-white border border-[#e5e7eb] p-5 sm:p-8 space-y-7" onSubmit={onSubmit}>
           <div className="space-y-2">
             <span className="text-sm font-bold text-[#111827]">
               사진 <span className="text-[#b91c1c]">*</span>
@@ -137,7 +144,7 @@ function ProductFormView({
               )}
             </div>
             <p className="text-[13px] text-[#6b7280]">
-              첫 번째 사진이 대표 사진이 돼요. 끌어서 순서를 바꿀 수 있어요. JPEG · PNG, 한 장에 10MB 이하, 1~10장
+              첫 번째 사진이 대표 사진이 돼요. 끌어서 순서를 바꿀 수 있어요. JPEG · PNG · WEBP, 한 장에 7.5MB 이하, 1~10장
             </p>
           </div>
           <div className="space-y-2">
@@ -167,7 +174,7 @@ function ProductFormView({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              {species.isOpen && species.options.length > 0 && <SpeciesOptionList species={species} />}
+              {species.isOpen && (species.options.length > 0 || species.isEmptyResult) && <SpeciesOptionList species={species} />}
             </div>
             <p className="text-[13px] text-[#6b7280]">목록에 없는 식물이면 "기타"를 골라 주세요. 관리자가 확인해요.</p>
           </div>

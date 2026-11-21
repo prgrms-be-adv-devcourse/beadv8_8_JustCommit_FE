@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { isSessionJustEnded } from '../../api/tokenStore';
 import { ACTION_ERROR } from '../../constants/actionError';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -37,12 +38,14 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [notice] = useState(() => getInitialNotice(location.state));
+  // 로그인 뒤 갈 곳: 로그인이 필요해서 온 경우는 원래 가려던 곳, 방금 로그아웃 · 세션 만료로 온 경우는 홈
+  const [returnTo] = useState(() => (isSessionJustEnded() ? '/' : (location.state?.from ?? '/')));
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 이미 로그인한 사용자는 원래 가려던 곳(없으면 홈)으로
   if (!isInitializing && isLoggedIn && !isSubmitting) {
-    return <Navigate to={location.state?.from ?? '/'} replace />;
+    return <Navigate to={returnTo} replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -57,7 +60,7 @@ function LoginPage() {
     setIsSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-      navigate(location.state?.from ?? '/', { replace: true });
+      navigate(returnTo, { replace: true });
     } catch (loginError) {
       const code = loginError.response?.data?.code;
       if (code === 'LOGIN_FAILED') {

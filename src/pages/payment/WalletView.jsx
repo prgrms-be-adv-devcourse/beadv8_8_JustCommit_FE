@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { won } from './chargeUtils';
 
 // 시안 07-1-1 예치금 · 07-1-2 예치금 빈 상태
-// rows: [{ id, date, badge, description, amount, isIn }] (이미 탭으로 거른 목록)
+// rows: [{ id, date, badge, description, amount, isIn, balanceAfter }] (이미 탭으로 거른 목록)
 // listState: loading | error | done
 function WalletView({ balance, tabs, tab, onTabChange, rows, listState }) {
   const renderList = () => {
@@ -33,9 +33,14 @@ function WalletView({ balance, tabs, tab, onTabChange, rows, listState }) {
               {row.badge}
             </span>
             <span className="flex-1 min-w-0 text-[15px] text-[#111827] truncate">{row.description}</span>
-            <span
-              className={`text-base font-bold tabular-nums ${row.isIn ? 'text-[#0f4c3a]' : 'text-[#111827]'}`}
-            >{`${row.isIn ? '+' : '−'}${won(row.amount)}`}</span>
+            <div className="flex flex-col items-end shrink-0">
+              <span
+                className={`text-base font-bold tabular-nums ${row.isIn ? 'text-[#0f4c3a]' : 'text-[#111827]'}`}
+              >{`${row.isIn ? '+' : '−'}${won(row.amount)}`}</span>
+              {row.balanceAfter != null && (
+                <span className="text-[13px] text-[#6b7280] tabular-nums">잔액 {won(row.balanceAfter)}</span>
+              )}
+            </div>
           </li>
         ))}
       </ul>

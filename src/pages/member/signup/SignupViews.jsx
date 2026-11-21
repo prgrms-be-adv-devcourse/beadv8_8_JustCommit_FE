@@ -285,7 +285,7 @@ export function SignupDoneView({ nickname, to, error }) {
       </div>
       <div>
         <Link to={to} className="w-full h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-base font-bold">
-          로그인하러 가기
+          {to === '/' ? '홈으로 가기' : '로그인하러 가기'}
         </Link>
         <ActionErrorLine message={error} />
       </div>
