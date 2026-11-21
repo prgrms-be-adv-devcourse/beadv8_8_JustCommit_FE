@@ -1,4 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
+import AdminHeader from './AdminHeader';
 import Header from './Header';
 import Footer from './Footer';
 import ChatbotWidget from '../ai/ChatbotWidget';
@@ -13,15 +15,18 @@ const HIDE_FOOTER_PREFIXES = ['/mypage', '/wallet', '/deposit'];
 // hideFooter: 시안 이전 화면에서 경로와 상관없이 푸터를 숨길 때 (404처럼 아무 주소나 해당되는 화면)
 function Layout({ designed = false, hideFooter: forceHideFooter = false }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  // 관리자는 서비스 화면을 볼 때도 관리자 헤더 (일반 회원 헤더와 구분, 관리자 화면으로 돌아가는 탭이 있음)
+  const header = user?.role === 'ADMIN' ? <AdminHeader /> : <Header />;
 
   if (designed) {
     return (
       <div className="bg-white text-[#111827] min-h-screen flex flex-col antialiased">
-        <Header />
+        {header}
         <Outlet />
         <Footer />
         {/* 식물 상담 챗봇 (오른쪽 아래 버튼) */}
-        <ChatbotWidget />
+        {user?.role !== 'ADMIN' && <ChatbotWidget />}
       </div>
     );
   }
@@ -31,7 +36,7 @@ function Layout({ designed = false, hideFooter: forceHideFooter = false }) {
 
   return (
     <div className={styles.layout}>
-      <Header />
+      {header}
       <main className={styles.main}>
         <div className={styles.container}>
           <Outlet />

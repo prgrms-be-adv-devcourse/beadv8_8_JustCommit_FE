@@ -33,7 +33,7 @@ function LoginPage() {
   usePageTitle('로그인');
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggedIn, isInitializing } = useAuth();
+  const { user, login, isLoggedIn, isInitializing } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,9 +43,12 @@ function LoginPage() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 관리자는 로그인하면 관리자 화면이 첫 화면 (가려던 곳이 따로 있으면 그곳으로)
+  const afterLogin = (role) => (role === 'ADMIN' && returnTo === '/' ? '/admin/reviews' : returnTo);
+
   // 이미 로그인한 사용자는 원래 가려던 곳(없으면 홈)으로
   if (!isInitializing && isLoggedIn && !isSubmitting) {
-    return <Navigate to={returnTo} replace />;
+    return <Navigate to={afterLogin(user?.role)} replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -59,8 +62,8 @@ function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
-      navigate(returnTo, { replace: true });
+      const { role } = await login({ email: email.trim(), password });
+      navigate(afterLogin(role), { replace: true });
     } catch (loginError) {
       const code = loginError.response?.data?.code;
       if (code === 'LOGIN_FAILED') {
