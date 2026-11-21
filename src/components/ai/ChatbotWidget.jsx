@@ -86,20 +86,6 @@ function BotMessage({ message }) {
           ))}
         </div>
       )}
-      {message.species?.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] text-gray-400">참고한 품종</span>
-          {message.species.map((species) => (
-            <Link
-              key={species.speciesId}
-              to={`/?speciesId=${species.speciesId}`}
-              className="px-2 py-0.5 border border-[#d1e7dd] text-[11px] text-[#0f4c3a] hover:bg-[#f0f5f1]"
-            >
-              {species.name}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -162,7 +148,7 @@ function ChatPanel({ isOpen }) {
           text: data.answer,
           answerGenerated: data.answerGenerated,
           products: data.products ?? [],
-          species: data.species ?? [],
+          // 답변이 참고한 품종(data.species)은 그리지 않음: 상품이 없는 품종은 눌러도 빈 목록이라 헷갈림
         }),
       ]);
     } catch (error) {
