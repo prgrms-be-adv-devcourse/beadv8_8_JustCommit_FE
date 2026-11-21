@@ -30,10 +30,11 @@ export function createProduct(form) {
 }
 
 // 서명된 링크로 S3에 직접 PUT (공통 client를 쓰면 토큰 헤더·쿠키가 붙어서 fetch 사용)
-export async function uploadToPresignedUrl(uploadUrl, file) {
+// contentType: 업로드 링크를 받을 때 보낸 형식과 같아야 서명이 맞음
+export async function uploadToPresignedUrl(uploadUrl, file, contentType = file.type) {
   const response = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': file.type },
+    headers: { 'Content-Type': contentType },
     body: file,
   });
   if (!response.ok) {

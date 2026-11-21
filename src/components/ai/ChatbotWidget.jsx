@@ -308,8 +308,9 @@ function ChatbotWidget() {
   return (
     <>
       {/* 열고 닫아도 대화가 남도록 패널은 숨기기만 함. 회원이 바뀌면(key) 대화를 새로 시작 */}
+      {/* 최대 높이: 창 높이 - 헤더(84px, sticky z-50) - 아래 여백(96px) - 16px → 창이 낮아도 헤더에 가리지 않음 */}
       <section
-        className={`fixed right-6 bottom-24 z-40 w-[380px] max-w-[calc(100vw-32px)] h-[560px] max-h-[calc(100vh-140px)] bg-white border border-gray-200 shadow-xl flex-col ${
+        className={`fixed right-6 bottom-24 z-40 w-[380px] max-w-[calc(100vw-32px)] h-[560px] max-h-[calc(100dvh-196px)] bg-white border border-gray-200 shadow-xl flex-col ${
           isOpen ? 'flex' : 'hidden'
         }`}
         aria-label="식물 상담 챗봇"

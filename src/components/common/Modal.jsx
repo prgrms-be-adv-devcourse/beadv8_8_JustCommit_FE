@@ -30,7 +30,7 @@ function Modal({ title, onClose, width = 440, top = 180, bodyClassName = 'space-
         aria-modal="true"
         aria-labelledby="modal-title"
         className="bg-white border border-[#e5e7eb] shadow-2xl"
-        style={{ width: `${width}px` }}
+        style={{ width: `${width}px`, maxWidth: 'calc(100vw - 32px)' }}
       >
         <div className="px-6 py-4 border-b border-[#e5e7eb] flex items-center justify-between">
           <h3 id="modal-title" className="text-base font-bold text-[#111827]">
