@@ -45,7 +45,7 @@ function HeaderSearch({ initialKeyword }) {
         <input
           className="w-full h-9 pl-9 pr-4 bg-transparent border-0 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-0 transition-all"
           data-purpose="header-search-input"
-          placeholder="식물 이름이나 원하는 조건으로 검색 (예: 몬스테라, 햇빛 적은 방에서 키우기 쉬운 식물)"
+          placeholder="식물 이름이나 품종으로 검색 (예: 몬스테라)"
           type="text"
           enterKeyHint="search"
           aria-label="식물 검색"

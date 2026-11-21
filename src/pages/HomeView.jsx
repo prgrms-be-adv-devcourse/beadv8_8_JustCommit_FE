@@ -375,6 +375,33 @@ function EmptyBox({ keyword, isFiltered, onReset }) {
           </button>
         )
       )}
+      {keyword && <CareShortcuts />}
+    </div>
+  );
+}
+
+// 검색 결과가 없을 때 키우는 환경(광량 · 물주기)으로 바로 골라 보기
+// 검색어를 남기면 다시 0건이므로 검색어 없이 메인 목록(/?light=…)으로 이동
+function CareShortcuts() {
+  return (
+    <div className="mt-8 pt-6 border-t border-[#e5e7eb] w-full max-w-[560px] flex flex-col gap-3" data-purpose="care-shortcuts">
+      <p className="text-[14px] font-semibold text-[#111827]">키우는 환경으로 골라 볼 수도 있어요</p>
+      {CARE_FILTERS.filter((care) => care.key !== 'difficulty').map((care) => (
+        <div key={care.key} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <span className="sm:w-12 shrink-0 text-[12px] font-semibold text-gray-500 text-left">{care.label}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(care.options).map(([value, label]) => (
+              <Link
+                key={value}
+                to={`/?${care.key}=${value}`}
+                className="px-2.5 py-1 text-[12px] bg-white hover:bg-[#f4f8f6] border border-gray-200 hover:border-[#0f4c3a] text-gray-700 transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
