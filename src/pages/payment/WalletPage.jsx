@@ -51,6 +51,7 @@ function toRow(item, refs) {
     description: item.description ?? describeTransaction(item, refs) ?? type.description,
     amount: Number(item.amount),
     isIn: item.status === 'IN',
+    balanceAfter: item.balanceAfter == null ? null : Number(item.balanceAfter),
   };
 }
 
