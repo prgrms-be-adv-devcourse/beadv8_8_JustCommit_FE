@@ -437,7 +437,11 @@ function SalesOrderDetailView({
             </CardHead>
             {shipment.note && <div className="px-6 pt-4 text-[13px] text-[#6b7280]">{shipment.note}</div>}
             {shipment.returnTimeline ? (
-              <ReturnTimeline deliveredTime={shipment.returnTimeline.deliveredTime} steps={shipment.returnTimeline.steps} />
+              <ReturnTimeline
+                deliveredTime={shipment.returnTimeline.deliveredTime}
+                steps={shipment.returnTimeline.steps}
+                trackingNo={shipment.returnTimeline.trackingNo}
+              />
             ) : (
               shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />
             )}

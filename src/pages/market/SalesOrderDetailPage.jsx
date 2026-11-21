@@ -97,6 +97,7 @@ function returnTimelineOf(items, deliveredAt) {
   return {
     deliveredTime: deliveredAt ? formatShortDateTime(deliveredAt) : null,
     steps: buildReturnTimeline(returnItem),
+    trackingNo: returnItem.returnTrackingNo ?? null, // 반품 송장번호 (BE #613)
   };
 }
 

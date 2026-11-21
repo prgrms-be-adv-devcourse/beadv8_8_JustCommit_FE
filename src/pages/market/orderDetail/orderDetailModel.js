@@ -322,14 +322,12 @@ function buildGroup(order, sellerOrder, index, context) {
     const returnRequest = returnItem.returnRequest;
     const deliveredTime = formatShortDateTime(sellerOrder.deliveredAt);
     // 배송 완료 시각이 없으면 그 한 줄을 숨김
-    group.returnTimeline = { deliveredTime, steps: buildReturnSteps(returnItem, returnStatus) };
-    if (returnStatus === 'SHIPPING' || returnStatus === 'COMPLETED') {
-      group.tracking = {
-        invoiceLabel: '반품 송장번호',
-        invoiceNo: returnRequest?.trackingNo ?? NO_TRACKING_NO,
-        location: getLocation(returnRequest),
-      };
-    }
+    // 반품 송장번호는 타임라인 아래 한 줄 (BE items[].returnTrackingNo, 판매자 상세와 같은 템플릿). 없으면 숨김
+    group.returnTimeline = {
+      deliveredTime,
+      steps: buildReturnSteps(returnItem, returnStatus),
+      trackingNo: returnItem.returnTrackingNo ?? returnRequest?.trackingNo ?? null,
+    };
     return group;
   }
 
