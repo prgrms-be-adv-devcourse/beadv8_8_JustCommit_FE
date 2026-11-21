@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useNotification from '../../hooks/useNotification';
 import CountBadge from '../common/CountBadge';
@@ -13,6 +13,8 @@ function AdminHeader({ pendingReviewCount }) {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotification();
   const navigate = useNavigate();
+  // 관리자 화면(/admin/...)을 보는 중인지, 서비스 화면을 보는 중인지 (오른쪽 전환 링크가 달라짐)
+  const isAdminScreen = useLocation().pathname.startsWith('/admin');
 
   const handleLogout = async (event) => {
     event.preventDefault();
@@ -75,8 +77,8 @@ function AdminHeader({ pendingReviewCount }) {
             <CountBadge count={unreadCount} />
           </Link>
           {/* 관리자도 일반 회원이 쓰는 서비스 화면을 볼 수 있게 (서비스 화면에서도 이 헤더를 씀 → Layout) */}
-          <Link to="/" className="font-semibold text-[#0f4c3a] underline">
-            서비스 화면
+          <Link to={isAdminScreen ? '/' : '/admin/reviews'} className="font-semibold text-[#0f4c3a] underline">
+            {isAdminScreen ? '서비스 화면' : '관리자 화면'}
           </Link>
           <span className="text-[#4b5563]">{user?.nickname ?? EMPTY}</span>
           <a href="/login" onClick={handleLogout} className="flex items-center gap-1 text-[#4b5563] underline">

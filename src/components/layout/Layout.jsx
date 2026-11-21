@@ -26,7 +26,7 @@ function Layout({ designed = false, hideFooter: forceHideFooter = false }) {
         <Outlet />
         <Footer />
         {/* 식물 상담 챗봇 (오른쪽 아래 버튼) */}
-        <ChatbotWidget />
+        {user?.role !== 'ADMIN' && <ChatbotWidget />}
       </div>
     );
   }
