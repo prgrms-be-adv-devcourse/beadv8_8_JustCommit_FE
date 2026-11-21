@@ -184,7 +184,12 @@ function Header() {
                 className="h-9 flex items-center justify-center gap-1.5 px-4 py-1.5 bg-[#1b4332] hover:bg-[#143427] text-white font-medium text-xs rounded-[4px] transition-colors shadow-xs"
                 type="button"
                 style={{ backgroundColor: 'rgb(15, 76, 58)' }}
-                onClick={() => navigate(isSeller ? '/products/new' : '/seller/register')}
+                // 판매자 등록은 마친 뒤 보던 페이지로 돌아오게 지금 주소를 함께 넘김
+                onClick={() =>
+                  isSeller
+                    ? navigate('/products/new')
+                    : navigate('/seller/register', { state: { from: `${location.pathname}${location.search}` } })
+                }
               >
                 <span className="text-sm font-normal leading-none">+</span>
                 <span>{isSeller ? '식물 판매하기' : '판매자 등록하기'}</span>
