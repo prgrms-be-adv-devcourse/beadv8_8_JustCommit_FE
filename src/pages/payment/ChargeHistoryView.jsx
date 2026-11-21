@@ -26,7 +26,7 @@ function ChargeHistoryView({ charges }) {
           <thead>
             <tr className="bg-[#f9fafb] text-[13px] text-[#4b5563] text-left">
               <th className="px-6 py-3 font-semibold">충전일</th>
-              <th className="px-6 py-3 font-semibold text-right">금액</th>
+              <th className="px-6 py-3 font-semibold text-left">금액</th>
               <th className="px-6 py-3 font-semibold">상태</th>
             </tr>
           </thead>
@@ -36,7 +36,7 @@ function ChargeHistoryView({ charges }) {
               return (
                 <tr key={charge.chargeId} className="border-t border-[#e5e7eb]">
                   <td className="px-6 py-4 text-[#4b5563] tabular-nums">{charge.approvedAt}</td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-left">
                     <span className="text-base font-bold tabular-nums text-[#111827]">{won(charge.amount)}</span>
                   </td>
                   <td className="px-6 py-4">

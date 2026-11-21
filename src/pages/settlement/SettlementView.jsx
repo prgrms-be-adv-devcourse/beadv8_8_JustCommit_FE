@@ -61,10 +61,10 @@ function SettlementView({ summary, rows }) {
               <tr className="bg-[#f9fafb] text-[13px] text-[#4b5563] text-left">
                 <th className="px-5 py-3 font-semibold">정산일</th>
                 <th className="px-5 py-3 font-semibold">상품 · 주문번호</th>
-                <th className="px-5 py-3 font-semibold text-right">판매 금액</th>
-                <th className="px-5 py-3 font-semibold text-right">수수료 (5%)</th>
-                <th className="px-5 py-3 font-semibold text-right">판매자 부담금</th>
-                <th className="px-5 py-3 font-semibold text-right">정산 금액</th>
+                <th className="px-5 py-3 font-semibold text-left">판매 금액</th>
+                <th className="px-5 py-3 font-semibold text-left">수수료 (5%)</th>
+                <th className="px-5 py-3 font-semibold text-left">판매자 부담금</th>
+                <th className="px-5 py-3 font-semibold text-left">정산 금액</th>
                 <th className="px-5 py-3 font-semibold">상태</th>
               </tr>
             </thead>
@@ -78,10 +78,10 @@ function SettlementView({ summary, rows }) {
                     </p>
                     <p className="text-xs text-[#6b7280] tabular-nums">{row.orderNo}</p>
                   </td>
-                  <td className="px-5 py-4 text-right tabular-nums text-[#111827]">{row.saleText}</td>
-                  <td className="px-5 py-4 text-right tabular-nums text-[#4b5563]">{row.feeText}</td>
-                  <td className="px-5 py-4 text-right tabular-nums text-[#4b5563]">{row.burdenText}</td>
-                  <td className="px-5 py-4 text-right font-bold tabular-nums text-[#111827]">{row.payoutText}</td>
+                  <td className="px-5 py-4 text-left tabular-nums text-[#111827]">{row.saleText}</td>
+                  <td className="px-5 py-4 text-left tabular-nums text-[#4b5563]">{row.feeText}</td>
+                  <td className="px-5 py-4 text-left tabular-nums text-[#4b5563]">{row.burdenText}</td>
+                  <td className="px-5 py-4 text-left font-bold tabular-nums text-[#111827]">{row.payoutText}</td>
                   <td className="px-5 py-4">
                     <span className={`h-7 px-2.5 inline-flex items-center text-xs font-semibold ${row.status.tone}`}>
                       {row.status.label}

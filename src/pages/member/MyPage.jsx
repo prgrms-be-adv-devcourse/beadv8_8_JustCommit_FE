@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import useNotification from '../../hooks/useNotification';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import { getMyInfo } from '../../api/memberApi';
@@ -19,7 +18,6 @@ function MyPage() {
   usePageTitle('마이페이지');
   const { user, isLoggedIn, isInitializing } = useAuth();
   const { balance } = useWallet(); // null = 조회 실패 또는 로딩 중
-  const { unreadCount } = useNotification();
 
   const [myInfo, setMyInfo] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -81,7 +79,6 @@ function MyPage() {
       }}
       balanceText={balance === null ? '-' : formatPrice(balance)}
       counts={{
-        notifications: unreadCount,
         salesOrders: acceptPendingCount,
       }}
       // 판매자 상점 B안 (02-3-1). sellerId = memberId (BE SellerProfileService)

@@ -40,7 +40,7 @@ function WithdrawHistoryView({ cashOuts }) {
               <thead>
                 <tr className="bg-[#f9fafb] text-[13px] text-[#4b5563] text-left">
                   <th className="px-6 py-3 font-semibold">신청일</th>
-                  <th className="px-6 py-3 font-semibold text-right">금액</th>
+                  <th className="px-6 py-3 font-semibold text-left">금액</th>
                   <th className="px-6 py-3 font-semibold">받는 계좌</th>
                   <th className="px-6 py-3 font-semibold">상태</th>
                 </tr>
@@ -52,7 +52,7 @@ function WithdrawHistoryView({ cashOuts }) {
                   return (
                     <tr key={cashOut.cashOutId} className="border-t border-[#e5e7eb]">
                       <td className="px-6 py-4 text-[#4b5563] tabular-nums">{cashOut.requestedAt}</td>
-                      <td className="px-6 py-4 text-right text-base font-bold text-[#111827] tabular-nums">
+                      <td className="px-6 py-4 text-left text-base font-bold text-[#111827] tabular-nums">
                         {won(cashOut.amount)}
                       </td>
                       <td className="px-6 py-4 text-[#111827] tabular-nums">{cashOut.account}</td>
