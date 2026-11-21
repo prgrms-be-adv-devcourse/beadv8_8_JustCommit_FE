@@ -181,6 +181,18 @@ function toViewOrder(order) {
     ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'].includes(item.status),
   );
   const trackingNo = returnShipItem ? returnShipItem.returnTrackingNo : order.trackingNo;
+
+  // 판매액 줄 배송비 문구 (BE cancel-refund.md 「반품 환불」): 반품 배송비는 판매자가 냄.
+  // 전부 반품(취소 상품을 빼고 남은 상품이 모두 반품 승인 뒤)이면 구매자가 낸 원래 배송비도 판매자가 냄
+  const feeText = formatPrice(shippingFee);
+  const notCancelledItems = items.filter((item) => item.status !== 'CANCELLED');
+  const allReturned =
+    notCancelledItems.length > 0 &&
+    notCancelledItems.every((item) => ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'].includes(item.status));
+  let saleFeeText = `배송비 ${feeText}은 구매자가 내요`;
+  if (allReturned) saleFeeText = `구매자가 낸 배송비 ${feeText}과 반품 배송비 ${feeText}은 판매자가 내요`;
+  else if (returnShipItem) saleFeeText = `배송비 ${feeText}은 구매자가 내요 · 반품 배송비 ${feeText}은 판매자가 내요`;
+
   const shipment =
     mode === 'ACCEPT'
       ? null
@@ -222,7 +234,7 @@ function toViewOrder(order) {
     saleFooter:
       mode === 'CANCEL_RETURN'
         ? null
-        : { label: `판매액 (배송비 ${formatPrice(shippingFee)}은 구매자가 냄)`, amountText: formatPrice(sale) },
+        : { label: `판매액 (${saleFeeText})`, amountText: formatPrice(sale) },
     recipient: {
       name: order.recipientName,
       phone: maskPhone(order.recipientPhone),
