@@ -74,6 +74,10 @@ function AdminHeader({ pendingReviewCount }) {
             </svg>
             <CountBadge count={unreadCount} />
           </Link>
+          {/* 관리자도 일반 회원이 쓰는 서비스 화면을 볼 수 있게 (서비스 화면에서도 이 헤더를 씀 → Layout) */}
+          <Link to="/" className="font-semibold text-[#0f4c3a] underline">
+            서비스 화면
+          </Link>
           <span className="text-[#4b5563]">{user?.nickname ?? EMPTY}</span>
           <a href="/login" onClick={handleLogout} className="flex items-center gap-1 text-[#4b5563] underline">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -57,6 +57,8 @@ export function AuthProvider({ children }) {
     async ({ email, password }) => {
       const response = await loginApi({ email, password });
       loginWithResponse(response.data.data);
+      // 로그인 화면이 관리자를 관리자 화면으로 보낼 수 있게 role을 돌려줌
+      return { role: response.data.data.role };
     },
     [loginWithResponse],
   );
