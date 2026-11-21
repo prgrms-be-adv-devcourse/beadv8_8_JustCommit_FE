@@ -74,6 +74,8 @@ export const SALES_ORDER_STATUS = {
   SHIPPING: { label: '배송 중', tone: MINT, noteTone: 'text-[#6b7280]' },
   DELIVERED: { label: '배송 완료', tone: MINT, noteTone: 'text-[#6b7280]' },
   RETURN_REQUESTED: { label: '반품 신청', tone: AMBER, noteTone: 'text-[#92400e]' },
+  RETURN_SHIPPING: { label: '반품 배송 중', tone: AMBER, noteTone: 'text-[#92400e]' },
+  RETURNED: { label: '반품 완료', tone: GRAY, noteTone: 'text-[#6b7280]' },
   CONFIRMED: { label: '구매 확정', tone: GRAY, noteTone: 'text-[#6b7280]' },
   CANCELLED: { label: '취소', tone: GRAY, noteTone: 'text-[#6b7280]' },
   UNPAID: { label: '결제 미완료', tone: GRAY, noteTone: 'text-[#6b7280]' },
@@ -83,15 +85,66 @@ export const SALES_ORDER_STATUS = {
 export const SALES_CANCEL_LABEL = { BUYER: '구매자 취소', SELLER: '판매자 거절', AUTO: '자동 거절' };
 
 // 판매 주문 목록 탭 (시안 08-5-1 순서). 배송 완료(구매 확정 전)는 탭이 없어 「전체」에서만 보임
+// 「반품」 탭: 반품 신청 · 반품 배송 중, 반품 완료는 「취소」 탭 (구매자 주문 목록 03-4-1과 같은 규칙)
 export const SALES_TABS = [
   { value: '', label: '전체' },
   { value: 'ACCEPT_PENDING', label: '수락 대기' },
   { value: 'PICKUP', label: '픽업 대기' },
   { value: 'SHIPPING', label: '배송 중' },
-  { value: 'RETURN_REQUESTED', label: '반품 신청' },
+  { value: 'RETURN', label: '반품' },
   { value: 'CONFIRMED', label: '구매 확정' },
   { value: 'CANCELLED', label: '취소' },
 ];
+
+// 목록 상태 키 → 탭
+export function getSalesTab(statusKey) {
+  if (statusKey === 'RETURN_REQUESTED' || statusKey === 'RETURN_SHIPPING') return 'RETURN';
+  if (statusKey === 'RETURNED') return 'CANCELLED';
+  return statusKey;
+}
+
+// 주문상품 반품 상태(BE OrderItemStatus) → 목록 반품 단계
+const ITEM_RETURN_STAGE = {
+  RETURN_REQUESTED: 'RETURN_REQUESTED',
+  RETURN_IN_TRANSIT: 'RETURN_SHIPPING',
+  RETURN_PROCESSING: 'RETURN_SHIPPING', // 판매자 도착 · 환불 대기도 목록에서는 「반품 배송 중」
+  RETURNED: 'RETURNED',
+};
+const RETURN_STAGE_ORDER = ['RETURN_REQUESTED', 'RETURN_SHIPPING', 'RETURNED']; // 덜 진행된 쪽이 먼저
+
+/**
+ * 판매 주문 목록의 상태 (반품 단계 포함)
+ * - BE 목록 응답에 returnStatus(판매자 주문의 반품 단계)가 오면 그 값을 씀
+ *   TODO: returnStatus · returnItemCount가 목록 응답에 생기면 로더가 상세를 부르는 임시 처리(attachSalesDetails)를 뺌
+ * - 없으면 상세로 채운 items[].status로 판단: 살아 있는 상품(취소 제외)이 모두 반품 중이면 반품 단계,
+ *   일부만 반품이면 배송 상태 그대로 + partialReturnCount
+ * - 반품 신청(판매자 응답 필요)은 일부만이어도 「반품 신청」으로 보여 줌
+ * @returns {{ key: string, partialReturnCount: number, returnStage: string|null }}
+ */
+export function getSalesListStatus(order) {
+  const base = getSalesOrderStatus(order);
+  if (['UNPAID', 'CANCELLED', 'ACCEPT_PENDING'].includes(base)) return { key: base, partialReturnCount: 0, returnStage: null };
+
+  const fromBe = ITEM_RETURN_STAGE[order.returnStatus] ?? null;
+  const items = order.items ?? [];
+  const live = items.filter((item) => item.status !== 'CANCELLED');
+  const returning = live.filter((item) => ITEM_RETURN_STAGE[item.status]);
+  const stages = returning.map((item) => ITEM_RETURN_STAGE[item.status]);
+  const earliest = RETURN_STAGE_ORDER.find((stage) => stages.includes(stage)) ?? null;
+
+  if (base === 'RETURN_REQUESTED') return { key: 'RETURN_REQUESTED', partialReturnCount: 0, returnStage: 'RETURN_REQUESTED' };
+  if (fromBe) {
+    const count = Number(order.returnItemCount ?? 0);
+    const all = !order.itemCount || !count || count >= order.itemCount;
+    return all
+      ? { key: fromBe, partialReturnCount: 0, returnStage: fromBe }
+      : { key: base, partialReturnCount: count, returnStage: fromBe };
+  }
+  if (returning.length > 0 && returning.length === live.length) {
+    return { key: earliest, partialReturnCount: 0, returnStage: earliest };
+  }
+  return { key: base, partialReturnCount: returning.length, returnStage: earliest };
+}
 
 // 배송 단계 (시안 04 판매 주문 상세)
 export const SALES_SHIPMENT_STEPS = ['픽업 대기', '수거', '배송 중', '배송 완료', '구매 확정'];

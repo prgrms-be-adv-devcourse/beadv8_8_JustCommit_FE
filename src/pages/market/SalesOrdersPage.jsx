@@ -6,7 +6,8 @@ import {
   RETURN_RESPONSE_HOURS,
   SALES_CANCEL_LABEL,
   SALES_TABS,
-  getSalesOrderStatus,
+  getSalesListStatus,
+  getSalesTab,
 } from '../../constants/seller';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -37,7 +38,7 @@ const untilText = (text) => (text ? `${text}까지 ` : '');
 // 구매자 열은 목록에서 뺌(11/20 사용자 결정). TODO: 판매액(saleAmount, 배송비 제외) ·
 //       결제 완료 시각(paidAt) · 반품 신청 시각(returnRequestedAt) · 취소 주체(cancelledBy)가 목록 응답에 생기면 그대로 쓰임
 function toSalesRow(order) {
-  const statusKey = getSalesOrderStatus(order);
+  const { key: statusKey, partialReturnCount } = getSalesListStatus(order);
   const row = {
     sellerOrderId: order.sellerOrderId,
     createdAtText: formatDateTime(order.createdAt),
@@ -46,7 +47,9 @@ function toSalesRow(order) {
     itemName: getItemName(order),
     amountText: formatPrice(Number(order.saleAmount ?? order.totalAmount)),
     statusKey,
+    tabKey: getSalesTab(statusKey),
     statusLabel: null,
+    statusTag: partialReturnCount > 0 ? `일부 반품 ${partialReturnCount}건` : null, // 일부만 반품: 배송 배지 + 안내 앞 굵은 글씨
     statusNote: null,
     action: 'DETAIL',
   };
@@ -65,6 +68,12 @@ function toSalesRow(order) {
     case 'RETURN_REQUESTED':
       row.statusNote = `${untilText(deadlineText(order.returnDeadlineAt, order.returnRequestedAt, RETURN_RESPONSE_HOURS))}응답하지 않으면 자동으로 승인돼요`;
       row.action = 'RETURN';
+      break;
+    case 'RETURN_SHIPPING':
+      row.statusNote = '반품 상품이 돌아오고 있어요';
+      break;
+    case 'RETURNED':
+      row.statusNote = '반품이 끝나 구매자에게 환불됐어요';
       break;
     case 'CANCELLED':
       row.statusLabel = SALES_CANCEL_LABEL[order.cancelledBy] ?? CANCELLED_LABEL;
@@ -95,7 +104,7 @@ function SalesOrdersPage() {
         if (ignore) return;
         setOrders(list.map(toSalesRow));
         setLoadState('done');
-        // 송장번호는 판매 주문 상세로 채운 뒤 다시 그림 (실패해도 목록은 그대로)
+        // 송장번호 · 반품 단계는 판매 주문 상세로 채운 뒤 다시 그림 (실패해도 목록은 그대로)
         attachTrackingNos(list).then((enriched) => {
           if (!ignore) setOrders(enriched.map(toSalesRow));
         });
@@ -117,9 +126,9 @@ function SalesOrdersPage() {
 
   const tabs = SALES_TABS.map((item) => ({
     ...item,
-    count: item.value ? orders.filter((row) => row.statusKey === item.value).length : orders.length,
+    count: item.value ? orders.filter((row) => row.tabKey === item.value).length : orders.length,
   }));
-  const rows = tab ? orders.filter((row) => row.statusKey === tab) : orders;
+  const rows = tab ? orders.filter((row) => row.tabKey === tab) : orders;
 
   return <SalesOrdersView tabs={tabs} tab={tab} onTabChange={setTab} rows={rows} />;
 }

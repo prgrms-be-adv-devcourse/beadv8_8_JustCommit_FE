@@ -42,15 +42,22 @@ const DETAIL_CONCURRENCY = 4; // 판매 주문 상세를 동시에 부르는 수
 const SHIPPING_STATUSES = ['PICKUP', 'SHIPPING', 'DELIVERED']; // 목록에 송장번호를 보여 주는 단계
 
 /**
- * 송장번호: 판매 주문 목록 응답(SellerOrderResponse)에는 없고 상세(trackingNo)에만 있어
+ * 송장번호 · 주문상품 상태: 판매 주문 목록 응답(SellerOrderResponse)에는 없고 상세(trackingNo · items[])에만 있어
  * 배송 단계(픽업 대기 · 배송 중 · 배송 완료)인 주문만 상세를 불러 붙임. 실패한 주문은 그대로 (송장번호는 「예약 전」)
+ * items[].status로 목록에서 반품 배송 중 · 반품 완료 · 일부 반품을 가림(getSalesListStatus)
+ * TODO: 목록 응답에 trackingNo · returnStatus · returnItemCount가 생기면 이 상세 호출을 뺌
  */
 export async function attachTrackingNos(orders) {
   return mapWithLimit(orders, DETAIL_CONCURRENCY, async (order) => {
-    if (order.trackingNo || !SHIPPING_STATUSES.includes(getSalesOrderStatus(order))) return order;
+    if (!SHIPPING_STATUSES.includes(getSalesOrderStatus(order))) return order;
     try {
       const detail = await fetchSalesOrder(order.sellerOrderId);
-      return detail?.trackingNo ? { ...order, trackingNo: detail.trackingNo } : order;
+      if (!detail) return order;
+      return {
+        ...order,
+        trackingNo: order.trackingNo ?? detail.trackingNo ?? null,
+        items: Array.isArray(detail.items) ? detail.items : order.items,
+      };
     } catch {
       return order;
     }

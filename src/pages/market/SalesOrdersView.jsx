@@ -23,7 +23,7 @@ const ACTION = {
 
 // 시안 08-5-1 판매 주문 (화면만, 데이터는 props)
 // rows = [{ sellerOrderId, createdAtText, orderNo, thumbnailUrl, itemName, amountText,
-//           statusKey, statusLabel, statusNote, action: ACCEPT | RETURN | DETAIL }]
+//           statusKey, statusLabel, statusTag(「일부 반품 N건」), statusNote, action: ACCEPT | RETURN | DETAIL }]
 function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
@@ -67,7 +67,12 @@ function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
                       <span className={`h-7 px-2.5 inline-flex items-center text-xs font-semibold ${status.tone}`}>
                         {row.statusLabel ?? status.label}
                       </span>
-                      {row.statusNote && <p className={`text-xs ${status.noteTone}`}>{row.statusNote}</p>}
+                      {(row.statusTag || row.statusNote) && (
+                        <p className={`text-xs ${status.noteTone}`}>
+                          {row.statusTag && <span className="font-semibold text-[#4b5563]">{row.statusTag}</span>}
+                          {row.statusTag && row.statusNote ? ` · ${row.statusNote}` : row.statusNote}
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <Link to={`/orders/seller/${row.sellerOrderId}`} className={action.className}>
