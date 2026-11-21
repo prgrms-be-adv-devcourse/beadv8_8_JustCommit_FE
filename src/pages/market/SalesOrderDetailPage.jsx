@@ -202,6 +202,11 @@ function toViewOrder(order) {
   const booked = order.shipmentStatus === 'BOOKED' || order.shipmentStatus === 'CANCEL_LOCKED';
   // 시안 08-5-7: 상품이 모두 취소된 주문(반송 중이 아님)은 송장 · 배송 단계 · 배송 조회 대신 안내 한 줄
   const cancelledOnly = salesStatus === 'CANCELLED' && mode === 'NORMAL';
+  // 반품 승인 뒤(반품 배송 중 · 환불 중 · 완료)에는 반품 송장(items[].returnTrackingNo, #606). 판매 송장 order.trackingNo와 다름
+  const returnShipItem = items.find((item) =>
+    ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'].includes(item.status),
+  );
+  const trackingNo = returnShipItem ? returnShipItem.returnTrackingNo : order.trackingNo;
   const shipment =
     mode === 'ACCEPT'
       ? null
@@ -210,7 +215,7 @@ function toViewOrder(order) {
         : cancelledOnly
         ? { cancelledNote: '취소된 주문이라 배송하지 않아요.' }
         : {
-          trackingNo: order.trackingNo ?? NO_TRACKING_NO,
+          trackingNo: trackingNo ?? NO_TRACKING_NO,
           // 시안 08-5-5: 택배 예약이 끝난 픽업 대기(BOOKED · CANCEL_LOCKED)는 예약 완료 안내
           note:
             step === 0 && mode === 'NORMAL'
