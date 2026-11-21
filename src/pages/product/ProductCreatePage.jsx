@@ -20,7 +20,16 @@ import { toReviewStage } from './reviewStatusModel';
 // 백엔드 ProductImageService 규칙과 같게 유지 (JPEG · PNG · WebP, 7.5MB 이하)
 // 7.5MB: 검수 때 사진을 base64(4/3배)로 AI에 보내 한도 10MB 안에 들게 (BE #594)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+// 브라우저가 형식(file.type)을 못 알아내 빈 값으로 줄 때는 확장자로 판단
+const TYPE_BY_EXTENSION = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const MAX_FILE_SIZE = 7_864_320; // 7.5MB
+
+// 업로드 링크 발급 · 업로드에 쓸 형식 (file.type이 비면 확장자로)
+function contentTypeOf(file) {
+  if (file.type) return file.type;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return TYPE_BY_EXTENSION[extension] ?? '';
+}
 const SEARCH_DELAY_MS = 300;
 
 let photoSeq = 0;
@@ -64,6 +73,8 @@ function ProductForm({ productId }) {
   const [species, setSpecies] = useState(null); // { speciesId, name }
   const [speciesQuery, setSpeciesQuery] = useState('');
   const [speciesOptions, setSpeciesOptions] = useState([]);
+  // 지금 목록이 어떤 검색어의 결과인지 (응답 전에 「결과 없음」이 잠깐 뜨지 않게)
+  const [speciesResultQuery, setSpeciesResultQuery] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(0);
 
@@ -144,10 +155,13 @@ function ProductForm({ productId }) {
         .then((response) => {
           if (ignore) return;
           setSpeciesOptions(response.data.data.content);
+          setSpeciesResultQuery(speciesQuery.trim());
           setActiveOption(0);
         })
         .catch(() => {
-          if (!ignore) setSpeciesOptions([]);
+          if (ignore) return;
+          setSpeciesOptions([]);
+          setSpeciesResultQuery(null);
         });
     }, SEARCH_DELAY_MS);
 
@@ -188,9 +202,9 @@ function ProductForm({ productId }) {
     const files = Array.from(event.target.files ?? []);
     event.target.value = ''; // 같은 파일을 다시 고를 수 있게 초기화
 
-    const valid = files.filter((f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_FILE_SIZE);
+    const valid = files.filter((f) => ALLOWED_TYPES.includes(contentTypeOf(f)) && f.size <= MAX_FILE_SIZE);
     if (valid.length < files.length) {
-      setErrorMessage('JPEG · PNG · WebP 형식의 7.5MB 이하 사진만 올릴 수 있어요.');
+      setErrorMessage('JPEG · PNG · WEBP 형식의 7.5MB 이하 사진만 올릴 수 있어요.');
     } else {
       setErrorMessage('');
     }
@@ -240,6 +254,8 @@ function ProductForm({ productId }) {
   const speciesProps = {
     query: speciesQuery,
     options: speciesOptions,
+    isEmptyResult:
+      speciesOptions.length === 0 && speciesQuery.trim() !== '' && speciesResultQuery === speciesQuery.trim(),
     isOpen: isDropdownOpen,
     activeIndex: activeOption,
     onSelect: selectSpecies,
@@ -283,10 +299,10 @@ function ProductForm({ productId }) {
     const newPhotos = photos.filter((p) => p.file);
     let uploadedById = {};
     if (newPhotos.length > 0) {
-      const files = newPhotos.map((p) => ({ contentType: p.file.type, size: p.file.size }));
+      const files = newPhotos.map((p) => ({ contentType: contentTypeOf(p.file), size: p.file.size }));
       const response = await issueImageUploadUrls(files);
       const links = response.data.data; // 요청한 순서대로 응답
-      await Promise.all(links.map((link, i) => uploadToPresignedUrl(link.uploadUrl, newPhotos[i].file)));
+      await Promise.all(links.map((link, i) => uploadToPresignedUrl(link.uploadUrl, newPhotos[i].file, contentTypeOf(newPhotos[i].file))));
       uploadedById = Object.fromEntries(newPhotos.map((p, i) => [p.id, links[i].imageUrl]));
     }
     return photos.map((p) => (p.file ? uploadedById[p.id] : p.url));
@@ -361,7 +377,7 @@ function ProductForm({ productId }) {
       <input
         ref={fileInputRef}
         type="file"
-        accept={ALLOWED_TYPES.join(',')}
+        accept={[...ALLOWED_TYPES, ...Object.keys(TYPE_BY_EXTENSION).map((ext) => `.${ext}`)].join(',')}
         multiple
         hidden
         onChange={handleFiles}
