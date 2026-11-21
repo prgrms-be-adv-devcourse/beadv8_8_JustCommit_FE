@@ -223,7 +223,8 @@ function Actions({ product, isOwner, isBusy, actionError, onBuy, onAddToCart, on
 }
 
 // 안내 박스 문구: [제목, 설명]
-function getNotice(product, isOwner) {
+function getNotice(product, isOwner, isAdmin) {
+  if (isAdmin) return ['관리자 계정으로 보는 화면이에요', '관리자 계정은 구매하거나 장바구니에 담을 수 없어요.'];
   if (!isOwner) return ['예치금으로 결제하고, 구매 확정 후 판매자에게 정산돼요', '배송 완료 3일 뒤에는 자동으로 구매 확정돼요.'];
   if (product.status === 'REVIEW_PENDING') {
     return ['검수 중인 상품이라 다른 회원에게 보이지 않아요', '검수를 통과하면 바로 판매를 시작해요. 결과는 알림으로도 알려 드려요.'];
@@ -249,6 +250,7 @@ function getNotice(product, isOwner) {
 function ProductDetailView({
   product,
   isOwner,
+  isAdmin,
   selected,
   onSelectImage,
   onBack,
@@ -261,7 +263,7 @@ function ProductDetailView({
 }) {
   const images = product.imageUrls ?? [];
   const badge = STATUS_BADGE[product.status];
-  const [noticeTitle, noticeText] = getNotice(product, isOwner);
+  const [noticeTitle, noticeText] = getNotice(product, isOwner, isAdmin);
   const isSoldOut = product.status === 'SOLD_OUT';
   const descriptionLines = (product.description ?? '').split('\n').filter((line) => line.trim() !== '');
 
@@ -341,16 +343,19 @@ function ProductDetailView({
             </div>
           </div>
 
-          <Actions
-            product={product}
-            isOwner={isOwner}
-            isBusy={isBusy}
-            actionError={actionError}
-            onBuy={onBuy}
-            onAddToCart={onAddToCart}
-            onToggleHidden={onToggleHidden}
-            onDelete={onDelete}
-          />
+          {/* 관리자는 둘러보기만: 구매 · 장바구니 버튼을 그리지 않음 */}
+          {!isAdmin && (
+            <Actions
+              product={product}
+              isOwner={isOwner}
+              isBusy={isBusy}
+              actionError={actionError}
+              onBuy={onBuy}
+              onAddToCart={onAddToCart}
+              onToggleHidden={onToggleHidden}
+              onDelete={onDelete}
+            />
+          )}
 
           <div className="bg-[#f4f8f6] border border-[#e5e7eb] px-5 py-4 flex items-start gap-3.5">
             <div className="mt-0.5 flex-shrink-0 text-[#0f4c3a]">

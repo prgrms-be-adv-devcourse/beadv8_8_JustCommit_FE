@@ -171,6 +171,7 @@ function ProductDetail({ productId }) {
       <ProductDetailView
         product={product}
         isOwner={isOwner}
+        isAdmin={user?.role === 'ADMIN'}
         selected={selected}
         onSelectImage={setSelected}
         onBack={goBack}
