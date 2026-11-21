@@ -92,9 +92,9 @@ function SignupPage() {
   if (step === STEP.SELLER) {
     const isSeller = role === 'seller';
 
-    // 가입 → (판매자면) 로그인 → 판매자 등록 → 가입 완료 화면
-    // 가입 API는 토큰을 주지 않고, 판매자 등록은 로그인이 필요하므로 판매자를 고른 경우에만 로그인합니다.
-    // TODO(member): 가입 요청에 판매자 등록(소개 · 동의)을 함께 받으면 로그인 없이 한 번에 끝낼 수 있음
+    // 가입 → 로그인(구매자 · 판매자 모두) → (판매자면) 판매자 등록 → 가입 완료 화면
+    // 가입 API는 토큰을 주지 않아서, 가입한 이메일 · 비밀번호로 바로 로그인해 자동 로그인 상태를 만듭니다.
+    // TODO(member): 가입 응답이 토큰을 주거나 판매자 등록(소개 · 동의)을 함께 받으면 한 번에 끝낼 수 있음
     const handleSubmit = async () => {
       if (isSubmitting) return;
       if (isSeller && !agreed) {
@@ -113,15 +113,27 @@ function SignupPage() {
         return;
       }
 
-      if (isSeller) {
+      let loggedIn = false;
+      try {
+        await login({ email: verifiedEmail, password: info.password });
+        loggedIn = true;
+      } catch {
+        // 로그인이 실패하면 완료 화면에서 「로그인하러 가기」로 직접 로그인하게 함
+        setDoneError(
+          isSeller
+            ? '가입은 끝났지만 자동으로 로그인하지 못해 판매자 등록을 하지 못했어요. 로그인한 뒤 마이페이지에서 다시 등록해 주세요.'
+            : '가입은 끝났지만 자동으로 로그인하지 못했어요. 로그인해 주세요.',
+        );
+      }
+
+      if (isSeller && loggedIn) {
         try {
-          await login({ email: verifiedEmail, password: info.password });
           // 로그인한 뒤 현재 동의 문구 버전을 받아 함께 보냄
           const policyResponse = await getSellerConsentPolicy();
           await registerSeller(intro.trim(), policyResponse.data.data?.version);
           await refreshUser();
         } catch {
-          setDoneError('가입은 끝났지만 판매자 등록을 하지 못했어요. 로그인한 뒤 마이페이지에서 다시 등록해 주세요.');
+          setDoneError('가입은 끝났지만 판매자 등록을 하지 못했어요. 마이페이지에서 다시 등록해 주세요.');
         }
       }
       setIsSubmitting(false);
@@ -143,8 +155,8 @@ function SignupPage() {
     );
   }
 
-  // 판매자 등록으로 이미 로그인됐다면 「로그인하러 가기」는 홈으로 보냄
-  return <SignupDoneView nickname={info.nickname} to={isLoggedIn ? '/' : '/login'} error={doneError} />;
+  // 06-3-9: 자동 로그인됐으면 「replant 시작하기」(홈), 로그인 실패면 「로그인하러 가기」
+  return <SignupDoneView nickname={info.nickname} loggedIn={isLoggedIn} error={doneError} />;
 }
 
 export default SignupPage;

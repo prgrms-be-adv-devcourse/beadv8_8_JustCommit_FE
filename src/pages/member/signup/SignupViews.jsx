@@ -270,7 +270,7 @@ export function SignupSellerView({ role, intro, agreed, consentPolicy, on, onPre
 }
 
 // 06-3-9 가입 완료
-export function SignupDoneView({ nickname, to, error }) {
+export function SignupDoneView({ nickname, loggedIn, error }) {
   return (
     <SignupCard width={440}>
       <SignupStepper current={3} />
@@ -284,8 +284,11 @@ export function SignupDoneView({ nickname, to, error }) {
         </p>
       </div>
       <div>
-        <Link to={to} className="w-full h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-base font-bold">
-          로그인하러 가기
+        <Link
+          to={loggedIn ? '/' : '/login'}
+          className="w-full h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-base font-bold"
+        >
+          {loggedIn ? 'replant 시작하기' : '로그인하러 가기'}
         </Link>
         <ActionErrorLine message={error} />
       </div>
