@@ -33,10 +33,16 @@ function ChatIcon({ className }) {
   );
 }
 
-function ChatProductCard({ product }) {
+// 카드를 누르면 상세로 가면서 패널을 닫음 (대화는 숨긴 패널에 그대로 남음)
+// Ctrl · Cmd · Shift 클릭(새 탭 · 새 창)은 이 화면이 그대로라 닫지 않음
+function ChatProductCard({ product, onSelect }) {
   return (
     <Link
       to={`/products/${product.productId}`}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        onSelect();
+      }}
       className="w-[132px] shrink-0 border border-[#e5e7eb] bg-white hover:border-[#0f4c3a] transition-colors"
     >
       <div className="w-full aspect-square bg-[#f0f5f1] overflow-hidden">
@@ -57,7 +63,7 @@ function ChatProductCard({ product }) {
   );
 }
 
-function BotMessage({ message }) {
+function BotMessage({ message, onSelectProduct }) {
   if (message.kind === 'error') {
     return (
       <p
@@ -82,7 +88,7 @@ function BotMessage({ message }) {
       {message.products?.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1" aria-label="추천 상품">
           {message.products.map((product) => (
-            <ChatProductCard key={product.productId} product={product} />
+            <ChatProductCard key={product.productId} product={product} onSelect={onSelectProduct} />
           ))}
         </div>
       )}
@@ -110,7 +116,7 @@ function LoginRequired({ onLogin }) {
   );
 }
 
-function ChatPanel({ isOpen }) {
+function ChatPanel({ isOpen, onSelectProduct }) {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [input, setInput] = useState('');
@@ -209,7 +215,7 @@ function ChatPanel({ isOpen }) {
               {message.text}
             </p>
           ) : (
-            <BotMessage key={message.id} message={message} />
+            <BotMessage key={message.id} message={message} onSelectProduct={onSelectProduct} />
           ),
         )}
         {isSending && (
@@ -319,7 +325,7 @@ function ChatbotWidget() {
           </button>
         </header>
         {isLoggedIn ? (
-          <ChatPanel key={user.memberId} isOpen={isOpen} />
+          <ChatPanel key={user.memberId} isOpen={isOpen} onSelectProduct={close} />
         ) : (
           <LoginRequired
             onLogin={() => {
