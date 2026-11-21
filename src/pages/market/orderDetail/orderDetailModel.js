@@ -1,6 +1,8 @@
 import { AUTO_CONFIRM_DAYS } from '../../../constants/order';
 import {
   RETURN_ITEM_STATUSES,
+  buildReturnDistance,
+  buildReturnLocation,
   buildReturnShipmentEvents,
   buildReturnTimeline,
   isReturnShipping,
@@ -334,7 +336,9 @@ function buildGroup(order, sellerOrder, index, context) {
     group.returnTimeline = {
       deliveredTime,
       steps: buildReturnSteps(returnItem, returnStatus),
-      tracking: returnShipping ? { invoiceNo: returnInvoiceNo } : null,
+      tracking: returnShipping
+        ? { invoiceNo: returnInvoiceNo, location: buildReturnLocation(returnItem), distance: buildReturnDistance(returnItem) }
+        : null,
     };
     if (returnShipping) {
       group.invoiceLabel = '반품 송장번호';

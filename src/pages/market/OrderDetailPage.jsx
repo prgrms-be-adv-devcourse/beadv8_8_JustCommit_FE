@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder, withSellerNicknames, getBuyerShipmentTracking, withShipmentTracking } from '../../api/orderApi';
+import {
+  cancelOrder,
+  cancelOrderItem,
+  confirmOrderItem,
+  getOrder,
+  withSellerNicknames,
+  getBuyerShipmentTracking,
+  withShipmentTracking,
+  getBuyerReturnShipmentTracking,
+  withReturnShipmentTracking,
+} from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -32,9 +42,16 @@ async function fetchOrder(orderId) {
   const order = await withSellerNicknames(response.data.data ?? response.data);
   // 배송 조회(#605): 택배 예약 뒤 배송 중인 판매자 주문만 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
   const sellerOrders = await Promise.all(
-    (order.sellerOrders ?? []).map((sellerOrder) =>
-      withShipmentTracking(sellerOrder, () => getBuyerShipmentTracking(orderId, sellerOrder.id)),
-    ),
+    (order.sellerOrders ?? []).map(async (sellerOrder) => {
+      const tracked = await withShipmentTracking(sellerOrder, () => getBuyerShipmentTracking(orderId, sellerOrder.id));
+      // 반품 택배 조회(#621): 반품 택배가 예약 뒤 · 도착 전인 상품만 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
+      const items = await Promise.all(
+        (tracked.items ?? []).map((item) =>
+          withReturnShipmentTracking(item, () => getBuyerReturnShipmentTracking(orderId, item.id)),
+        ),
+      );
+      return { ...tracked, items };
+    }),
   );
   return { ...order, sellerOrders };
 }

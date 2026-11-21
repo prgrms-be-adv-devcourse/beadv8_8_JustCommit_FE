@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   RETURN_ITEM_STATUSES,
+  buildReturnDistance,
+  buildReturnLocation,
   buildReturnShipmentEvents,
   buildReturnTimeline,
   isReturnShipping,
@@ -24,7 +26,12 @@ import usePollWhile from '../../hooks/usePollWhile';
 import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
-import { getSellerShipmentTracking, withShipmentTracking } from '../../api/orderApi';
+import {
+  getSellerShipmentTracking,
+  withShipmentTracking,
+  getSellerReturnShipmentTracking,
+  withReturnShipmentTracking,
+} from '../../api/orderApi';
 import SalesOrderDetailView from './SalesOrderDetailView';
 import { TrackingModal } from './orderDetail/OrderDetailModals';
 import { buildShipmentEvents } from './orderDetail/orderDetailModel';
@@ -104,7 +111,13 @@ function returnTimelineOf(items, deliveredAt) {
   return {
     deliveredTime: deliveredAt ? formatShortDateTime(deliveredAt) : null,
     steps: buildReturnTimeline(returnItem),
-    tracking: returnShipping ? { invoiceNo: returnItem.returnTrackingNo ?? NO_TRACKING_NO } : null,
+    tracking: returnShipping
+      ? {
+          invoiceNo: returnItem.returnTrackingNo ?? NO_TRACKING_NO,
+          location: buildReturnLocation(returnItem),
+          distance: buildReturnDistance(returnItem),
+        }
+      : null,
     events: returnShipping ? buildReturnShipmentEvents(returnItem) : null,
   };
 }
@@ -304,6 +317,15 @@ function SalesOrderDetailPage() {
       fetchSalesOrder(sellerOrderId)
         // 배송 조회(#605): 택배 예약 뒤 배송 중이면 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
         .then((data) => withShipmentTracking(data, () => getSellerShipmentTracking(sellerOrderId)))
+        // 반품 택배 조회(#621): 반품 택배가 예약 뒤 · 도착 전인 상품만 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
+        .then(async (data) => ({
+          ...data,
+          items: await Promise.all(
+            (data.items ?? []).map((item) =>
+              withReturnShipmentTracking(item, () => getSellerReturnShipmentTracking(sellerOrderId, item.id)),
+            ),
+          ),
+        }))
         .then((data) => {
           setOrder(data);
           setLoadState('done');
