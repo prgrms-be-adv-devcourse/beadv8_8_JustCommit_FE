@@ -74,7 +74,10 @@ function useMemberInfoForm({ withPassword }) {
   const [accountNo, setAccountNo] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [recipientName, setRecipientName] = useState('');
-  const [recipientPhone, setRecipientPhone] = useState('');
+  // 받는 사람 연락처: 직접 고치기 전까지는 위에서 입력한 휴대폰 번호를 따라감 (받는 사람 이름은 닉네임과 별개라 따로 입력)
+  const [recipientPhoneInput, setRecipientPhoneInput] = useState('');
+  const [isRecipientPhoneEdited, setIsRecipientPhoneEdited] = useState(false);
+  const recipientPhone = isRecipientPhoneEdited ? recipientPhoneInput : phone.value;
   const [zipcode, setZipcode] = useState('');
   const [address1, setAddress1] = useState('');
   const [address2, setAddress2] = useState('');
@@ -133,7 +136,10 @@ function useMemberInfoForm({ withPassword }) {
     accountNoChange: (value) => setAccountNo(onlyDigits(value, 14)),
     accountHolderChange: setAccountHolder,
     recipientNameChange: setRecipientName,
-    recipientPhoneChange: (value) => setRecipientPhone(onlyDigits(value, 11)),
+    recipientPhoneChange: (value) => {
+      setIsRecipientPhoneEdited(true);
+      setRecipientPhoneInput(onlyDigits(value, 11));
+    },
     searchAddress,
     address2Change: setAddress2,
     addressNameChange: setAddressName,
