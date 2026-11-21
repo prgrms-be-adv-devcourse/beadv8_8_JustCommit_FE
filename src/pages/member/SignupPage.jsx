@@ -93,7 +93,7 @@ function SignupPage() {
     const isSeller = role === 'seller';
 
     // 가입 → (판매자면) 로그인 → 판매자 등록 → 가입 완료 화면
-    // 가입 API는 토큰을 주지 않고, 판매자 등록은 로그인이 필요하므로 판매자를 고른 경우에만 로그인합니다.
+    // 가입 API는 토큰을 주지 않으므로 가입 직후 바로 로그인합니다 (구매자 · 판매자 모두). 판매자 등록은 그 뒤에 이어서 합니다.
     // TODO(member): 가입 요청에 판매자 등록(소개 · 동의)을 함께 받으면 로그인 없이 한 번에 끝낼 수 있음
     const handleSubmit = async () => {
       if (isSubmitting) return;
@@ -113,9 +113,18 @@ function SignupPage() {
         return;
       }
 
-      if (isSeller) {
+      let isAutoLoggedIn = false;
+      try {
+        await login({ email: verifiedEmail, password: info.password });
+        isAutoLoggedIn = true;
+      } catch {
+        // 자동 로그인 실패: 가입은 끝났으므로 완료 화면의 「로그인하러 가기」로 직접 로그인
+      }
+
+      if (isSeller && !isAutoLoggedIn) {
+        setDoneError('가입은 끝났지만 판매자 등록을 하지 못했어요. 로그인한 뒤 마이페이지에서 다시 등록해 주세요.');
+      } else if (isSeller) {
         try {
-          await login({ email: verifiedEmail, password: info.password });
           // 로그인한 뒤 현재 동의 문구 버전을 받아 함께 보냄
           const policyResponse = await getSellerConsentPolicy();
           await registerSeller(intro.trim(), policyResponse.data.data?.version);
@@ -143,7 +152,7 @@ function SignupPage() {
     );
   }
 
-  // 판매자 등록으로 이미 로그인됐다면 「로그인하러 가기」는 홈으로 보냄
+  // 가입 직후 자동 로그인됐으면 홈으로, 자동 로그인에 실패했으면 로그인 화면으로 보냄
   return <SignupDoneView nickname={info.nickname} to={isLoggedIn ? '/' : '/login'} error={doneError} />;
 }
 
