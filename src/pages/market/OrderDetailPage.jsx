@@ -75,7 +75,8 @@ function OrderDetailPage() {
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState(null);
-  const [trackingGroup, setTrackingGroup] = useState(null);
+  // 배송 조회 모달은 판매자 주문 key만 기억하고, 내용은 매번 최신 view에서 찾음 (새로고침 뒤 송장번호 · 단계가 바로 바뀌도록)
+  const [trackingKey, setTrackingKey] = useState(null);
   const [cancelAllTarget, setCancelAllTarget] = useState(null);
   const [cancellingAll, setCancellingAll] = useState(false);
   const [cancelAllError, setCancelAllError] = useState(null);
@@ -133,7 +134,7 @@ function OrderDetailPage() {
     setConfirmTarget(null);
     setConfirmError(null);
   }, []);
-  const closeTracking = useCallback(() => setTrackingGroup(null), []);
+  const closeTracking = useCallback(() => setTrackingKey(null), []);
   const closeCancelAll = useCallback(() => {
     setCancelAllTarget(null);
     setCancelAllError(null);
@@ -228,6 +229,7 @@ function OrderDetailPage() {
   };
 
   // 배송 조회 모달: 배송 단계 시각 목록(buildShipmentEvents) + 최신 줄에 현재 위치(배송 조회 API locationName). 시각이 하나도 없으면 「조회 전」 한 줄
+  const trackingGroup = trackingKey == null ? null : view?.groups?.find((group) => group.key === trackingKey) ?? null;
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
     invoiceLabel: trackingGroup.invoiceLabel,
@@ -247,7 +249,7 @@ function OrderDetailPage() {
       busyItemId={busyItemId}
       refreshCooldown={refreshCooldown}
       onAction={handleAction}
-      onOpenTracking={setTrackingGroup}
+      onOpenTracking={(group) => setTrackingKey(group.key)}
       onRefreshDistance={refreshDistance}
       onCancelAll={cancelAllPreview ? () => setCancelAllTarget(cancelAllPreview) : null}
     >
