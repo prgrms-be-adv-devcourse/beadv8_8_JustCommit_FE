@@ -221,7 +221,12 @@ function SellerGroup({ group, busyItemId, refreshCooldown, onAction, onOpenTrack
       {expanded ? (
         <>
           {group.returnTimeline && (
-            <ReturnTimeline deliveredTime={group.returnTimeline.deliveredTime} steps={group.returnTimeline.steps} />
+            <ReturnTimeline
+              deliveredTime={group.returnTimeline.deliveredTime}
+              steps={group.returnTimeline.steps}
+              tracking={group.returnTimeline.tracking}
+              onOpenTracking={() => onOpenTracking(group)}
+            />
           )}
           {group.headline && <Headline headline={group.headline} />}
           {group.steps && <StepBar steps={group.steps.items} current={group.steps.current} label={group.steps.label} />}

@@ -41,6 +41,26 @@ const DETAIL_CONCURRENCY = 4; // 주문 상세를 동시에 부르는 수
 
 const LIVE_ITEM = (item) => !['CANCELLED', 'RETURNED'].includes(item.status);
 
+// 반품 중인 주문상품 상태 (BE OrderItemStatus) → 목록 반품 단계. 진행이 가장 덜 된 상품 기준
+const RETURN_STAGE_BY_ITEM_STATUS = {
+  RETURN_REQUESTED: 'RETURN_REQUESTED',
+  RETURN_IN_TRANSIT: 'RETURN_SHIPPING',
+  RETURN_PROCESSING: 'RETURN_SHIPPING',
+  RETURNED: 'RETURNED',
+};
+const RETURN_STAGE_ORDER = ['RETURN_REQUESTED', 'RETURN_SHIPPING', 'RETURNED'];
+
+// 판매자 주문의 반품: 취소되지 않은 상품이 모두 반품 중이면 그 단계(returnStage), 일부만이면 반품 건수(partialReturnCount)
+function getReturnInfo(items) {
+  const notCancelled = items.filter((item) => item.status !== 'CANCELLED');
+  const returning = notCancelled.filter((item) => RETURN_STAGE_BY_ITEM_STATUS[item.status]);
+  if (returning.length === 0) return { returnStage: null, partialReturnCount: 0 };
+  if (returning.length < notCancelled.length) return { returnStage: null, partialReturnCount: returning.length };
+  const stages = returning.map((item) => RETURN_STAGE_BY_ITEM_STATUS[item.status]);
+  const returnStage = RETURN_STAGE_ORDER.find((stage) => stages.includes(stage));
+  return { returnStage, partialReturnCount: 0 };
+}
+
 // 주문 상세의 판매자 주문 → 목록 카드 한 줄에 쓰는 값 (BE OrderDetailResponse.SellerOrderDetail)
 // 판매자 주문 상태는 응답에 없어 주문상품 상태로 정함: 모두 취소 → CANCELLED, 수락 대기 상품 → ACCEPT_PENDING,
 // 남은 상품이 모두 구매 확정 → CONFIRMED (주문 상세 화면 orderDetailModel과 같은 기준)
@@ -56,6 +76,7 @@ function toListSellerOrder(sellerOrder) {
     .filter((item) => item.status === 'CANCELLED')
     .reduce((sum, item) => sum + Number(item.price), 0);
   return {
+    ...getReturnInfo(items),
     sellerOrderId: sellerOrder.id,
     sellerName: sellerOrder.sellerNickname,
     representativeItemName: items[0]?.productName,
@@ -108,6 +129,10 @@ const STAGES = {
   SHIPPING: { badge: { label: '배송 중', tone: 'green' }, tab: 'SHIPPING' },
   DELIVERED: { badge: { label: '배송 완료', tone: 'green' }, tab: 'SHIPPING' },
   CONFIRMED: { badge: { label: '구매 확정', tone: 'dark' }, tab: 'CONFIRMED' },
+  // 반품 (시안 03-4-1): 진행 중은 배송 탭, 반품 완료는 취소 탭
+  RETURN_REQUESTED: { badge: { label: '반품 신청', tone: 'amber' }, tab: 'SHIPPING' },
+  RETURN_SHIPPING: { badge: { label: '반품 배송 중', tone: 'amber' }, tab: 'SHIPPING' },
+  RETURNED: { badge: { label: '반품 완료', tone: 'gray' }, tab: 'CANCELLED', muted: true },
   REJECTED: { badge: { label: '판매자 거절', tone: 'gray' }, tab: 'CANCELLED', muted: true },
   AUTO_CANCELLED: { badge: { label: '자동 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
   CANCELLED: { badge: { label: '주문 취소', tone: 'gray' }, tab: 'CANCELLED', muted: true },
@@ -124,6 +149,8 @@ function getStage(sellerOrder) {
     return 'CANCELLED';
   }
   if (sellerOrder.status === 'ACCEPT_PENDING') return 'ACCEPT';
+  // 반품: 가는 배송이 배송 완료여도 반품 단계가 먼저 (반품 중에는 자동 구매 확정 안내를 보이지 않음)
+  if (sellerOrder.returnStage) return sellerOrder.returnStage;
   if (sellerOrder.confirmedAt || sellerOrder.status === 'CONFIRMED') return 'CONFIRMED';
   switch (sellerOrder.shipmentStatus) {
     case 'READY':
@@ -148,6 +175,18 @@ function getStageNote(stage, sellerOrder) {
     const count = sellerOrder.cancelledItemCount;
     return { strong: `일부 취소 ${count}건`, text: `판매자가 ${count}건을 거절해 ${refund}예치금으로 환불됐어요` };
   }
+  if (sellerOrder.partialReturnCount > 0) {
+    const count = sellerOrder.partialReturnCount;
+    if (stage === 'DELIVERED') {
+      const date = sellerOrder.deliveredAt
+        ? `${formatMonthDay(new Date(sellerOrder.deliveredAt).getTime() + AUTO_CONFIRM_MS)}에`
+        : `배송 완료 ${AUTO_CONFIRM_MS / (24 * 60 * 60 * 1000)}일 뒤`;
+      return { strong: `일부 반품 ${count}건`, text: `반품하지 않은 상품은 ${date} 자동으로 구매 확정돼요` };
+    }
+    const base = getStageNote(stage, { ...sellerOrder, partialReturnCount: 0 });
+    // 다른 단계 안내가 없으면(예: 구매 확정) 건수만
+    return base ? { strong: `일부 반품 ${count}건`, text: base.text } : { tone: 'gray', text: `일부 반품 ${count}건` };
+  }
   switch (stage) {
     case 'ACCEPT': {
       // 결제 시각이 없으면 마감 시각 없이 안내
@@ -165,6 +204,12 @@ function getStageNote(stage, sellerOrder) {
         : `배송 완료 ${AUTO_CONFIRM_MS / (24 * 60 * 60 * 1000)}일 뒤`;
       return { tone: 'gray', text: `${date} 자동으로 구매 확정돼요` };
     }
+    case 'RETURN_REQUESTED':
+      return { tone: 'gray', text: '판매자가 반품 신청을 확인하고 있어요' };
+    case 'RETURN_SHIPPING':
+      return { tone: 'gray', text: '반품 상품이 판매자에게 가고 있어요' };
+    case 'RETURNED':
+      return { tone: 'gray', text: '반품이 끝나 환불됐어요' };
     case 'REJECTED':
       return { tone: 'gray', text: `판매자가 주문을 거절해 ${refund}예치금으로 환불됐어요` };
     case 'AUTO_CANCELLED':

@@ -1,5 +1,10 @@
 import { AUTO_CONFIRM_DAYS } from '../../../constants/order';
-import { RETURN_ITEM_STATUSES, buildReturnTimeline } from '../../../components/order/returnSteps';
+import {
+  RETURN_ITEM_STATUSES,
+  buildReturnShipmentEvents,
+  buildReturnTimeline,
+  isReturnShipping,
+} from '../../../components/order/returnSteps';
 import { formatDateTime, formatPrice, maskPhone, toValidDate } from '../../../utils/format';
 import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 
@@ -322,13 +327,19 @@ function buildGroup(order, sellerOrder, index, context) {
     const returnRequest = returnItem.returnRequest;
     const deliveredTime = formatShortDateTime(sellerOrder.deliveredAt);
     // 배송 완료 시각이 없으면 그 한 줄을 숨김
-    group.returnTimeline = { deliveredTime, steps: buildReturnSteps(returnItem, returnStatus) };
-    if (returnStatus === 'SHIPPING' || returnStatus === 'COMPLETED') {
-      group.tracking = {
-        invoiceLabel: '반품 송장번호',
-        invoiceNo: returnRequest?.trackingNo ?? NO_TRACKING_NO,
-        location: getLocation(returnRequest),
-      };
+    // 반품 택배 단계(승인 뒤)면 타임라인 아래 「반품 송장번호 · 배송 조회」 (판매자 상세와 같은 템플릿, 시안 04-4-2 · 04-4-3)
+    // 이때 배송 조회 모달도 가는 배송이 아니라 반품 택배 송장 · 단계로 바꿈. 반품 신청 단계면 줄을 숨김
+    const returnShipping = isReturnShipping(returnItem);
+    const returnInvoiceNo = returnItem.returnTrackingNo ?? returnRequest?.trackingNo ?? NO_TRACKING_NO;
+    group.returnTimeline = {
+      deliveredTime,
+      steps: buildReturnSteps(returnItem, returnStatus),
+      tracking: returnShipping ? { invoiceNo: returnInvoiceNo } : null,
+    };
+    if (returnShipping) {
+      group.invoiceLabel = '반품 송장번호';
+      group.invoiceNo = returnInvoiceNo;
+      group.shipmentEvents = buildReturnShipmentEvents(returnItem);
     }
     return group;
   }

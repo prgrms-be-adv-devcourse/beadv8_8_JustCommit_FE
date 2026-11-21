@@ -213,6 +213,7 @@ function OrderDetailPage() {
   // 배송 조회 모달: 배송 단계 시각 목록(buildShipmentEvents) + 최신 줄에 현재 위치(배송 조회 API locationName). 시각이 하나도 없으면 「조회 전」 한 줄
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
+    invoiceLabel: trackingGroup.invoiceLabel,
     invoiceNo: trackingGroup.tracking?.invoiceNo ?? trackingGroup.invoiceNo,
     events: trackingGroup.shipmentEvents?.length
       ? trackingGroup.shipmentEvents
