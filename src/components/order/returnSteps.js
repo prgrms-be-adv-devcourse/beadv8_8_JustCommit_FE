@@ -59,3 +59,25 @@ export function buildReturnTimeline(item, fallback = {}) {
     }),
   };
 }
+
+// 반품 택배 단계(승인 뒤): 이때부터 배송 카드의 송장 · 배송 조회는 가는 배송이 아니라 반품 택배 기준
+// BE #606: items[].returnShipmentStatus · returnTrackingNo가 있거나, 주문상품이 반품 택배 상태면 반품 택배 단계
+const RETURN_SHIPPING_ITEM_STATUSES = ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'];
+
+export function isReturnShipping(item) {
+  if (!item) return false;
+  return item.returnShipmentStatus != null || item.returnTrackingNo != null || RETURN_SHIPPING_ITEM_STATUSES.includes(item.status);
+}
+
+// 배송 조회 모달용 반품 택배 단계 목록 (최신이 먼저, 시각이 있는 단계만)
+// TODO: 반품 택배 현재 위치 · 기사님 거리 API가 생기면 location을 채움 (지금은 없어 칸을 숨김)
+export function buildReturnShipmentEvents(item) {
+  if (!item) return [];
+  return [
+    ['returnArrivedAt', '판매자 도착'],
+    ['returnInTransitAt', '반품 배송 중'],
+    ['returnPickedUpAt', '반품 수거'],
+  ]
+    .filter(([key]) => shortTime(item[key]))
+    .map(([key, status]) => ({ time: shortTime(item[key]), status, location: null }));
+}

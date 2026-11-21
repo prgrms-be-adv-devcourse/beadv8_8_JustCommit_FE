@@ -431,16 +431,19 @@ function SalesOrderDetailView({
         {shipment && !shipment.cancelledNote && (
           <section className="bg-white border border-[#e5e7eb]">
             <CardHead title="배송">
-              <span className="text-sm text-[#4b5563]">
-                송장번호 <span className="font-semibold text-[#111827] tabular-nums">{shipment.trackingNo}</span>
-              </span>
+              {!shipment.headTrackingHidden && (
+                <span className="text-sm text-[#4b5563]">
+                  송장번호 <span className="font-semibold text-[#111827] tabular-nums">{shipment.trackingNo}</span>
+                </span>
+              )}
             </CardHead>
             {shipment.note && <div className="px-6 pt-4 text-[13px] text-[#6b7280]">{shipment.note}</div>}
             {shipment.returnTimeline ? (
               <ReturnTimeline
                 deliveredTime={shipment.returnTimeline.deliveredTime}
                 steps={shipment.returnTimeline.steps}
-                trackingNo={shipment.returnTimeline.trackingNo}
+                tracking={shipment.returnTimeline.tracking}
+                onOpenTracking={onOpenTracking}
               />
             ) : (
               shipment.step !== null && <ShipmentSteps step={shipment.step} stepTimes={shipment.stepTimes} />
@@ -448,34 +451,36 @@ function SalesOrderDetailView({
             {shipment.distance && (
               <DistanceBox distance={shipment.distance} refreshCooldown={refreshCooldown} onRefresh={onRefreshDistance} />
             )}
-            <div className={`px-6 py-3${shipment.step !== null && !shipment.returnTimeline ? ' border-t' : ''} border-[#f3f4f6] flex items-center gap-3`}>
-              {shipment.location && (
-                <span className="flex items-center gap-1.5 text-[13px] text-[#111827]">
-                  <svg className="w-4 h-4 text-[#0f4c3a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {`현재 위치: ${shipment.location}`}
+            {!shipment.headTrackingHidden && (
+              <div className={`px-6 py-3${shipment.step !== null && !shipment.returnTimeline ? ' border-t' : ''} border-[#f3f4f6] flex items-center gap-3`}>
+                {shipment.location && (
+                  <span className="flex items-center gap-1.5 text-[13px] text-[#111827]">
+                    <svg className="w-4 h-4 text-[#0f4c3a] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {`현재 위치: ${shipment.location}`}
+                  </span>
+                )}
+                <span className="ml-auto">
+                  <button
+                    type="button"
+                    className="shrink-0 flex items-center gap-0.5 text-[13px] font-semibold text-[#0f4c3a]"
+                    onClick={onOpenTracking}
+                  >
+                    배송 조회
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </span>
-              )}
-              <span className="ml-auto">
-                <button
-                  type="button"
-                  className="shrink-0 flex items-center gap-0.5 text-[13px] font-semibold text-[#0f4c3a]"
-                  onClick={onOpenTracking}
-                >
-                  배송 조회
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </span>
-            </div>
+              </div>
+            )}
           </section>
         )}
 

@@ -224,7 +224,8 @@ function SellerGroup({ group, busyItemId, refreshCooldown, onAction, onOpenTrack
             <ReturnTimeline
               deliveredTime={group.returnTimeline.deliveredTime}
               steps={group.returnTimeline.steps}
-              trackingNo={group.returnTimeline.trackingNo}
+              tracking={group.returnTimeline.tracking}
+              onOpenTracking={() => onOpenTracking(group)}
             />
           )}
           {group.headline && <Headline headline={group.headline} />}

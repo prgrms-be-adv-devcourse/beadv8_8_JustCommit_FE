@@ -153,7 +153,8 @@ export function ConfirmModal({ target, confirming, error, onClose, onConfirm }) 
 }
 
 // 시안 03-5-4 배송 조회 모달
-// tracking = { sellerName, invoiceNo, events: [{ time, status, location? }] } — 첫 줄이 최신. 위치가 없으면 칸을 숨김
+// tracking = { sellerName, invoiceLabel?, invoiceNo, events: [{ time, status, location? }] } — 첫 줄이 최신. 위치가 없으면 칸을 숨김
+//   invoiceLabel: 반품 택배를 조회할 때 「반품 송장번호」 (없으면 「송장번호」)
 export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, onClose }) {
   return (
     <Modal
@@ -172,7 +173,7 @@ export function TrackingModal({ tracking, refreshCooldown, onRefresh, onCopy, on
       }
     >
       <div className="px-4 py-3 bg-[#f9fafb] border border-[#e5e7eb] flex items-center gap-3">
-        <span className="text-[13px] text-[#6b7280]">송장번호</span>
+        <span className="text-[13px] text-[#6b7280]">{tracking.invoiceLabel ?? '송장번호'}</span>
         <span className="font-bold text-[#111827] tabular-nums">{tracking.invoiceNo}</span>
         <button
           type="button"
