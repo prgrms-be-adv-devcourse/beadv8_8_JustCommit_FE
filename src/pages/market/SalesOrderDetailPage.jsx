@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RETURN_ITEM_STATUSES, buildReturnTimeline } from '../../components/order/returnSteps';
+import {
+  RETURN_ITEM_STATUSES,
+  buildReturnShipmentEvents,
+  buildReturnTimeline,
+  isReturnShipping,
+} from '../../components/order/returnSteps';
 import { Navigate, useParams } from 'react-router-dom';
 import { getAddresses } from '../../api/memberApi';
 import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
@@ -94,9 +99,13 @@ function acceptTexts(allItems, rejectIds) {
 function returnTimelineOf(items, deliveredAt) {
   const returnItem = items.find((item) => RETURN_ITEM_STATUSES.includes(item.status));
   if (!returnItem) return null;
+  // 반품 택배 단계(승인 뒤)면 반품 송장 · 배송 조회를 반품 택배 기준으로 (BE #606 returnTrackingNo · returnShipmentStatus)
+  const returnShipping = isReturnShipping(returnItem);
   return {
     deliveredTime: deliveredAt ? formatShortDateTime(deliveredAt) : null,
     steps: buildReturnTimeline(returnItem),
+    tracking: returnShipping ? { invoiceNo: returnItem.returnTrackingNo ?? NO_TRACKING_NO } : null,
+    events: returnShipping ? buildReturnShipmentEvents(returnItem) : null,
   };
 }
 
@@ -116,6 +125,11 @@ function toViewOrder(order) {
     if (item.status === 'CANCELLED') statusText = SALES_CANCEL_LABEL[item.cancelledBy ?? order.cancelledBy] ?? cancelLabel;
     if (item.status === 'RETURN_REQUESTED') {
       statusText = '반품 신청';
+      statusTone = 'text-[#92400e]';
+    }
+    // 시안 04-5-4: 반품 택배가 오는 중 · 판매자에게 도착(환불 대기)
+    if (item.status === 'RETURN_IN_TRANSIT' || item.status === 'RETURN_PROCESSING') {
+      statusText = item.status === 'RETURN_IN_TRANSIT' ? '반품 배송 중' : '판매자 도착';
       statusTone = 'text-[#92400e]';
     }
     if (item.status === 'RETURNED') statusText = '반품 완료';
@@ -193,6 +207,18 @@ function toViewOrder(order) {
     ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'].includes(item.status),
   );
   const trackingNo = returnShipItem ? returnShipItem.returnTrackingNo : order.trackingNo;
+
+  // 판매액 줄 배송비 문구 (BE cancel-refund.md 「반품 환불」): 반품 배송비는 판매자가 냄.
+  // 전부 반품(취소 상품을 빼고 남은 상품이 모두 반품 승인 뒤)이면 구매자가 낸 원래 배송비도 판매자가 냄
+  const feeText = formatPrice(shippingFee);
+  const notCancelledItems = items.filter((item) => item.status !== 'CANCELLED');
+  const allReturned =
+    notCancelledItems.length > 0 &&
+    notCancelledItems.every((item) => ['RETURN_IN_TRANSIT', 'RETURN_PROCESSING', 'RETURNED'].includes(item.status));
+  let saleFeeText = `배송비 ${feeText}은 구매자가 내요`;
+  if (allReturned) saleFeeText = `구매자가 낸 배송비 ${feeText}과 반품 배송비 ${feeText}은 판매자가 내요`;
+  else if (returnShipItem) saleFeeText = `배송비 ${feeText}은 구매자가 내요 · 반품 배송비 ${feeText}은 판매자가 내요`;
+
   const shipment =
     mode === 'ACCEPT'
       ? null
@@ -228,6 +254,18 @@ function toViewOrder(order) {
           events: buildShipmentEvents(order),
         };
 
+  // 시안 04-5-4: 반품 택배 단계면 가는 배송 송장 · 현재 위치 · 기사님 거리 대신 반품 송장 · 반품 택배 단계만 보여 줌
+  // (가는 배송은 타임라인 위 「구매 배송 · 배송 완료」 한 줄로만 남음)
+  const returnTracking = shipment?.returnTimeline?.tracking;
+  if (returnTracking) {
+    shipment.headTrackingHidden = true;
+    shipment.invoiceLabel = '반품 송장번호';
+    shipment.trackingNo = returnTracking.invoiceNo;
+    shipment.events = shipment.returnTimeline.events;
+    shipment.location = null;
+    shipment.distance = null;
+  }
+
   return {
     sellerOrderId: order.sellerOrderId,
     mode,
@@ -236,7 +274,7 @@ function toViewOrder(order) {
     saleFooter:
       mode === 'CANCEL_RETURN'
         ? null
-        : { label: `판매액 (배송비 ${formatPrice(shippingFee)}은 구매자가 냄)`, amountText: formatPrice(sale) },
+        : { label: `판매액 (${saleFeeText})`, amountText: formatPrice(sale) },
     recipient: {
       name: order.recipientName,
       phone: maskPhone(order.recipientPhone),
@@ -417,6 +455,7 @@ function SalesOrderDetailPage() {
   const tracking = trackingOpen &&
     shipment?.events && {
       sellerName: '내 판매 주문',
+      invoiceLabel: shipment.invoiceLabel,
       invoiceNo: shipment.trackingNo,
       events: shipment.events.length ? shipment.events : [{ time: EMPTY, status: NO_LOCATION }],
     };
