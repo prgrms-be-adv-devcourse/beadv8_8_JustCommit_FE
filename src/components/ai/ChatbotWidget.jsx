@@ -86,20 +86,6 @@ function BotMessage({ message }) {
           ))}
         </div>
       )}
-      {message.species?.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] text-gray-400">참고한 품종</span>
-          {message.species.map((species) => (
-            <Link
-              key={species.speciesId}
-              to={`/?speciesId=${species.speciesId}`}
-              className="px-2 py-0.5 border border-[#d1e7dd] text-[11px] text-[#0f4c3a] hover:bg-[#f0f5f1]"
-            >
-              {species.name}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -162,7 +148,7 @@ function ChatPanel({ isOpen }) {
           text: data.answer,
           answerGenerated: data.answerGenerated,
           products: data.products ?? [],
-          species: data.species ?? [],
+          // 답변이 참고한 품종(data.species)은 그리지 않음: 상품이 없는 품종은 눌러도 빈 목록이라 헷갈림
         }),
       ]);
     } catch (error) {
@@ -308,8 +294,9 @@ function ChatbotWidget() {
   return (
     <>
       {/* 열고 닫아도 대화가 남도록 패널은 숨기기만 함. 회원이 바뀌면(key) 대화를 새로 시작 */}
+      {/* 최대 높이: 창 높이 - 헤더(84px, sticky z-50) - 아래 여백(96px) - 16px → 창이 낮아도 헤더에 가리지 않음 */}
       <section
-        className={`fixed right-6 bottom-24 z-40 w-[380px] max-w-[calc(100vw-32px)] h-[560px] max-h-[calc(100vh-140px)] bg-white border border-gray-200 shadow-xl flex-col ${
+        className={`fixed right-6 bottom-24 z-40 w-[380px] max-w-[calc(100vw-32px)] h-[560px] max-h-[calc(100dvh-196px)] bg-white border border-gray-200 shadow-xl flex-col ${
           isOpen ? 'flex' : 'hidden'
         }`}
         aria-label="식물 상담 챗봇"

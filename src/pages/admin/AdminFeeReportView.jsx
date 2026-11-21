@@ -192,13 +192,13 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
             </tr>
             <tr className="bg-[#f9fafb] text-[13px] text-[#4b5563]">
               <th className="px-4 py-3 text-left font-semibold">날짜</th>
-              <th className="px-4 py-3 text-right font-semibold">정산 건수</th>
-              <th className="px-4 py-3 text-right font-semibold">수수료</th>
-              <th className="px-4 py-3 text-right font-semibold">판매자 부담금</th>
-              <th className="px-4 py-3 text-right font-semibold text-[#0f4c3a]">순수익</th>
-              <th className="px-4 py-3 text-right font-semibold">배송비 수납</th>
-              <th className="px-4 py-3 text-right font-semibold">배송비 환불</th>
-              <th className="px-4 py-3 text-right font-semibold">총 입금</th>
+              <th className="px-4 py-3 text-left font-semibold">정산 건수</th>
+              <th className="px-4 py-3 text-left font-semibold">수수료</th>
+              <th className="px-4 py-3 text-left font-semibold">판매자 부담금</th>
+              <th className="px-4 py-3 text-left font-semibold text-[#0f4c3a]">순수익</th>
+              <th className="px-4 py-3 text-left font-semibold">배송비 수납</th>
+              <th className="px-4 py-3 text-left font-semibold">배송비 환불</th>
+              <th className="px-4 py-3 text-left font-semibold">총 입금</th>
             </tr>
           </thead>
           <tbody>
@@ -207,52 +207,52 @@ function AdminFeeReportView({ period, report, onPeriodChange, onDownloadCsv }) {
                 <td className="px-4 py-3 text-[#111827] tabular-nums whitespace-nowrap">
                   {formatReportDate(row.date).full}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">
+                <td className="px-4 py-3 text-left tabular-nums">
                   {formatNumber(row.settlementCount)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">{formatNumber(row.fee)}</td>
+                <td className="px-4 py-3 text-left tabular-nums">{formatNumber(row.fee)}</td>
                 <td
-                  className={`px-4 py-3 text-right tabular-nums ${row.sellerBurden === 0 ? 'text-[#9ca3af]' : ''}`}
+                  className={`px-4 py-3 text-left tabular-nums ${row.sellerBurden === 0 ? 'text-[#9ca3af]' : ''}`}
                 >
                   {formatNumber(row.sellerBurden)}
                 </td>
-                <td className="px-4 py-3 text-right font-bold tabular-nums text-[#0f4c3a] bg-[#f4f8f6]">
+                <td className="px-4 py-3 text-left font-bold tabular-nums text-[#0f4c3a] bg-[#f4f8f6]">
                   {formatNumber(row.netRevenue)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-[#4b5563]">
+                <td className="px-4 py-3 text-left tabular-nums text-[#4b5563]">
                   {formatNumber(row.shippingCollected)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right tabular-nums ${
+                  className={`px-4 py-3 text-left tabular-nums ${
                     row.shippingRefunded === 0 ? 'text-[#9ca3af]' : 'text-[#b91c1c]'
                   }`}
                 >
                   {formatMinus(row.shippingRefunded)}
                 </td>
-                <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                <td className="px-4 py-3 text-left font-semibold tabular-nums">
                   {formatNumber(row.totalDeposit)}
                 </td>
               </tr>
             ))}
             <tr className="border-t-2 border-[#d1d5db] bg-[#f9fafb] font-bold">
               <td className="px-4 py-3">합계</td>
-              <td className="px-4 py-3 text-right tabular-nums">
+              <td className="px-4 py-3 text-left tabular-nums">
                 {formatNumber(total.settlementCount)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums">{formatNumber(total.fee)}</td>
-              <td className="px-4 py-3 text-right tabular-nums">
+              <td className="px-4 py-3 text-left tabular-nums">{formatNumber(total.fee)}</td>
+              <td className="px-4 py-3 text-left tabular-nums">
                 {formatNumber(total.sellerBurden)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums text-[#0f4c3a] bg-[#f4f8f6]">
+              <td className="px-4 py-3 text-left tabular-nums text-[#0f4c3a] bg-[#f4f8f6]">
                 {formatNumber(total.netRevenue)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums">
+              <td className="px-4 py-3 text-left tabular-nums">
                 {formatNumber(total.shippingCollected)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums text-[#b91c1c]">
+              <td className="px-4 py-3 text-left tabular-nums text-[#b91c1c]">
                 {formatMinus(total.shippingRefunded)}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums">
+              <td className="px-4 py-3 text-left tabular-nums">
                 {formatNumber(total.totalDeposit)}
               </td>
             </tr>

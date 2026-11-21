@@ -28,16 +28,16 @@ export function CountTabs({ tabs, value, onChange }) {
 // quota = { reviewing, registeredToday, reviewedToday } (값은 "3 / 5개"처럼 완성된 문자열)
 export function QuotaBar({ quota }) {
   return (
-    <div className="px-5 py-3 bg-[#f9fafb] border border-[#e5e7eb] flex items-center gap-6 text-sm text-[#4b5563]">
-      <span>
+    <div className="px-5 py-3 bg-[#f9fafb] border border-[#e5e7eb] flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-[#4b5563]">
+      <span className="whitespace-nowrap">
         검수 중 <b className="text-[#111827] tabular-nums">{quota.reviewing}</b>
       </span>
-      <span className="w-px h-4 bg-[#e5e7eb]"></span>
-      <span>
+      <span className="hidden sm:block w-px h-4 bg-[#e5e7eb]"></span>
+      <span className="whitespace-nowrap">
         오늘 등록 <b className="text-[#111827] tabular-nums">{quota.registeredToday}</b>
       </span>
-      <span className="w-px h-4 bg-[#e5e7eb]"></span>
-      <span>
+      <span className="hidden sm:block w-px h-4 bg-[#e5e7eb]"></span>
+      <span className="whitespace-nowrap">
         오늘 사진 검수 <b className="text-[#111827] tabular-nums">{quota.reviewedToday}</b>
       </span>
     </div>

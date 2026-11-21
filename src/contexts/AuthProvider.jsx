@@ -6,7 +6,7 @@ import {
   logout as logoutApi,
   signup as signupApi,
 } from '../api/memberApi';
-import { clearAccessToken, onSessionExpired, setAccessToken } from '../api/tokenStore';
+import { clearAccessToken, markSessionEnded, onSessionExpired, setAccessToken } from '../api/tokenStore';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
@@ -79,6 +79,7 @@ export function AuthProvider({ children }) {
       await logoutApi();
     } finally {
       clearAccessToken();
+      markSessionEnded();
       setUser(null);
     }
   }, []);

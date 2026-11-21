@@ -10,16 +10,16 @@ import { orEmpty } from '../../constants/emptyText';
 export const APPEAL_MEMO_MAX = 200;
 
 const linkWhite =
-  'h-12 w-[160px] flex items-center justify-center bg-white border border-[#d1d5db] text-[15px] font-semibold text-[#111827]';
-const linkGreen = 'flex-1 h-12 flex items-center justify-center bg-[#0f4c3a] text-white text-[15px] font-bold';
+  'h-12 w-full sm:w-[160px] shrink-0 flex items-center justify-center bg-white border border-[#d1d5db] text-[15px] font-semibold text-[#111827]';
+const linkGreen = 'w-full sm:flex-1 h-12 px-3 flex items-center justify-center bg-[#0f4c3a] text-white text-[15px] font-bold';
 
 // 반려 사유 상자
 function RejectReason({ review }) {
   return (
     <div className="p-5 bg-[#fef2f2] border border-[#fecaca] space-y-2">
       <p className="text-xs font-bold text-[#b91c1c]">반려 사유</p>
-      <p className="text-base font-bold text-[#111827]">{review.reasonTitle}</p>
-      <p className="text-sm text-[#4b5563] leading-relaxed">{review.reasonHelp}</p>
+      <p className="text-base font-bold text-[#111827] break-words">{review.reasonTitle}</p>
+      <p className="text-sm text-[#4b5563] leading-relaxed break-words">{review.reasonHelp}</p>
       <p className="text-[13px] text-[#6b7280]">{`${review.decidedByLabel} · ${review.decidedAt}`}</p>
     </div>
   );
@@ -57,7 +57,7 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
       <div className="max-w-[760px] mx-auto space-y-6">
         <PageBackLink to="/mypage/products" label="내 판매 목록" />
         <h1 className="text-2xl font-bold text-[#111827] tracking-tight">검수 결과</h1>
-        <section className="bg-white border border-[#e5e7eb] p-8 space-y-5">
+        <section className="bg-white border border-[#e5e7eb] p-5 sm:p-8 space-y-5">
           <div className="space-y-2">
             <span className={`h-7 px-2.5 inline-flex items-center text-xs font-semibold ${badge.tone}`}>{badge.label}</span>
             <h2 className="text-xl font-bold text-[#111827]">{heading[0]}</h2>
@@ -81,7 +81,7 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
           {isRejected && <RejectReason review={review} />}
 
           {stage === 'PASSED' && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Link to="/mypage/products" className={linkWhite}>
                 내 판매 목록으로
               </Link>
@@ -91,7 +91,7 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
             </div>
           )}
           {(stage === 'MANUAL' || stage === 'DELAYED') && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Link to={editPath} className={linkWhite}>
                 상품 수정
               </Link>
@@ -101,10 +101,10 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
             </div>
           )}
           {stage === 'REJECTED' && review.appealable && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
-                className="h-12 w-[200px] bg-white border border-[#d1d5db] text-[15px] font-semibold text-[#111827] shrink-0"
+                className="h-12 w-full sm:w-[200px] bg-white border border-[#d1d5db] text-[15px] font-semibold text-[#111827] shrink-0"
                 onClick={appeal.onOpen}
               >
                 판정이 틀렸어요 · 이의 신청
@@ -115,7 +115,7 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
             </div>
           )}
           {(stage === 'REJECTED_ADMIN' || (stage === 'REJECTED' && !review.appealable)) && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Link to={editPath} className={linkGreen}>
                 수정해서 다시 검수받기
               </Link>
@@ -123,7 +123,7 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
           )}
           {stage === 'EXPIRED' && (
             <div className="space-y-2">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {review.resubmittable ? (
                   <button
                     type="button"
@@ -156,9 +156,9 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
           {stage === 'EXPIRED' && <InfoNote>이 반려는 횟수에 세지 않아요.</InfoNote>}
         </section>
 
-        <section className="bg-white border border-[#e5e7eb] p-8 space-y-5">
+        <section className="bg-white border border-[#e5e7eb] p-5 sm:p-8 space-y-5">
           <h2 className="text-base font-bold text-[#111827]">검수한 상품</h2>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {product.photos.map((url, index) => (
               <div key={url + index} className="relative w-[96px] h-[96px] shrink-0 border border-[#e5e7eb] overflow-hidden">
                 <img src={url} alt={`상품 사진 ${index + 1}`} className="w-full h-full object-cover object-center" />
@@ -171,20 +171,20 @@ function ReviewResultView({ review, product, appeal, resubmit }) {
             ))}
           </div>
           <dl className="border border-[#e5e7eb] divide-y divide-[#e5e7eb] text-sm">
-            <div className="px-4 py-3 flex justify-between">
-              <dt className="text-[#6b7280]">상품명</dt>
-              <dd className="text-[#111827] font-medium">{product.title}</dd>
+            <div className="px-4 py-3 flex justify-between gap-4">
+              <dt className="text-[#6b7280] shrink-0">상품명</dt>
+              <dd className="min-w-0 text-right break-words text-[#111827] font-medium">{product.title}</dd>
             </div>
-            <div className="px-4 py-3 flex justify-between">
-              <dt className="text-[#6b7280]">선택한 품종</dt>
-              <dd className="text-[#111827] font-medium">{product.speciesName}</dd>
+            <div className="px-4 py-3 flex justify-between gap-4">
+              <dt className="text-[#6b7280] shrink-0">선택한 품종</dt>
+              <dd className="min-w-0 text-right break-words text-[#111827] font-medium">{product.speciesName}</dd>
             </div>
-            <div className="px-4 py-3 flex justify-between">
-              <dt className="text-[#6b7280]">가격</dt>
+            <div className="px-4 py-3 flex justify-between gap-4">
+              <dt className="text-[#6b7280] shrink-0">가격</dt>
               <dd className="text-[#111827] font-semibold tabular-nums">{product.priceText}</dd>
             </div>
-            <div className="px-4 py-3 flex justify-between">
-              <dt className="text-[#6b7280]">등록</dt>
+            <div className="px-4 py-3 flex justify-between gap-4">
+              <dt className="text-[#6b7280] shrink-0">등록</dt>
               <dd className="text-[#111827] tabular-nums">{product.createdAtText}</dd>
             </div>
           </dl>
