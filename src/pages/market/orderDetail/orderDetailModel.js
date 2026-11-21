@@ -11,7 +11,8 @@ import { EMPTY, NO_TRACKING_NO, orEmpty } from '../../../constants/emptyText';
 // - 판매자 수락 전: BE는 판매자 주문이 아니라 items[].status = ACCEPT_PENDING으로 줌 (없으면 배송이 없을 때 수락 전으로 봄)
 // - sellerOrders[].trackingNo              송장번호
 // - sellerOrders[].currentLocation         택배 현재 위치 한 줄 (예: 서울 성수 ○○대리점 · 배송 완료 · 10.13 11:02)
-// - sellerOrders[].driverDistanceKm · driverCheckedAt   기사님 거리 · 조회 시각 (2km 안 취소 잠금은 shipmentStatus = CANCEL_LOCKED)
+// - sellerOrders[].driverDistanceKm · driverCheckedAt · currentLocation   배송 조회 API(#605)에서 붙인 기사님 거리 · 조회 시각 · 현재 위치
+//   (수거 전 단계에만 거리, 2km 안 취소 잠금은 shipmentStatus = CANCEL_LOCKED)
 // - order.paidAt                           판매자 수락 마감(결제 완료 + 24시간) 계산용
 // - items[].returnRequest                  { status: REQUESTED|APPROVED|SHIPPING|COMPLETED|REJECTED,
 //                                            requestedAt, approvedAt, shippedAt, completedAt, rejectedAt, trackingNo, currentLocation }
@@ -116,7 +117,12 @@ export function buildShipmentEvents(source) {
     ['bookedAt', '택배 예약'],
   ]
     .filter(([key]) => source[key])
-    .map(([key, status]) => ({ time: formatShortDateTime(source[key]), status }));
+    // 현재 위치(배송 조회 API locationName)는 가장 최근 단계 줄에만 붙임 (없으면 칸을 숨김)
+    .map(([key, status], index) => ({
+      time: formatShortDateTime(source[key]),
+      status,
+      location: index === 0 ? (source.currentLocation ?? null) : null,
+    }));
 }
 
 function buildShippingSteps(order, sellerOrder, current) {
@@ -363,7 +369,7 @@ function buildGroup(order, sellerOrder, index, context) {
     group.tracking.tag = locked
       ? { tone: 'danger', label: '기사님 근접 · 취소 불가' }
       : { tone: 'default', label: '기사 배정 · 수거 예정' };
-    // TODO: 기사님 거리 API가 생기면 값 교체. 거리 값이 없으면 박스를 숨김(판매자 화면과 같게)
+    // 거리는 배송 조회 API(#605, withShipmentTracking)에서 수거 전일 때만 옴. 거리 값이 없으면 박스를 숨김(판매자 화면과 같게)
     //   다만 2km 안 취소 잠금(CANCEL_LOCKED)은 거리 값이 없어도 안내가 필요해 박스를 보임
     const km = sellerOrder.driverDistanceKm != null ? `${sellerOrder.driverDistanceKm}km` : null;
     if (km || locked) {

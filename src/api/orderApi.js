@@ -107,10 +107,55 @@ export function requestReturn(orderItemId, { reason, detail }) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return`, { reason, reasonDetail: detail });
 }
 
-// TODO: 배송 조회 API (택배 이벤트 목록, 경로 미정). 생기기 전까지 화면은 「조회 전」 한 줄을 씀
-// → { trackingNo, events: [{ occurredAt, status, location }] } (최신순)
-export function getShipmentTracking(shipmentId) {
-  return client.get(`/api/v1/shipments/${shipmentId}/tracking`);
+// 배송 조회 (BE #588 · PR #605): 단계별 시각 + 택배사 값(courierStatus · driverDistanceKm · locationName · driverCheckedAt)
+// 응답은 ApiResponse로 감싸지 않은 ShipmentTrackingResponse. 택배사 실패 · 시간 초과면 택배사 4칸만 null(200),
+// 배송 전(수락 전)이면 404 SHIPMENT_TRACKING_NOT_FOUND
+export function getSellerShipmentTracking(sellerOrderId) {
+  return client.get(`/api/v1/orders/seller/${sellerOrderId}/shipment`);
+}
+
+export function getBuyerShipmentTracking(orderId, sellerOrderId) {
+  return client.get(`/api/v1/orders/${orderId}/sellerOrders/${sellerOrderId}/shipment`);
+}
+
+// 수거 전 택배사 단계: 이때만 남은 거리가 「기사님 → 수거지」 거리 (수거 뒤에는 간선 · 배송 구간 거리라 박스를 숨김)
+const BEFORE_PICKUP_COURIER_STATUSES = ['RESERVED', 'NEAR_5KM', 'CANCEL_LOCKED'];
+// 택배 예약 뒤 · 배송이 끝나거나 취소되기 전에만 조회 (그 밖은 택배사 값이 늘 null)
+const TRACKABLE_SHIPMENT_STATUSES = ['BOOKED', 'CANCEL_LOCKED', 'PICKED_UP', 'IN_TRANSIT'];
+
+export function isTrackableShipment(shipmentStatus) {
+  return TRACKABLE_SHIPMENT_STATUSES.includes(shipmentStatus);
+}
+
+/**
+ * 배송 조회 응답을 판매자 주문(구매자 상세의 sellerOrders[] 또는 판매자 상세 응답)에 합침
+ * - 거리: 수거 전 단계일 때만 driverDistanceKm · driverCheckedAt (아니면 null → 거리 박스 숨김)
+ * - 현재 위치: locationName → currentLocation (화면이 읽는 이름)
+ * - 단계 시각은 원래 응답에 없을 때만 채움
+ * 실패(404 · #605 배포 전 등)하면 원래 값을 그대로 돌려줌
+ */
+export async function withShipmentTracking(target, fetchTracking) {
+  if (!target || !isTrackableShipment(target.shipmentStatus)) return target;
+  try {
+    const response = await fetchTracking();
+    const t = response.data?.data ?? response.data;
+    if (!t) return target;
+    const beforePickup = BEFORE_PICKUP_COURIER_STATUSES.includes(t.courierStatus);
+    return {
+      ...target,
+      trackingNo: target.trackingNo ?? t.trackingNo,
+      bookedAt: target.bookedAt ?? t.bookedAt,
+      pickedUpAt: target.pickedUpAt ?? t.pickedUpAt,
+      inTransitAt: target.inTransitAt ?? t.inTransitAt,
+      deliveredAt: target.deliveredAt ?? t.deliveredAt,
+      courierStatus: t.courierStatus ?? null,
+      driverDistanceKm: beforePickup && t.driverDistanceKm != null ? Number(t.driverDistanceKm.toFixed(1)) : null,
+      driverCheckedAt: beforePickup ? (t.driverCheckedAt ?? null) : null,
+      currentLocation: t.locationName ?? null,
+    };
+  } catch {
+    return target;
+  }
 }
 
 // 목록 항목마다 추가 조회를 부를 때 동시에 limit개까지만 부름 (결과 순서 = 입력 순서)

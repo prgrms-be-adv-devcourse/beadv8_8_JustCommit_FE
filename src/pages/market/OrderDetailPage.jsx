@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder, withSellerNicknames } from '../../api/orderApi';
+import { cancelOrder, cancelOrderItem, confirmOrderItem, getOrder, withSellerNicknames, getBuyerShipmentTracking, withShipmentTracking } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -29,7 +29,14 @@ const NOT_CANCELABLE_CODES = ['SHIPMENT_NOT_CANCELABLE'];
 // 판매자 닉네임은 주문 응답에 없어 판매자 공개 API로 채움 (실패해도 주문은 보임)
 async function fetchOrder(orderId) {
   const response = await getOrder(orderId);
-  return withSellerNicknames(response.data.data ?? response.data);
+  const order = await withSellerNicknames(response.data.data ?? response.data);
+  // 배송 조회(#605): 택배 예약 뒤 배송 중인 판매자 주문만 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
+  const sellerOrders = await Promise.all(
+    (order.sellerOrders ?? []).map((sellerOrder) =>
+      withShipmentTracking(sellerOrder, () => getBuyerShipmentTracking(orderId, sellerOrder.id)),
+    ),
+  );
+  return { ...order, sellerOrders };
 }
 
 function OrderDetailPage() {
@@ -203,8 +210,7 @@ function OrderDetailPage() {
     }
   };
 
-  // 배송 조회: 택배사 이벤트 API가 없어 배송 단계 시각으로 목록을 만듦(buildShipmentEvents). 시각이 하나도 없으면 「조회 전」 한 줄
-  // TODO: 택배사 배송 조회 API(getShipmentTracking)가 생기면 이벤트 목록 · 위치로 교체
+  // 배송 조회 모달: 배송 단계 시각 목록(buildShipmentEvents) + 최신 줄에 현재 위치(배송 조회 API locationName). 시각이 하나도 없으면 「조회 전」 한 줄
   const tracking = trackingGroup && {
     sellerName: trackingGroup.sellerName,
     invoiceNo: trackingGroup.tracking?.invoiceNo ?? trackingGroup.invoiceNo,

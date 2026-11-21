@@ -19,6 +19,7 @@ import usePollWhile from '../../hooks/usePollWhile';
 import { formatDate, formatDateTime, formatPrice, maskPhone } from '../../utils/format';
 import { addHours, formatMonthDayTime, formatShortDateTime } from '../../utils/sellerFormat';
 import { fetchSalesOrder } from './salesOrderLoader';
+import { getSellerShipmentTracking, withShipmentTracking } from '../../api/orderApi';
 import SalesOrderDetailView from './SalesOrderDetailView';
 import { TrackingModal } from './orderDetail/OrderDetailModals';
 import { buildShipmentEvents } from './orderDetail/orderDetailModel';
@@ -269,10 +270,13 @@ function SalesOrderDetailPage() {
 
   const load = useCallback(
     () =>
-      fetchSalesOrder(sellerOrderId).then((data) => {
-        setOrder(data);
-        setLoadState('done');
-      }),
+      fetchSalesOrder(sellerOrderId)
+        // 배송 조회(#605): 택배 예약 뒤 배송 중이면 기사님 거리 · 현재 위치를 붙임 (실패하면 그대로)
+        .then((data) => withShipmentTracking(data, () => getSellerShipmentTracking(sellerOrderId)))
+        .then((data) => {
+          setOrder(data);
+          setLoadState('done');
+        }),
     [sellerOrderId],
   );
 
