@@ -14,7 +14,7 @@ import { formatDateTime, formatPrice } from '../../utils/format';
 import { addHours, formatMonthDayTime } from '../../utils/sellerFormat';
 import { attachTrackingNos, fetchSalesOrders } from './salesOrderLoader';
 import SalesOrdersView from './SalesOrdersView';
-import { EMPTY, NO_TRACKING_NO, CANCELLED_LABEL } from '../../constants/emptyText';
+import { NO_TRACKING_NO, CANCELLED_LABEL } from '../../constants/emptyText';
 
 // "몬스테라 델리시오사 외 1개"
 function getItemName(order) {
@@ -34,7 +34,7 @@ const untilText = (text) => (text ? `${text}까지 ` : '');
 
 // 판매 주문 응답 → 목록 한 줄
 // 송장번호(trackingNo)는 목록 응답에 없어 판매 주문 상세로 채움(attachTrackingNos)
-// TODO: 구매자 닉네임(buyerNickname) · 판매액(saleAmount, 배송비 제외) ·
+// 구매자 열은 목록에서 뺌(11/20 사용자 결정). TODO: 판매액(saleAmount, 배송비 제외) ·
 //       결제 완료 시각(paidAt) · 반품 신청 시각(returnRequestedAt) · 취소 주체(cancelledBy)가 목록 응답에 생기면 그대로 쓰임
 function toSalesRow(order) {
   const statusKey = getSalesOrderStatus(order);
@@ -42,7 +42,6 @@ function toSalesRow(order) {
     sellerOrderId: order.sellerOrderId,
     createdAtText: formatDateTime(order.createdAt),
     orderNo: order.orderNo,
-    buyer: order.buyerNickname ?? EMPTY,
     thumbnailUrl: order.thumbnailUrl,
     itemName: getItemName(order),
     amountText: formatPrice(Number(order.saleAmount ?? order.totalAmount)),

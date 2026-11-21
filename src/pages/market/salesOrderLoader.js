@@ -4,6 +4,11 @@ import { getSalesOrderStatus } from '../../constants/seller';
 // 판매 주문 목록·상세를 불러오는 함수들
 // 사진은 판매 주문 응답(thumbnailUrl)에 있어서 상품 API를 따로 부르지 않음
 
+// 결제가 끝나지 않은 주문(BE OrderStatus). 판매자 목록 · 탭 수 · 마이페이지 수락 대기 수에서 뺌
+// TODO: BE #604가 배포되면 판매자 주문 API가 PAID · CANCELLED · COMPLETED만 내려 줘서(상세는 404 SELLER_ORDER_NOT_FOUND)
+//       이 거르기와 상세의 「결제 미완료」 분기는 빼도 됨
+export const UNPAID_ORDER_STATUSES = ['PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAYMENT_FAILED', 'EXPIRED'];
+
 const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
 const MAX_PAGES = 10; // 안전장치: 최대 500건까지
 
@@ -20,7 +25,7 @@ export async function fetchSalesOrders() {
   const orders = [];
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const data = unwrap(await getSellerOrders({ page, size: PAGE_SIZE }));
-    orders.push(...data.content);
+    orders.push(...data.content.filter((order) => !UNPAID_ORDER_STATUSES.includes(order.status)));
     if (page + 1 >= data.totalPages) break;
   }
   return orders;

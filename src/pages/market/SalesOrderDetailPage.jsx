@@ -3,7 +3,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { getAddresses } from '../../api/memberApi';
 import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
-import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
+import { RETURN_REASON_LABEL, SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import {
   ACCEPT_HOURS,
   RETURN_RESPONSE_HOURS,
@@ -84,8 +84,9 @@ function acceptTexts(allItems, rejectIds) {
 }
 
 // 판매 주문 상세 응답 → 화면 값
-// TODO: 구매자 닉네임(buyerNickname) · 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) ·
-//       배송 조회 주소(trackingUrl) · 반품 사유(returnReason · returnDetail) · 반품 신청 시각(returnRequestedAt) ·
+// 반품 사유 · 설명 · 신청 시각 · 응답 마감은 items[]의 returnReason · returnDetail · returnRequestedAt · returnDeadlineAt (#593)
+// 구매자 닉네임은 최상위 buyerNickname (#604, 배포 전. 탈퇴 회원이면 「탈퇴한 회원」, 모르면 「알 수 없는 회원」)
+// TODO: 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) · 배송 조회 주소(trackingUrl) ·
 //       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 기본값(emptyText)
 function toViewOrder(order) {
   const salesStatus = getSalesOrderStatus(order);
@@ -106,6 +107,7 @@ function toViewOrder(order) {
       statusTone = 'text-[#92400e]';
     }
     if (item.status === 'RETURNED') statusText = '반품 완료';
+    if (salesStatus === 'UNPAID') statusText = '결제 미완료';
     return {
       orderItemId: itemIdOf(item),
       name: item.productName,
@@ -117,13 +119,22 @@ function toViewOrder(order) {
   });
 
   const shippingFee = Number(order.shippingFee ?? SHIPPING_FEE_PER_SELLER);
-  const liveItems = items.filter((item) => item.status !== 'CANCELLED');
+  // 결제 미완료 주문은 판매액 0원 (시안 08-5-8)
+  const liveItems = salesStatus === 'UNPAID' ? [] : items.filter((item) => item.status !== 'CANCELLED');
   const sale = liveItems.reduce((sum, item) => sum + Number(item.price), 0);
   const fee = Math.floor(sale * SETTLEMENT_FEE_RATE);
   const burden = Number(order.sellerBurden ?? 0);
 
   let settlement;
-  if (salesStatus === 'CANCELLED') {
+  if (salesStatus === 'UNPAID') {
+    // 시안 08-5-8: 결제가 끝나지 않은 주문 (목록에서는 빠지지만 주소로 직접 들어온 경우)
+    settlement = {
+      badgeText: '결제 미완료',
+      badgeTone: GRAY_BADGE,
+      amounts: null,
+      note: '결제가 완료되지 않은 주문이에요. 정산하지 않아요.',
+    };
+  } else if (salesStatus === 'CANCELLED') {
     settlement = {
       badgeText: cancelLabel,
       badgeTone: GRAY_BADGE,
@@ -168,7 +179,9 @@ function toViewOrder(order) {
   const shipment =
     mode === 'ACCEPT'
       ? null
-      : cancelledOnly
+      : salesStatus === 'UNPAID'
+        ? { cancelledNote: '결제가 완료되지 않은 주문이에요. 배송하지 않아요.' }
+        : cancelledOnly
         ? { cancelledNote: '취소된 주문이라 배송하지 않아요.' }
         : {
           trackingNo: order.trackingNo ?? NO_TRACKING_NO,
@@ -309,6 +322,11 @@ function SalesOrderDetailPage() {
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? fallback);
       // 이미 처리됨(자동 거절 · 구매자 취소 등): 지금 상태를 다시 불러와 보여 줌 (BE 409 SELLER_ORDER_NOT_ACCEPTABLE)
+      // 반품도 이미 처리됨(자동 승인 · 다른 창에서 응답)이면 다시 불러옴 (BE 409 RETURN_NOT_DECIDABLE)
+      if (error.response?.data?.code === 'RETURN_NOT_DECIDABLE') {
+        setModal(null);
+        load().catch(() => {});
+      }
       if (error.response?.data?.code === 'SELLER_ORDER_NOT_ACCEPTABLE') {
         setRejectIds([]);
         load().catch(() => {});
@@ -348,7 +366,7 @@ function SalesOrderDetailPage() {
       thumbnailUrl: returnItem.thumbnailUrl,
       priceText: formatPrice(Number(returnItem.price)),
     },
-    reason: returnItem.returnReason ?? EMPTY,
+    reason: RETURN_REASON_LABEL[returnItem.returnReason] ?? returnItem.returnReason ?? EMPTY,
     detail: returnItem.returnDetail ?? EMPTY,
     shippingFeeText: formatPrice(view.shippingFee),
     modal,

@@ -22,7 +22,7 @@ const ACTION = {
 };
 
 // 시안 08-5-1 판매 주문 (화면만, 데이터는 props)
-// rows = [{ sellerOrderId, createdAtText, orderNo, buyer, thumbnailUrl, itemName, amountText,
+// rows = [{ sellerOrderId, createdAtText, orderNo, thumbnailUrl, itemName, amountText,
 //           statusKey, statusLabel, statusNote, action: ACCEPT | RETURN | DETAIL }]
 function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
   return (
@@ -38,9 +38,8 @@ function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
             <thead>
               <tr className="bg-[#f9fafb] text-[13px] text-[#4b5563] text-left">
                 <th className="px-5 py-3 font-semibold">주문일 · 주문번호</th>
-                <th className="px-5 py-3 font-semibold">구매자</th>
                 <th className="px-5 py-3 font-semibold">상품</th>
-                <th className="px-5 py-3 font-semibold text-right">판매 금액</th>
+                <th className="px-5 py-3 font-semibold">판매 금액</th>
                 <th className="px-5 py-3 font-semibold w-[240px]">상태</th>
                 <th className="px-5 py-3"></th>
               </tr>
@@ -55,7 +54,6 @@ function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
                       <p className="text-[#111827] tabular-nums">{row.createdAtText}</p>
                       <p className="text-xs text-[#6b7280] tabular-nums">{row.orderNo}</p>
                     </td>
-                    <td className="px-5 py-4 text-[#111827]">{row.buyer}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 shrink-0 border border-[#e5e7eb] overflow-hidden">
@@ -64,7 +62,7 @@ function SalesOrdersView({ tabs, tab, onTabChange, rows }) {
                         <span className="text-[#111827]">{row.itemName}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-[#111827] tabular-nums">{row.amountText}</td>
+                    <td className="px-5 py-4 font-bold text-[#111827] tabular-nums">{row.amountText}</td>
                     <td className="px-5 py-4 space-y-1">
                       <span className={`h-7 px-2.5 inline-flex items-center text-xs font-semibold ${status.tone}`}>
                         {row.statusLabel ?? status.label}

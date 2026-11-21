@@ -1,15 +1,12 @@
 import { ActionErrorLine } from '../../../components/common/ActionError';
+import { RETURN_REASON_LABEL } from '../../../constants/order';
 import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 04-3-1 · 04-3-2 반품 신청 화면 (데이터는 props로만 받음)
 // product = { name, imageUrl, meta, deadline, price }
 
-// TODO: 반품 사유 코드는 백엔드 반품 신청 API가 정해지면 맞춤
-const RETURN_REASONS = [
-  { value: 'DAMAGED', label: '상품이 파손됐어요' },
-  { value: 'NOT_AS_DESCRIBED', label: '상품 설명과 달라요' },
-  { value: 'OTHER', label: '기타' },
-];
+// 반품 사유 (BE ReturnReason)
+const RETURN_REASONS = Object.entries(RETURN_REASON_LABEL).map(([value, label]) => ({ value, label }));
 
 const DETAIL_MAX_LENGTH = 500;
 

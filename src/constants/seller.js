@@ -76,6 +76,7 @@ export const SALES_ORDER_STATUS = {
   RETURN_REQUESTED: { label: '반품 신청', tone: AMBER, noteTone: 'text-[#92400e]' },
   CONFIRMED: { label: '구매 확정', tone: GRAY, noteTone: 'text-[#6b7280]' },
   CANCELLED: { label: '취소', tone: GRAY, noteTone: 'text-[#6b7280]' },
+  UNPAID: { label: '결제 미완료', tone: GRAY, noteTone: 'text-[#6b7280]' },
 };
 
 // 취소 주체 (백엔드 cancelledBy: BUYER · SELLER · AUTO) → 배지 라벨
@@ -102,11 +103,12 @@ export const SETTLEMENT_FEE_RATE = 0.05;
  * 판매 주문 상태 키(SALES_ORDER_STATUS)를 계산
  * 수락 대기: 주문 상태(OrderStatus)에는 없고, 목록은 acceptPending(boolean),
  *           상세는 items[].status === 'ACCEPT_PENDING'으로 옴 (BE SellerOrderResponse · SellerOrderDetailResponse)
- * 반품 신청: 상세는 items[].status === 'RETURN_REQUESTED'(BE OrderItemStatus)로 옴
- * TODO: 목록 응답(SellerOrderResponse)에는 주문상품 상태 · 반품 여부가 없어 목록에서는 반품 신청을 못 가림.
- *       BE에 returnRequested(boolean)가 생기면 그대로 쓰임
+ * 반품 신청: 목록은 returnRequested(boolean, 판매자 응답 전 반품 신청이 있음),
+ *           상세는 items[].status === 'RETURN_REQUESTED'(BE OrderItemStatus)로 옴 (#593)
  */
 export function getSalesOrderStatus(order) {
+  // 결제가 끝나지 않은 주문 (BE OrderStatus): 목록에서는 로더가 거르고, 상세로 직접 오면 「결제 미완료」
+  if (['PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAYMENT_FAILED', 'EXPIRED'].includes(order.status)) return 'UNPAID';
   if (order.status === 'CANCELLED') return 'CANCELLED';
   if (
     order.acceptPending ||
