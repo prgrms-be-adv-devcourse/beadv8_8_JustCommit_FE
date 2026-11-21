@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { getSeller } from '../../api/memberApi';
 import { getSellerProducts, getSellerSoldOutProducts } from '../../api/productApi';
 import ErrorPage from '../../components/common/ErrorPage';
+import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import SellerShopView from './SellerShopView';
 import { toShopSeller } from './sellerShopFormat';
@@ -20,6 +21,7 @@ const NO_REVIEWS = { averageRating: null, totalCount: null, tagCounts: [], conte
 // 판매자 상점 B안 (시안 02-3-1 · 02-3-2 · 02-3-4). 누구나 봄 (로그인 필요 없음)
 function SellerShop({ sellerId }) {
   const location = useLocation();
+  const { user } = useAuth();
   const [data, setData] = useState(null); // { seller, products, productTotal }
   const [loadState, setLoadState] = useState('loading'); // loading | done | notFound | error
   // 판매 완료 줄: SOLD_OUT이면서 숨기지 않은 상품만 (BE docs/services/product.md 「상태」 · 「숨김」)
@@ -101,6 +103,8 @@ function SellerShop({ sellerId }) {
             }
       }
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
+      // 내 상점이면 소개글을 고치러 갈 수 있게 (판매자 번호 = 회원 번호)
+      introEditTo={user?.memberId === Number(sellerId) ? '/mypage/account/intro' : null}
     />
   );
 }
