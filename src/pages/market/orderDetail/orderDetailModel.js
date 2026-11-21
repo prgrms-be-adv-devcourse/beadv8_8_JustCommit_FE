@@ -292,8 +292,21 @@ function buildGroup(order, sellerOrder, index, context) {
   const shippingIndex = acceptPending ? 0 : (SHIPPING_STEP_INDEX[sellerOrder.shipmentStatus] ?? 1);
   const current = allConfirmed ? 5 : shippingIndex;
 
+  // 취소되지 않은 상품이 모두 반품 중이면 머리 배지도 반품 단계 (주문 목록 03-4-1과 같은 규칙: 가장 덜 진행된 단계)
+  // 일부 상품만 반품이면 배송 단계 그대로 두고 상품 줄의 반품 배지로 보여 줌. 거절(REJECTED)은 반품이 아님
+  const notCancelled = sellerOrder.items.filter((item) => item.status !== 'CANCELLED');
+  const returnStatuses = notCancelled.map(getReturnStatus);
+  const allInReturn = notCancelled.length > 0 && returnStatuses.every((status) => status && status !== 'REJECTED');
+  let returnBadge = null;
+  if (allInReturn) {
+    if (returnStatuses.includes('REQUESTED')) returnBadge = { tone: 'pending', label: '반품 신청' };
+    else if (returnStatuses.every((status) => status === 'COMPLETED')) returnBadge = { tone: 'closed', label: '반품 완료' };
+    else returnBadge = { tone: 'pending', label: '반품 배송 중' };
+  }
+
   let badge;
   if (allCancelled) badge = { tone: 'closed', label: '주문 취소' };
+  else if (returnBadge) badge = returnBadge;
   else if (allConfirmed) badge = { tone: 'confirmed', label: '구매 확정' };
   else if (acceptPending) badge = { tone: 'pending', label: SHIPPING_STEP_LABELS[0] };
   else badge = { tone: 'shipping', label: SHIPPING_STEP_LABELS[shippingIndex] };
