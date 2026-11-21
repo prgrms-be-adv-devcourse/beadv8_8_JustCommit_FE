@@ -3,7 +3,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { getAddresses } from '../../api/memberApi';
 import { approveReturn, rejectReturn, respondSellerOrder } from '../../api/orderApi';
 import ErrorPage from '../../components/common/ErrorPage';
-import { SHIPPING_FEE_PER_SELLER } from '../../constants/order';
+import { RETURN_REASON_LABEL, SHIPPING_FEE_PER_SELLER } from '../../constants/order';
 import {
   ACCEPT_HOURS,
   RETURN_RESPONSE_HOURS,
@@ -84,8 +84,9 @@ function acceptTexts(allItems, rejectIds) {
 }
 
 // 판매 주문 상세 응답 → 화면 값
-// TODO: 구매자 닉네임(buyerNickname) · 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) ·
-//       배송 조회 주소(trackingUrl) · 반품 사유(returnReason · returnDetail) · 반품 신청 시각(returnRequestedAt) ·
+// 반품 사유 · 설명 · 신청 시각 · 응답 마감은 items[]의 returnReason · returnDetail · returnRequestedAt · returnDeadlineAt (#593)
+// 구매자 닉네임은 최상위 buyerNickname (#604, 배포 전. 탈퇴 회원이면 「탈퇴한 회원」, 모르면 「알 수 없는 회원」)
+// TODO: 취소 주체(cancelledBy) · 반송 중 여부(returnShipping) · 현재 위치(currentLocation) · 배송 조회 주소(trackingUrl) ·
 //       결제 완료 시각(paidAt) · 판매자 부담금(sellerBurden)이 응답에 생기면 그대로 쓰임. 없으면 기본값(emptyText)
 function toViewOrder(order) {
   const salesStatus = getSalesOrderStatus(order);
@@ -321,6 +322,11 @@ function SalesOrderDetailPage() {
     } catch (error) {
       setErrorMessage(error.response?.data?.message ?? fallback);
       // 이미 처리됨(자동 거절 · 구매자 취소 등): 지금 상태를 다시 불러와 보여 줌 (BE 409 SELLER_ORDER_NOT_ACCEPTABLE)
+      // 반품도 이미 처리됨(자동 승인 · 다른 창에서 응답)이면 다시 불러옴 (BE 409 RETURN_NOT_DECIDABLE)
+      if (error.response?.data?.code === 'RETURN_NOT_DECIDABLE') {
+        setModal(null);
+        load().catch(() => {});
+      }
       if (error.response?.data?.code === 'SELLER_ORDER_NOT_ACCEPTABLE') {
         setRejectIds([]);
         load().catch(() => {});
@@ -360,7 +366,7 @@ function SalesOrderDetailPage() {
       thumbnailUrl: returnItem.thumbnailUrl,
       priceText: formatPrice(Number(returnItem.price)),
     },
-    reason: returnItem.returnReason ?? EMPTY,
+    reason: RETURN_REASON_LABEL[returnItem.returnReason] ?? returnItem.returnReason ?? EMPTY,
     detail: returnItem.returnDetail ?? EMPTY,
     shippingFeeText: formatPrice(view.shippingFee),
     modal,

@@ -90,8 +90,8 @@ export function respondSellerOrder(sellerOrderId, rejectedOrderItemIds, senderAd
   return client.post(`/api/v1/orders/seller/${sellerOrderId}/accept`);
 }
 
-// 반품 승인 · 거절 (판매자)
-// TODO: BE에 아직 없음 (market #383). 경로는 BE가 만들 때 확인
+// 반품 승인 · 거절 (판매자, BE #383 · #593). 본문 없음, 200. 이미 처리됐으면 409 RETURN_NOT_DECIDABLE
+// 승인: 반품 배송을 만듦 / 거절: 그 주문상품을 바로 구매 확정
 export function approveReturn(orderItemId) {
   return client.post(`/api/v1/orders/items/${orderItemId}/return/approve`);
 }

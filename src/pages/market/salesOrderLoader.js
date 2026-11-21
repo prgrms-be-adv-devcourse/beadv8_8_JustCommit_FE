@@ -5,7 +5,8 @@ import { getSalesOrderStatus } from '../../constants/seller';
 // 사진은 판매 주문 응답(thumbnailUrl)에 있어서 상품 API를 따로 부르지 않음
 
 // 결제가 끝나지 않은 주문(BE OrderStatus). 판매자 목록 · 탭 수 · 마이페이지 수락 대기 수에서 뺌
-// TODO: BE 판매자 주문 API가 결제 완료(PAID) 이후 주문만 내려 주게 되면 이 거르기는 필요 없음
+// TODO: BE #604가 배포되면 판매자 주문 API가 PAID · CANCELLED · COMPLETED만 내려 줘서(상세는 404 SELLER_ORDER_NOT_FOUND)
+//       이 거르기와 상세의 「결제 미완료」 분기는 빼도 됨
 export const UNPAID_ORDER_STATUSES = ['PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAYMENT_FAILED', 'EXPIRED'];
 
 const PAGE_SIZE = 50; // 백엔드 PagingRequest.MAX_SIZE
