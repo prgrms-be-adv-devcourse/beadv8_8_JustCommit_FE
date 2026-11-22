@@ -111,11 +111,19 @@ const ITEM_RETURN_STAGE = {
   RETURNED: 'RETURNED',
 };
 const RETURN_STAGE_ORDER = ['RETURN_REQUESTED', 'RETURN_SHIPPING', 'RETURNED']; // 덜 진행된 쪽이 먼저
+// BE 목록 응답 returnStatus(#627) 값 → 목록 반품 단계. 판매자 주문 안 가장 덜 진행된 단계, 반품 없으면 null
+const LIST_RETURN_STAGE = {
+  REQUESTED: 'RETURN_REQUESTED',
+  IN_TRANSIT: 'RETURN_SHIPPING',
+  PROCESSING: 'RETURN_SHIPPING',
+  RETURNED: 'RETURNED',
+};
 
 /**
  * 판매 주문 목록의 상태 (반품 단계 포함)
  * - BE 목록 응답에 returnStatus(판매자 주문의 반품 단계)가 오면 그 값을 씀
- *   TODO: returnStatus · returnItemCount가 목록 응답에 생기면 로더가 상세를 부르는 임시 처리(attachSalesDetails)를 뺌
+ *   (BE #627: REQUESTED · IN_TRANSIT · PROCESSING · RETURNED, returnItemCount는 반품 완료 포함 반품 상품 수)
+ *   TODO: 목록 응답에 trackingNo도 생기면 로더가 상세를 부르는 처리(attachTrackingNos)를 뺌
  * - 없으면 상세로 채운 items[].status로 판단: 살아 있는 상품(취소 제외)이 모두 반품 중이면 반품 단계,
  *   일부만 반품이면 배송 상태 그대로 + partialReturnCount
  * - 반품 신청(판매자 응답 필요)은 일부만이어도 「반품 신청」으로 보여 줌
@@ -125,7 +133,7 @@ export function getSalesListStatus(order) {
   const base = getSalesOrderStatus(order);
   if (['UNPAID', 'CANCELLED', 'ACCEPT_PENDING'].includes(base)) return { key: base, partialReturnCount: 0, returnStage: null };
 
-  const fromBe = ITEM_RETURN_STAGE[order.returnStatus] ?? null;
+  const fromBe = LIST_RETURN_STAGE[order.returnStatus] ?? ITEM_RETURN_STAGE[order.returnStatus] ?? null;
   const items = order.items ?? [];
   const live = items.filter((item) => item.status !== 'CANCELLED');
   const returning = live.filter((item) => ITEM_RETURN_STAGE[item.status]);
