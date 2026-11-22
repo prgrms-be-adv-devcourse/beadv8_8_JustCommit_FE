@@ -133,9 +133,16 @@ export function buildShipmentEvents(source) {
 }
 
 function buildShippingSteps(order, sellerOrder, current) {
-  // 시각은 판매자 확인 중(주문) · 배송 완료 · 구매 확정 단계에만 표시
-  const times = [formatShortDateTime(order.createdAt), null, null, null, formatShortDateTime(sellerOrder.deliveredAt),
-    formatShortDateTime(sellerOrder.confirmedAt)];
+  // 단계마다 그 단계가 된 시각 (BE OrderDetailResponse.SellerOrderDetail). 시각이 없는 단계는 비움
+  // 판매자 확인 중 = 주문 시각, 픽업 대기 = 택배 예약(bookedAt), 수거 · 배송 중 · 배송 완료 · 구매 확정
+  const times = [
+    order.createdAt,
+    sellerOrder.bookedAt,
+    sellerOrder.pickedUpAt,
+    sellerOrder.inTransitAt,
+    sellerOrder.deliveredAt,
+    sellerOrder.confirmedAt,
+  ].map((value) => (value ? formatShortDateTime(value) : null));
   return {
     label: '배송 단계',
     current,

@@ -4,7 +4,7 @@ import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatPrice } from '../../utils/format';
-import { fetchSettlements, formatSettlementDate, toSettlementRow } from './settlementRows';
+import { fetchSettlements, formatSettlementDate, signedPriceText, toSettlementRow } from './settlementRows';
 import SettlementReportView from './SettlementReportView';
 
 const CHART_MONTHS = 6;
@@ -79,7 +79,7 @@ function SettlementReportPage() {
     saleCountText: `판매 ${inRange.length}건`,
     feeText: fee > 0 ? `−${formatPrice(fee)}` : formatPrice(0),
     burdenNote: burden > 0 ? `판매자 부담금 −${formatPrice(burden)} 별도` : null,
-    payoutText: formatPrice(sum(inRange, 'payoutAmount')),
+    payoutText: signedPriceText(sum(inRange, 'payoutAmount')),
   };
 
   // 최근 6개월 막대: 기간 끝 달까지, 선택한 기간에 걸친 달은 초록

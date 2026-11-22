@@ -5,7 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import useWallet from '../../hooks/useWallet';
 import usePageTitle from '../../hooks/usePageTitle';
 import { formatPrice } from '../../utils/format';
-import { fetchSettlements, toSettlementRow } from './settlementRows';
+import { fetchSettlements, signedPriceText, toSettlementRow } from './settlementRows';
 import SettlementView from './SettlementView';
 
 function isThisMonth(value) {
@@ -15,7 +15,8 @@ function isThisMonth(value) {
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 }
 
-const sumPayout = (rows) => rows.reduce((total, row) => total + row.payoutAmount, 0);
+// 금액이 문자열(BigDecimal)로 올 수 있어 숫자로 더함
+const sumPayout = (rows) => rows.reduce((total, row) => total + (Number(row.payoutAmount) || 0), 0);
 
 function SettlementPage() {
   usePageTitle('정산');
@@ -55,8 +56,8 @@ function SettlementPage() {
   const pending = rows.filter((row) => row.statusKey !== 'COMPLETED');
   const monthPaid = rows.filter((row) => row.statusKey === 'COMPLETED' && isThisMonth(row.date));
   const summary = {
-    pendingText: formatPrice(sumPayout(pending)),
-    monthPaidText: formatPrice(sumPayout(monthPaid)),
+    pendingText: signedPriceText(sumPayout(pending)),
+    monthPaidText: signedPriceText(sumPayout(monthPaid)),
     monthSinceText: `${new Date().getMonth() + 1}월 1일부터`,
     balanceText: balance === null || balance === undefined ? '-' : formatPrice(Number(balance)),
   };

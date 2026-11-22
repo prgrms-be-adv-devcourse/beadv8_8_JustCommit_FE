@@ -252,8 +252,11 @@ function toViewOrder(order) {
           step: mode === 'CANCEL_RETURN' ? null : step,
           // 시안 04-5-1: 반품 중인 상품이 있으면 배송 단계 대신 구매자 상세와 같은 반품 타임라인
           returnTimeline: returnTimelineOf(items, order.deliveredAt),
-          // 시안: 배송 완료 시각만 단계 아래에 보여 줌
-          stepTimes: [null, null, null, order.deliveredAt ? formatShortDateTime(order.deliveredAt) : null, null],
+          // 단계마다 그 단계가 된 시각 (구매자 주문 상세와 같은 규칙). 픽업 대기 = 택배 예약(bookedAt), 없는 단계는 비움
+          // 구매 확정 시각은 판매 주문 상세 응답에 없어 비움 (BE SellerOrderDetailResponse)
+          stepTimes: [order.bookedAt, order.pickedUpAt, order.inTransitAt, order.deliveredAt, order.confirmedAt].map(
+            (value) => (value ? formatShortDateTime(value) : null),
+          ),
           // 현재 위치: BE에 없으면 칸을 숨김
           location: order.currentLocation ?? null,
           // 시안 08-5-5: 픽업 대기일 때 수거지까지 기사님 거리. TODO: BE 기사님 거리 API가 생기면 연결 (값이 없으면 박스 숨김)
