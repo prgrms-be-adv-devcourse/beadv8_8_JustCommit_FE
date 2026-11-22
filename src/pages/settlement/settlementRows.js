@@ -15,6 +15,24 @@ export function minusText(amount) {
   return amount > 0 ? `−${formatPrice(amount)}` : '-';
 }
 
+// 음수면 다른 차감 칸과 같은 유니코드 마이너스로 "−6,000원" (음수 정산: 판매자 부담금이 판매액보다 큰 경우)
+export function signedPriceText(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return formatPrice(amount);
+  return value < 0 ? `−${formatPrice(-value)}` : formatPrice(value);
+}
+
+// 판매자 부담금: BE 응답에 따로 없어서 정산금 = 판매액 − 수수료 − 부담금(BE Settlement)으로 거꾸로 계산
+// 예) 일부 반품 20,000 − 1,000 − 16,000 = 3,000 / 전부 반품 0 − 0 − (−6,000) = 6,000
+export function sellerBurdenOf(item) {
+  if (item.sellerBurden != null) return Number(item.sellerBurden) || 0;
+  const sale = Number(item.saleAmount);
+  const fee = Number(item.fee);
+  const payout = Number(item.payoutAmount);
+  if (![sale, fee, payout].every(Number.isFinite)) return 0;
+  return Math.max(0, sale - fee - payout);
+}
+
 // 정산 응답에는 주문번호가 없어 판매 주문 상세(GET /api/v1/orders/seller/{sellerOrderId})의 orderNo로 채움
 // 같은 판매 주문은 한 번만 부르고, 실패하면 주문번호는 「-」
 async function loadOrderNos(settlements) {
@@ -41,9 +59,11 @@ export async function fetchSettlements() {
 // 정산 응답 → 표 한 줄
 // status는 BE가 COMPLETED · PENDING만 줌 (FAILED는 재시도 중이라 PENDING으로 옴)
 // 주문번호(orderNo)는 fetchSettlements가 판매 주문 상세로 채움
-// TODO: 판매자 부담금(sellerBurden) · 상품 수(itemCount) · 반품 수(returnedCount) · 취소 수(cancelledCount)가
+// 판매자 부담금은 sellerBurdenOf로 계산 (응답에 sellerBurden이 생기면 그 값을 씀)
+// TODO: 상품 수(itemCount) · 반품 수(returnedCount) · 취소 수(cancelledCount)가
 //       응답에 생기면 그대로 쓰임
 export function toSettlementRow(item) {
+  const sellerBurden = sellerBurdenOf(item);
   const itemCount = item.itemCount ?? 1;
   const name = itemCount > 1 ? `${item.productName} 외 ${itemCount - 1}개` : item.productName;
   let badge = null;
@@ -66,13 +86,13 @@ export function toSettlementRow(item) {
     rowTone,
     saleText: formatPrice(item.saleAmount),
     feeText: minusText(item.fee),
-    burdenText: minusText(item.sellerBurden ?? 0),
-    payoutText: formatPrice(item.payoutAmount),
+    burdenText: minusText(sellerBurden),
+    payoutText: signedPriceText(item.payoutAmount),
     status,
     statusKey: item.status ?? 'COMPLETED',
     saleAmount: item.saleAmount,
     fee: item.fee,
-    sellerBurden: item.sellerBurden ?? 0,
+    sellerBurden,
     payoutAmount: item.payoutAmount,
   };
 }
