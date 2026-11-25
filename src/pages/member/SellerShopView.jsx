@@ -4,19 +4,20 @@ import PageBackLink from '../../components/common/PageBackLink';
 import SellerShopBar from '../../components/seller/SellerShopBar';
 
 // 판매자 상점 B안 · 상품 중심 (시안 02-3-1, 판매 중 상품 없음 02-3-2, 02-3-4)
-// 리뷰는 판매자 줄의 별점 · 리뷰 수만 (「최근 리뷰」 칸은 그리지 않음)
+// 리뷰는 판매자 줄의 별점 · 리뷰 수 · 「리뷰 전체 보기」 링크만 (「최근 리뷰」 칸은 그리지 않음)
 // seller = SellerShopBar의 seller
 // products = [ ProductCard의 product ], productCountText = "8개"
 // backTo = 「< 상품 상세」 이동할 곳
 // sold = 판매 완료 줄 (null이면 줄을 통째로 숨김 = 판매 완료 0개, 시안에 없는 상태)
 //   { products: [ ProductCard의 product(status SOLD_OUT) ], countText: "41개", hasMore, isLoadingMore, onLoadMore, errorMessage }
 // introEditTo = 내 상점일 때 소개글 수정 화면 주소 (남의 상점이면 null)
-function SellerShopView({ seller, products, productCountText, sold, backTo, introEditTo }) {
+// reviewsTo · reviewsState = 「리뷰 전체 보기」 이동할 곳 · router state
+function SellerShopView({ seller, products, productCountText, sold, backTo, introEditTo, reviewsTo, reviewsState }) {
   return (
     <main className="flex-1 max-w-[1240px] w-full mx-auto px-5 pt-6 pb-16">
       <div className="space-y-6">
         <PageBackLink to={backTo} label="상품 상세" />
-        <SellerShopBar seller={seller} introEditTo={introEditTo} />
+        <SellerShopBar seller={seller} introEditTo={introEditTo} reviewsTo={reviewsTo} reviewsState={reviewsState} />
         <div className="flex flex-wrap items-start gap-6">
           <section aria-labelledby="b-sale" className="flex-[999_1_640px] min-w-0 space-y-4">
             <h2 id="b-sale" className="text-xl font-bold text-[#111827]">

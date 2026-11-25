@@ -103,6 +103,9 @@ function SellerShop({ sellerId }) {
             }
       }
       backTo={fromProductId ? `/products/${fromProductId}` : '/'}
+      reviewsTo={`/sellers/${sellerId}/reviews`}
+      // 리뷰 전체에서 「‹ 상점」으로 돌아와도 처음 들어온 상품으로 갈 수 있게 넘김
+      reviewsState={fromProductId ? { fromProductId } : undefined}
       // 내 상점이면 소개글을 고치러 갈 수 있게 (판매자 번호 = 회원 번호)
       introEditTo={user?.memberId === Number(sellerId) ? '/mypage/account/intro' : null}
     />

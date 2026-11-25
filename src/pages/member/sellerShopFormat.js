@@ -1,17 +1,14 @@
-import { getTagLabel } from '../../constants/review';
+import { formatRating, getTagLabel } from '../../constants/review';
 import { EMPTY } from '../../constants/emptyText';
+import { formatDate } from '../../utils/format';
 
 // 판매자 상점 화면(상점 · 리뷰 전체) 데이터 모양 맞추기
 
-const TAG_CHIP_MAX = 5;
-
-// 리뷰 요약의 tagCounts → 태그 칩 (많은 순, 최대 5개, 0개인 태그 제외)
-// 리뷰는 하지 않기로 해서(준비 중) tagCounts · 평균 별점 · 리뷰 수는 빈 값으로 들어옴 (나중에 리뷰 API가 생기면 연결)
+// 리뷰 집계의 tagCounts → 태그 칩 (많은 순, 0개인 태그 제외). 같은 개수면 백엔드 enum 순서 그대로
 export function toTagChips(tagCounts) {
   return (tagCounts ?? [])
     .filter((item) => item.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, TAG_CHIP_MAX)
     .map((item) => ({ label: getTagLabel(item.tag), count: item.count }));
 }
 
@@ -24,11 +21,27 @@ export function toShopSeller(seller, summary, soldCount = null) {
     nickname: seller.nickname,
     // 소개글 (GET sellers/{sellerId}의 intro, 비었으면 줄을 숨김)
     intro: seller.intro ?? '',
-    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」
+    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」, 1개 이상이면 「리뷰 전체 보기」로 갈 수 있음
     noReviews: reviewCount === 0,
+    hasReviews: reviewCount > 0,
     ratingText: summary?.averageRating == null ? EMPTY : Number(summary.averageRating).toFixed(1),
     reviewCountText: reviewCount == null ? EMPTY : reviewCount.toLocaleString('ko-KR'),
     soldCountText: soldCount == null ? EMPTY : soldCount.toLocaleString('ko-KR'),
   };
 }
 
+// GET reviews 목록의 리뷰 하나 → 리뷰 카드 (시안 02-3-3)
+export function toReviewCard(review) {
+  const rating = Number(review.rating);
+  return {
+    key: review.reviewId,
+    // 탈퇴 · 알 수 없는 회원도 백엔드가 닉네임 자리에 문구를 넣어 줌 (비어 오면 같은 문구로)
+    nickname: review.writerNickname || '알 수 없는 회원',
+    rating,
+    ratingText: formatRating(rating),
+    dateText: formatDate(review.createdAt),
+    content: review.content,
+    // 구매 확정된 주문상품 이름 (여러 개면 쉼표로). 비었으면 줄을 숨김
+    productText: review.productNames?.length ? `구매 상품 · ${review.productNames.join(', ')}` : '',
+  };
+}

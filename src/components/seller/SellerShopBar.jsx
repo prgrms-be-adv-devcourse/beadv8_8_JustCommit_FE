@@ -4,10 +4,11 @@ import { StarIcon } from '../review/Stars';
 
 // 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 · 02-3-2 · 02-3-3 · 02-3-4 공통)
 // seller = { nickname, ratingText, reviewCountText, soldCountText, intro(판매자 소개글, 비었으면 줄을 숨김),
-//           noReviews(true면 별점 자리에 「아직 리뷰 없음」) }
+//           noReviews(true면 별점 자리에 「아직 리뷰 없음」), hasReviews(true면 「리뷰 전체 보기」를 보일 수 있음) }
 // 별점 칸은 시안 02-3-3 모양. 상점 시안(02-3-1 · 02-3-4)에는 별점 칸이 없어 같은 모양을 씀
 // introEditTo = 내 상점일 때만 주는 소개글 수정 화면 주소 (있으면 「소개 수정」 링크를 보임)
-function SellerShopBar({ seller, introEditTo }) {
+// reviewsTo · reviewsState = 「리뷰 전체 보기」 이동할 곳 · router state (리뷰 전체 화면에서는 주지 않음)
+function SellerShopBar({ seller, introEditTo, reviewsTo, reviewsState }) {
   return (
     <section
       aria-label="판매자 정보"
@@ -37,6 +38,11 @@ function SellerShopBar({ seller, introEditTo }) {
           </span>
         )}
       </span>
+      {reviewsTo && seller.hasReviews && (
+        <Link to={reviewsTo} state={reviewsState} className="text-[13px] font-semibold text-[#0f4c3a] underline">
+          리뷰 전체 보기
+        </Link>
+      )}
       <span className="inline-flex items-center gap-x-3.5 whitespace-nowrap">
         <span aria-hidden="true" className="text-[#d1d5db]">
           ·

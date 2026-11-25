@@ -8,6 +8,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/product/ProductDetailPage';
 import SellerShopPage from './pages/member/SellerShopPage';
+import SellerReviewsPage from './pages/member/SellerReviewsPage';
 import SemanticSearchPage from './pages/ai/SemanticSearchPage';
 // 03 구매 · 주문
 import CartPage from './pages/market/CartPage';
@@ -65,14 +66,13 @@ function App() {
 
         {/* 웹 시안으로 다시 만든 화면 (헤더 · 푸터 모두 보임) */}
         <Route element={<Layout designed />}>
-          {/* 준비 중 화면 (시안 01-2-3): 정책 페이지 · 05 리뷰(하지 않기로 함, 시안 05 보드는 나중 대비로 남겨 둠) */}
+          {/* 준비 중 화면 (시안 01-2-3): 정책 페이지 · 05 리뷰 작성 · 관리 (판매자 리뷰 전체는 02-3-3으로 구현) */}
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
           <Route path="/orders/:orderId/review" element={<ComingSoonPage title="리뷰 작성" />} />
           <Route path="/orders/:orderId/review/done" element={<ComingSoonPage title="리뷰 작성" />} />
           <Route path="/mypage/reviews" element={<ComingSoonPage title="리뷰 관리" />} />
-          <Route path="/sellers/:sellerId/reviews" element={<ComingSoonPage title="리뷰 전체" />} />
 
           {/* 02 탐색 · 상품. 검색 결과는 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
           <Route path="/" element={<HomePage />} />
@@ -81,6 +81,7 @@ function App() {
           <Route path="/search/semantic" element={<SemanticSearchPage />} />
           <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="/sellers/:sellerId" element={<SellerShopPage />} />
+          <Route path="/sellers/:sellerId/reviews" element={<SellerReviewsPage />} />
 
           {/* 03 구매 · 주문 */}
           <Route path="/cart" element={<CartPage />} />
