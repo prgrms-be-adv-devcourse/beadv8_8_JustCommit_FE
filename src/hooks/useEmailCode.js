@@ -11,6 +11,9 @@ import useCountdown from './useCountdown';
 const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export const SENT_TEXT = '인증번호를 보냈어요. 메일함을 확인해 주세요.';
+// 탈퇴 후 30일 재가입 제한 (BE #611): 가입 인증번호 발송 · 카카오 신규 가입에서 같은 문구
+export const REJOIN_RESTRICTED_EMAIL_TEXT =
+  '탈퇴 후 30일 동안은 같은 이메일로 다시 가입할 수 없습니다.';
 const EXPIRED_TEXT = '인증 시간이 지났어요. 인증번호를 다시 받아 주세요';
 const MISMATCH_TEXT = '인증번호가 맞지 않아요 · 5번 틀리면 인증번호가 폐기돼 다시 받아야 해요';
 // 5번 틀려 폐기됨 (시안 06-3-4)
@@ -32,6 +35,10 @@ export function toSendError(error) {
   const code = error.response?.data?.code;
   if (code === 'DUPLICATE_EMAIL') {
     return { status: 'duplicate', text: '이미 가입한 이메일이에요. 로그인하거나 비밀번호를 재설정해 주세요.' };
+  }
+  // 409 REJOIN_RESTRICTED_EMAIL: 메일은 나가지 않음. 이메일 단계에 머물고 다른 이메일로 다시 받을 수 있음
+  if (code === 'REJOIN_RESTRICTED_EMAIL') {
+    return { status: 'error', text: REJOIN_RESTRICTED_EMAIL_TEXT };
   }
   // 429 EMAIL_SEND_DAILY_LIMIT + Retry-After (06-3-5)
   if (code === 'EMAIL_SEND_DAILY_LIMIT') {
