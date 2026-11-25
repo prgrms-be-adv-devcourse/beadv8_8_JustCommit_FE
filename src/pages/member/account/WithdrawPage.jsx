@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   getWithdrawalEligibility,
   sendWithdrawalEmailCode,
@@ -62,6 +62,15 @@ function toNumberDetails(details) {
 }
 
 const UNAVAILABLE_CODES = ['WITHDRAWAL_CHECK_UNAVAILABLE'];
+
+// 탈퇴 가능 여부 조회 (GET) → { status: 'ALLOWED' } | { status: 'UNAVAILABLE' } | { status: 'BLOCKED', rows }
+// 다른 서비스 확인 실패는 예외가 아니라 200 + status UNAVAILABLE로 옴. 요청 자체가 실패하면 예외를 그대로 던짐
+async function loadEligibility() {
+  const eligibility = (await getWithdrawalEligibility()).data.data;
+  if (eligibility?.status === 'ALLOWED') return { status: 'ALLOWED' };
+  if (eligibility?.status === 'UNAVAILABLE') return { status: 'UNAVAILABLE' };
+  return { status: 'BLOCKED', rows: toBlockers(toNumberDetails(mergeBlockerDetails(eligibility))) };
+}
 const CODE_SECONDS = 5 * 60; // 인증번호 유효 5분 (응답 expiresIn이 없을 때)
 const RESEND_SECONDS = 60; // 다시 받기 60초 뒤 (응답 resendAvailableIn이 없을 때)
 
@@ -76,6 +85,7 @@ const RESULT_UNKNOWN_MESSAGE = '처리 결과를 확인하지 못했습니다. �
 function WithdrawPage() {
   usePageTitle('회원 탈퇴');
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, isInitializing, logout } = useAuth();
 
   const [agreed, setAgreed] = useState(false);
@@ -86,6 +96,34 @@ function WithdrawPage() {
   const [blockers, setBlockers] = useState(null);
   const [isUnavailable, setIsUnavailable] = useState(false);
   const isKakao = myInfo?.provider === 'KAKAO';
+
+  // 홈의 탈퇴 보류 안내(BE #616) 「탈퇴 화면 바로가기」로 왔으면 본인 확인 전에 지금 막힌 이유를 바로 보여 줌.
+  // 처음 그릴 때 한 번만 읽고 기록의 state는 지움 (새로고침하면 일반 진입처럼). 일반 진입은 기존대로 「탈퇴」를 누를 때 확인
+  // 실제 탈퇴는 기존 본인 확인(비밀번호 · 이메일 인증)과 누를 때의 확인 · 최종 POST 검사를 그대로 거침
+  const [checkOnEntry] = useState(() => location.state?.checkEligibility === true);
+  useEffect(() => {
+    if (location.state?.checkEligibility) navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
+  useEffect(() => {
+    if (!checkOnEntry || !isLoggedIn) return undefined;
+    let ignore = false;
+    loadEligibility()
+      .then((result) => {
+        if (ignore) return;
+        if (result.status === 'UNAVAILABLE') setIsUnavailable(true);
+        else if (result.status === 'BLOCKED') {
+          if (result.rows.length > 0) setBlockers(result.rows);
+          else setSubmitError(ACTION_ERROR.DEFAULT);
+        }
+        // ALLOWED: 막힌 이유가 없으니 기존 탈퇴 화면 그대로
+      })
+      .catch(() => {
+        if (!ignore) setIsUnavailable(true);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [checkOnEntry, isLoggedIn]);
 
   // 일반 회원 본인 확인: 현재 비밀번호 (06-5-13 · 06-5-14)
   const [password, setPassword] = useState('');
@@ -155,15 +193,14 @@ function WithdrawPage() {
     setSubmitError('');
     // 탈퇴 가능 여부 확인 → 막혔으면 사유 모달(또는 오류 문구)을 띄우고 true
     const showBlockersIfBlocked = async () => {
-      const eligibility = (await getWithdrawalEligibility()).data.data;
-      if (eligibility?.status === 'ALLOWED') return false;
-      // 다른 서비스 확인 실패는 예외가 아니라 200 + status UNAVAILABLE로 옴 → 확인 불가 모달 (06-5-17)
-      if (eligibility?.status === 'UNAVAILABLE') {
+      const result = await loadEligibility();
+      if (result.status === 'ALLOWED') return false;
+      // 확인 불가 모달 (06-5-17)
+      if (result.status === 'UNAVAILABLE') {
         setIsUnavailable(true);
         return true;
       }
-      const rows = toBlockers(toNumberDetails(mergeBlockerDetails(eligibility)));
-      if (rows.length > 0) setBlockers(rows);
+      if (result.rows.length > 0) setBlockers(result.rows);
       else setSubmitError(ACTION_ERROR.DEFAULT);
       return true;
     };
