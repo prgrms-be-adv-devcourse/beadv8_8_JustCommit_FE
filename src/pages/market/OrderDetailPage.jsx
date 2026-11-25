@@ -11,6 +11,7 @@ import {
   getBuyerReturnShipmentTracking,
   withReturnShipmentTracking,
 } from '../../api/orderApi';
+import { getOrderReviewStatus } from '../../api/reviewApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -25,6 +26,7 @@ import {
   buildOrderDetailView,
   isCancelInProgress,
 } from './orderDetail/orderDetailModel';
+import { buildOrderReviewSection } from './review/reviewModel';
 import { EMPTY, NO_LOCATION } from '../../constants/emptyText';
 
 const CANCEL_POLL_INTERVAL_MS = 2500; // 취소 처리 중이면 2.5초마다 다시 조회
@@ -81,12 +83,40 @@ function OrderDetailPage() {
   const [cancellingAll, setCancellingAll] = useState(false);
   const [cancelAllError, setCancelAllError] = useState(null);
   const [refreshCooldown, setRefreshCooldown] = useState(0);
+  // 판매자별 리뷰 상태 (시안 05-1). 못 불러와도 주문 상세는 보이고 리뷰 영역에만 안내
+  const [reviewStatus, setReviewStatus] = useState(null);
+  const [reviewError, setReviewError] = useState('');
+
+  const reloadReviewStatus = useCallback(async () => {
+    try {
+      const response = await getOrderReviewStatus(orderId);
+      setReviewStatus(response.data.data);
+      setReviewError('');
+    } catch {
+      setReviewError('리뷰 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    }
+  }, [orderId]);
 
   const reload = useCallback(async () => {
     const data = await fetchOrder(orderId);
     setOrder(data);
     return data;
   }, [orderId]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return undefined;
+    let ignore = false;
+    getOrderReviewStatus(orderId)
+      .then((response) => {
+        if (!ignore) setReviewStatus(response.data.data);
+      })
+      .catch(() => {
+        if (!ignore) setReviewError('리뷰 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [isLoggedIn, orderId]);
 
   useEffect(() => {
     if (!isLoggedIn) return undefined;
@@ -125,6 +155,7 @@ function OrderDetailPage() {
       order && buildOrderDetailView(order, { duplicateCancelIds, lockedSellerOrderIds }),
     [order, duplicateCancelIds, lockedSellerOrderIds],
   );
+  const reviewSection = useMemo(() => buildOrderReviewSection(reviewStatus, order), [reviewStatus, order]);
 
   const closeCancel = useCallback(() => {
     setCancelTarget(null);
@@ -166,6 +197,8 @@ function OrderDetailPage() {
       await confirmOrderItem(itemId);
       closeConfirm();
       await reload();
+      // 구매 확정으로 리뷰를 쓸 수 있게 됐을 수 있어 리뷰 상태도 다시 조회
+      reloadReviewStatus();
     } catch (error) {
       setConfirmError(error.response?.data?.message ?? '구매를 확정하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
@@ -252,6 +285,8 @@ function OrderDetailPage() {
       onOpenTracking={(group) => setTrackingKey(group.key)}
       onRefreshDistance={refreshDistance}
       onCancelAll={cancelAllPreview ? () => setCancelAllTarget(cancelAllPreview) : null}
+      review={reviewSection}
+      reviewError={reviewError}
     >
       {cancelAllTarget && (
         <CancelAllModal

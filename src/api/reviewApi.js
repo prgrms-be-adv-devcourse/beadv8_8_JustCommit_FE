@@ -11,3 +11,17 @@ export function getSellerReviews(sellerId, { page, size } = {}) {
 export function getSellerReviewSummary(sellerId) {
   return client.get('/api/v1/reviews/summary', { params: { sellerId } });
 }
+
+// 주문 상세의 판매자별 리뷰 상태 (BE #644). 구매자 본인의 주문만 (없는 주문 · 남의 주문은 404 REVIEW_ORDER_NOT_FOUND)
+// data = { orderId, summary: { targetCount, writtenCount, writableCount, nextWritable }, sellerOrders: [...] }
+// sellerOrders[] = { sellerOrderId, sellerId, sellerNickname, productNames, confirmedAt, writableUntil, reviewStatus, review }
+// reviewStatus: DELETED · WRITTEN · NO_CONFIRMED_ITEM · NOT_CONFIRMED · EXPIRED · WRITABLE
+export function getOrderReviewStatus(orderId) {
+  return client.get(`/api/v1/reviews/orders/${orderId}`);
+}
+
+// 리뷰 작성 (BE #582). 성공 201 data = { reviewId }
+// 409: REVIEW_ALREADY_WRITTEN · REVIEW_PERIOD_EXPIRED · REVIEW_NOT_CONFIRMED · REVIEW_NO_CONFIRMED_ITEM
+export function createReview({ sellerOrderId, rating, content, tags }) {
+  return client.post('/api/v1/reviews', { sellerOrderId, rating, content, tags });
+}

@@ -32,6 +32,15 @@ export function formatDate(value) {
 }
 
 /**
+ * 날짜를 "10월 21일" 형태로 변환 (값이 없으면 "-")
+ */
+export function formatMonthDay(value) {
+  const date = toValidDate(value);
+  if (!date) return EMPTY;
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+/**
  * 날짜·시각을 "2026.10.15 14:32" 형태로 변환 (값이 없으면 "-")
  */
 export function formatDateTime(value) {

@@ -4,6 +4,7 @@ import StepBar from '../../../components/market/StepBar';
 import ReturnTimeline from '../../../components/order/ReturnTimeline';
 import { ActionErrorLine } from '../../../components/common/ActionError';
 import { ChevronIcon, PinIcon, RefreshIcon, SmallCheckIcon } from './icons';
+import ReviewSection from './ReviewSection';
 import PageBackLink from '../../../components/common/PageBackLink';
 
 // 시안 03-5 · 04-1 · 04-4 · 05-1 구매자 주문 상세 화면 (데이터는 props로만 받음)
@@ -272,6 +273,8 @@ function OrderDetailView({
   onOpenTracking = () => {},
   onRefreshDistance = () => {},
   onCancelAll = null,
+  review = null,
+  reviewError = '',
   children,
 }) {
   const { order } = view;
@@ -339,6 +342,8 @@ function OrderDetailView({
             />
           ))}
         </div>
+        {/* 시안 05-1: 판매자별 리뷰 상태 (GET reviews/orders/{orderId}) */}
+        <ReviewSection review={review} errorMessage={reviewError} />
       </div>
       {children}
     </main>

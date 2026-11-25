@@ -16,7 +16,7 @@ export function StarIcon({ className }) {
 }
 
 // 별 하나: fill = 'full' | 'half' | 'empty'. size = 'w-4 h-4' 같은 크기 클래스
-function Star({ fill, size }) {
+export function Star({ fill, size }) {
   if (fill === 'half') {
     return (
       <span className={`relative ${size}`}>
