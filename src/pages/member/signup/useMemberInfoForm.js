@@ -11,10 +11,24 @@ function getMessage(error, fallback) {
   return error.response?.data?.message ?? fallback;
 }
 
+// 탈퇴 후 30일 재가입 제한 (BE #611): 휴대폰 중복 확인이 409 REJOIN_RESTRICTED_PHONE으로 알려 줌
+const REJOIN_RESTRICTED_PHONE_TEXT =
+  '탈퇴 후 30일 동안은 같은 휴대폰 번호로 다시 가입할 수 없습니다.';
+
 // 중복 확인 칸 하나 (닉네임 · 휴대폰)
-function useCheckedValue({ isValid, invalidText, check, availableText, takenText, failText }) {
+// unavailableCodes: 사용할 수 없는 값이라 칸을 오류로 표시할 오류 코드 → 문구 (그 밖의 오류는 확인 실패로 보고 다시 확인할 수 있게)
+function useCheckedValue({
+  isValid,
+  invalidText,
+  check,
+  availableText,
+  takenText,
+  failText,
+  unavailableCodes = {},
+}) {
   const [value, setValue] = useState('');
-  const [status, setStatus] = useState('idle'); // idle · checking · available · taken · invalid
+  // idle · checking · available · taken · invalid · restricted(재가입 제한)
+  const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState(null);
 
   const change = (next) => {
@@ -38,6 +52,12 @@ function useCheckedValue({ isValid, invalidText, check, availableText, takenText
       setStatus(available ? 'available' : 'taken');
       setMessage(available ? { type: 'success', text: availableText } : { type: 'error', text: takenText });
     } catch (error) {
+      const unavailableText = unavailableCodes[error.response?.data?.code];
+      if (unavailableText) {
+        setStatus('restricted');
+        setMessage({ type: 'error', text: unavailableText });
+        return;
+      }
       setStatus('idle');
       setMessage({ type: 'error', text: getMessage(error, failText) });
     }
@@ -45,7 +65,7 @@ function useCheckedValue({ isValid, invalidText, check, availableText, takenText
 
   let state = 'default';
   if (status === 'available') state = 'success';
-  else if (status === 'taken' || status === 'invalid') state = 'error';
+  else if (status === 'taken' || status === 'invalid' || status === 'restricted') state = 'error';
 
   return { value, status, message, state, change, runCheck };
 }
@@ -66,6 +86,7 @@ function useMemberInfoForm({ withPassword }) {
     availableText: '사용할 수 있는 번호예요',
     takenText: '이미 가입한 번호예요',
     failText: '휴대폰 번호를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    unavailableCodes: { REJOIN_RESTRICTED_PHONE: REJOIN_RESTRICTED_PHONE_TEXT },
   });
 
   const [password, setPassword] = useState('');
