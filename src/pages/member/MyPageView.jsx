@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 // props
 //   profile = { nickname, email, joinedAt('2026.03.02'), isSeller }
 //   balanceText: '128,500원' (조회 실패면 '-')
-//   counts = { reviews, salesOrders } 메뉴 옆 숫자 (0 · 빈 값이면 안 보임)
+//   counts = { reviews(쓸 수 있는 리뷰 수), salesOrders } 메뉴 옆 숫자 (0 · 빈 값이면 안 보임)
 //   links = { shop } 판매자 상점 경로
 
 function Chevron({ className = 'w-5 h-5 text-[#9ca3af]' }) {
@@ -46,6 +46,7 @@ function MenuGroup({ title, items }) {
 function MyPageView({ profile, balanceText, counts, links }) {
   const shopping = [
     { to: '/orders', label: '주문 내역' },
+    { to: '/mypage/reviews', label: '리뷰 관리', count: counts.reviews },
     { to: '/wallet', label: '예치금 내역' },
   ];
   const selling = [

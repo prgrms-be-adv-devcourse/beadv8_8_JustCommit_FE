@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import useWallet from '../../hooks/useWallet';
 import { getMyInfo } from '../../api/memberApi';
+import { getWritableReviews } from '../../api/reviewApi';
 import { formatPrice } from '../../utils/format';
 import { getSalesOrderStatus } from '../../constants/seller';
 import { fetchSalesOrders } from '../market/salesOrderLoader';
@@ -23,6 +24,8 @@ function MyPage() {
   const [loadError, setLoadError] = useState('');
   // 수락 대기 판매 주문 수: 판매 주문 목록(GET orders/seller)의 acceptPending을 셈. null = 모름(로딩 중 · 실패) → 숫자 숨김
   const [acceptPendingCount, setAcceptPendingCount] = useState(null);
+  // 「리뷰 관리」 옆 숫자: 지금 쓸 수 있는 리뷰 수 (GET reviews/writable 길이). null = 모름 → 숫자 숨김
+  const [writableReviewCount, setWritableReviewCount] = useState(null);
 
   useEffect(() => {
     if (!isLoggedIn) return undefined;
@@ -35,6 +38,11 @@ function MyPage() {
       .catch((error) => {
         if (!ignore) setLoadError(error.response?.data?.message ?? '내 정보를 불러오지 못했습니다.');
       });
+    getWritableReviews()
+      .then((response) => {
+        if (!ignore) setWritableReviewCount(response.data.data.length);
+      })
+      .catch(() => {});
 
     return () => {
       ignore = true;
@@ -79,6 +87,7 @@ function MyPage() {
       }}
       balanceText={balance === null ? '-' : formatPrice(balance)}
       counts={{
+        reviews: writableReviewCount,
         salesOrders: acceptPendingCount,
       }}
       // 판매자 상점 B안 (02-3-1). sellerId = memberId (BE SellerProfileService)

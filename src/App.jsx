@@ -23,6 +23,7 @@ import RefundRequestPage from './pages/market/RefundRequestPage';
 // 05 리뷰
 import ReviewWritePage from './pages/market/review/ReviewWritePage';
 import ReviewDonePage from './pages/market/review/ReviewDonePage';
+import MyReviewsPage from './pages/market/review/MyReviewsPage';
 // 06 회원: 로그인 · 가입
 import OAuthCallbackPage from './pages/member/OAuthCallbackPage';
 import LoginPage from './pages/member/LoginPage';
@@ -69,11 +70,10 @@ function App() {
 
         {/* 웹 시안으로 다시 만든 화면 (헤더 · 푸터 모두 보임) */}
         <Route element={<Layout designed />}>
-          {/* 준비 중 화면 (시안 01-2-3): 정책 페이지 · 05 리뷰 관리 */}
+          {/* 준비 중 화면 (시안 01-2-3): 정책 페이지 */}
           <Route path="/terms" element={<ComingSoonPage title="이용약관" />} />
           <Route path="/privacy" element={<ComingSoonPage title="개인정보처리방침" />} />
           <Route path="/safety-policy" element={<ComingSoonPage title="안전 보증 정책" />} />
-          <Route path="/mypage/reviews" element={<ComingSoonPage title="리뷰 관리" />} />
 
           {/* 02 탐색 · 상품. 검색 결과는 메인 목록에 ?keyword= 를 적용해서 보여줌 */}
           <Route path="/" element={<HomePage />} />
@@ -99,6 +99,8 @@ function App() {
           {/* 05 리뷰: 작성 (05-2-1 · 05-2-2) · 등록 완료 (05-2-3) */}
           <Route path="/orders/:orderId/review" element={<ReviewWritePage />} />
           <Route path="/orders/:orderId/review/done" element={<ReviewDonePage />} />
+          {/* 05 리뷰 관리 (05-3): 내가 쓴 리뷰 · 쓸 수 있는 리뷰 · 받은 리뷰(판매자) */}
+          <Route path="/mypage/reviews" element={<MyReviewsPage />} />
 
           {/* 06 회원: 로그인 · 비밀번호 재설정 · 회원가입 */}
           <Route path="/login" element={<LoginPage />} />

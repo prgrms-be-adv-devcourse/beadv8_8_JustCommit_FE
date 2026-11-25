@@ -1,8 +1,8 @@
 import { formatRating, getTagLabel } from '../../../constants/review';
 import { EMPTY } from '../../../constants/emptyText';
-import { formatDate, formatMonthDay } from '../../../utils/format';
+import { formatDate, formatMonthDay, toValidDate } from '../../../utils/format';
 
-// 05 리뷰 화면(주문 상세 리뷰 영역 · 작성 · 완료) 데이터 모양 맞추기
+// 05 리뷰 화면(주문 상세 리뷰 영역 · 작성 · 완료 · 리뷰 관리) 데이터 모양 맞추기
 // 응답 모양은 api/reviewApi.js 주석 참고
 
 // 판매자 주문 하나의 리뷰 상태 (BE SellerOrderReviewStatus)
@@ -110,4 +110,61 @@ export function buildOrderReviewSection(status, order) {
     notice = { tone: 'muted', text: '구매 확정된 상품이 없어 쓸 수 있는 리뷰가 없어요' };
   }
   return { notice, rows, myReviews };
+}
+
+// GET reviews/me의 content[] 하나 → 내가 쓴 리뷰 (시안 05-3-1). now = 지금 시각(ms)
+export function toMyReviewItem(review, writerNickname, now) {
+  const rating = Number(review.rating);
+  const deletableUntil = toValidDate(review.deletableUntil);
+  return {
+    key: review.reviewId,
+    reviewId: review.reviewId,
+    sellerName: review.sellerNickname ?? EMPTY,
+    orderedText: `${formatDate(review.orderedAt)} 주문`,
+    deletable: deletableUntil != null && now < deletableUntil.getTime(),
+    deleteDeadlineText: `${formatMonthDay(deletableUntil)}까지 삭제할 수 있어요`,
+    card: {
+      nickname: writerNickname ?? EMPTY,
+      rating,
+      ratingText: formatRating(rating),
+      dateText: formatDate(review.createdAt),
+      tags: tagLabels(review.tags),
+      content: review.content,
+      productText: review.productNames?.length
+        ? `구매 상품 · ${review.productNames.join(', ')}`
+        : '',
+    },
+  };
+}
+
+// GET reviews/writable의 항목 하나 → 쓸 수 있는 리뷰 (시안 05-3-3)
+export function toWritableItem(item) {
+  return {
+    key: item.sellerOrderId,
+    sellerName: item.sellerNickname ?? EMPTY,
+    metaText: `${formatDate(item.orderedAt)} 주문 · 구매 확정 ${formatDate(item.confirmedAt)}`,
+    deadlineText: `${formatMonthDay(item.writableUntil)}까지 작성 가능`,
+    productNames: item.productNames ?? [],
+    writeTo: `/orders/${item.orderId}/review?sellerOrderId=${item.sellerOrderId}`,
+  };
+}
+
+// GET reviews/summary → 받은 리뷰 요약 (시안 05-3-4)
+// 별점 막대는 리뷰가 있는 구간만 (시안도 0개 구간은 그리지 않음), 비율 = 구간 개수 / 전체
+export function buildReceivedSummary(summary) {
+  const total = summary.reviewCount;
+  const average = summary.averageRating == null ? null : Number(summary.averageRating);
+  return {
+    averageText: average == null ? EMPTY : average.toFixed(1),
+    average: average ?? 0,
+    countText: `리뷰 ${total.toLocaleString('ko-KR')}개`,
+    bars: (summary.ratingCounts ?? [])
+      .filter((item) => item.count > 0)
+      .map((item) => ({
+        key: String(item.rating),
+        label: `${Number(item.rating).toFixed(1)}점`,
+        count: item.count,
+        percent: total > 0 ? Math.round((item.count / total) * 1000) / 10 : 0,
+      })),
+  };
 }
