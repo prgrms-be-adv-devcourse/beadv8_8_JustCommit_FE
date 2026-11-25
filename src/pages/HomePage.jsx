@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import usePageTitle from '../hooks/usePageTitle';
 import { getProducts, getSpecies } from '../api/productApi';
 import { searchSpeciesBySentence } from '../api/aiApi';
@@ -7,6 +7,8 @@ import { SENTENCE_QUERY_MAX, SENTENCE_QUERY_MIN } from '../constants/ai';
 import { loadSpeciesProducts, orderSpeciesProducts } from './ai/speciesProducts';
 import { SPECIES_CATEGORIES } from '../constants/product';
 import HomeView from './HomeView';
+import WithdrawalHeldModal from '../components/member/WithdrawalHeldModal';
+import { WITHDRAW_CHECK_ON_ENTRY_STATE, WITHDRAWAL_HELD_NOTICE } from '../constants/withdrawal';
 
 const PAGE_SIZE = 20;
 
@@ -56,6 +58,19 @@ function HomePage() {
   const query = JSON.stringify({ ...filters, keyword });
 
   usePageTitle(keyword ? `'${keyword}' 검색 결과` : undefined);
+
+  // 카카오 재로그인으로 탈퇴 보류에서 복구된 직후 (BE #616): 처음 그릴 때 한 번만 읽고, 기록의 state는 바로 지워
+  // 새로고침 · 뒤로 가기 · 홈 재방문에서는 다시 뜨지 않음 (다음 로그인은 이미 ACTIVE라 BE가 표시를 붙이지 않음)
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isWithdrawalHeldOpen, setIsWithdrawalHeldOpen] = useState(
+    () => location.state?.notice === WITHDRAWAL_HELD_NOTICE,
+  );
+  useEffect(() => {
+    if (location.state?.notice) {
+      navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   // URL에는 speciesId만 있으므로 품종 이름은 따로 보관 (새로고침 시에는 품종 상세 API로 다시 가져옴)
   const [speciesInfo, setSpeciesInfo] = useState(null); // { speciesId, name }
@@ -224,23 +239,31 @@ function HomePage() {
   };
 
   return (
-    <HomeView
-      keyword={keyword}
-      listTitle={listTitle}
-      filters={filters}
-      sorts={sorts}
-      selectedSort={selectedSort}
-      selectedSpecies={selectedSpecies}
-      isFiltered={isFiltered}
-      products={products}
-      totalElements={totalElements}
-      isLoading={isLoading}
-      errorMessage={errorMessage}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      similarSpecies={similarSpecies}
-      handlers={handlers}
-    />
+    <>
+      <HomeView
+        keyword={keyword}
+        listTitle={listTitle}
+        filters={filters}
+        sorts={sorts}
+        selectedSort={selectedSort}
+        selectedSpecies={selectedSpecies}
+        isFiltered={isFiltered}
+        products={products}
+        totalElements={totalElements}
+        isLoading={isLoading}
+        errorMessage={errorMessage}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        similarSpecies={similarSpecies}
+        handlers={handlers}
+      />
+      {isWithdrawalHeldOpen && (
+        <WithdrawalHeldModal
+          onClose={() => setIsWithdrawalHeldOpen(false)}
+          onGoWithdraw={() => navigate('/mypage/account/withdraw', { state: WITHDRAW_CHECK_ON_ENTRY_STATE })}
+        />
+      )}
+    </>
   );
 }
 

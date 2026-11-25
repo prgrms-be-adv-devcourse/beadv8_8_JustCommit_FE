@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { WITHDRAWAL_HELD_NOTICE } from '../../constants/withdrawal';
 import useAuth from '../../hooks/useAuth';
 
 const DEFAULT_ERROR = '로그인 중 문제가 발생했어요. 다시 시도해 주세요.';
@@ -35,8 +36,11 @@ export default function OAuthCallbackPage() {
       return;
     }
 
+    // 기존 회원 로그인. 탈퇴가 보류됐던 회원이 복구됐으면(?notice=WITHDRAWAL_HELD, BE #616) 홈에서 팝업을 한 번 띄우게 넘김
+    // replace라 콜백 주소는 기록에 남지 않아 뒤로 가기로 다시 오지 않음
+    const notice = searchParams.get('notice') === WITHDRAWAL_HELD_NOTICE ? WITHDRAWAL_HELD_NOTICE : undefined;
     refreshUser()
-      .then(() => navigate('/', { replace: true }))
+      .then(() => navigate('/', { replace: true, state: notice ? { notice } : undefined }))
       .catch(() => goLoginWithError(DEFAULT_ERROR));
   }, [navigate, searchParams, refreshUser]);
 
