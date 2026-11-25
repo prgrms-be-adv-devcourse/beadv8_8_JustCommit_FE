@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { getSeller } from '../../api/memberApi';
 import { getSellerProducts, getSellerSoldOutProducts } from '../../api/productApi';
+import { getSellerReviewSummary } from '../../api/reviewApi';
 import ErrorPage from '../../components/common/ErrorPage';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -15,14 +16,11 @@ function getSoldErrorMessage(error) {
   return error.response?.data?.message ?? '판매 완료 상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
 }
 
-// 리뷰는 하지 않기로 해서(준비 중) 리뷰 요약은 빈 값: 평균 별점 · 리뷰 수는 「-」, 최근 리뷰 · 태그 칩은 비어 보임
-const NO_REVIEWS = { averageRating: null, totalCount: null, tagCounts: [], content: [] };
-
 // 판매자 상점 B안 (시안 02-3-1 · 02-3-2 · 02-3-4). 누구나 봄 (로그인 필요 없음)
 function SellerShop({ sellerId }) {
   const location = useLocation();
   const { user } = useAuth();
-  const [data, setData] = useState(null); // { seller, products, productTotal }
+  const [data, setData] = useState(null); // { seller, products, productTotal, reviewSummary }
   const [loadState, setLoadState] = useState('loading'); // loading | done | notFound | error
   // 판매 완료 줄: SOLD_OUT이면서 숨기지 않은 상품만 (BE docs/services/product.md 「상태」 · 「숨김」)
   const [soldProducts, setSoldProducts] = useState([]);
@@ -38,13 +36,16 @@ function SellerShop({ sellerId }) {
       getSeller(sellerId),
       getSellerProducts(sellerId),
       getSellerSoldOutProducts(sellerId, { page: 0, size: SOLD_PAGE_SIZE }),
+      // 리뷰 집계를 못 불러와도 상점은 보여 줌 (별점 · 리뷰 수만 「-」)
+      getSellerReviewSummary(sellerId).catch(() => null),
     ])
-      .then(([seller, products, sold]) => {
+      .then(([seller, products, sold, summary]) => {
         if (ignore) return;
         setData({
           seller: seller.data.data,
           products: products.data.content,
           productTotal: products.data.totalElements,
+          reviewSummary: summary?.data.data ?? null,
         });
         setSoldProducts(sold.data.content);
         setSoldTotal(sold.data.totalElements);
@@ -79,14 +80,13 @@ function SellerShop({ sellerId }) {
   if (loadState === 'error') return <ErrorPage type="SERVER_ERROR" />;
   if (loadState === 'loading') return <main className="flex-1" />;
 
-  const { seller, products, productTotal } = data;
-  const reviews = NO_REVIEWS;
+  const { seller, products, productTotal, reviewSummary } = data;
   // 상품 상세에서 왔으면 그 상품으로, 아니면(마이페이지 「내 상점 보기」 · 직접 접속) 홈으로
   const fromProductId = location.state?.fromProductId;
 
   return (
     <SellerShopView
-      seller={toShopSeller(seller, reviews, soldTotal)}
+      seller={toShopSeller(seller, reviewSummary, soldTotal)}
       products={products}
       productCountText={productTotal == null ? EMPTY : `${productTotal.toLocaleString('ko-KR')}개`}
       // 판매 완료 0개면 줄을 통째로 숨김. 개수를 모르면(API 없음) 줄은 보이고 개수는 「-」

@@ -4,7 +4,7 @@ import PageBackLink from '../../components/common/PageBackLink';
 import SellerShopBar from '../../components/seller/SellerShopBar';
 
 // 판매자 상점 B안 · 상품 중심 (시안 02-3-1, 판매 중 상품 없음 02-3-2, 02-3-4)
-// 리뷰는 하지 않기로 해서 「최근 리뷰」 칸 · 별점을 그리지 않음 (11/20 결정)
+// 리뷰는 판매자 줄의 별점 · 리뷰 수만 (「최근 리뷰」 칸은 그리지 않음)
 // seller = SellerShopBar의 seller
 // products = [ ProductCard의 product ], productCountText = "8개"
 // backTo = 「< 상품 상세」 이동할 곳

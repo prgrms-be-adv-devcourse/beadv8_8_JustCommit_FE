@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { StarIcon } from '../review/Stars';
 
-// 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 · 02-3-2 · 02-3-4 공통). 리뷰는 하지 않기로 해서 별점 칸 없음
-// seller = { nickname, soldCountText, intro(판매자 소개글, 비었으면 줄을 숨김) }
+// 판매자 상점 맨 위 판매자 한 줄 (시안 02-3-1 · 02-3-2 · 02-3-3 · 02-3-4 공통)
+// seller = { nickname, ratingText, reviewCountText, soldCountText, intro(판매자 소개글, 비었으면 줄을 숨김),
+//           noReviews(true면 별점 자리에 「아직 리뷰 없음」) }
+// 별점 칸은 시안 02-3-3 모양. 상점 시안(02-3-1 · 02-3-4)에는 별점 칸이 없어 같은 모양을 씀
 // introEditTo = 내 상점일 때만 주는 소개글 수정 화면 주소 (있으면 「소개 수정」 링크를 보임)
 function SellerShopBar({ seller, introEditTo }) {
   return (
@@ -19,12 +22,29 @@ function SellerShopBar({ seller, introEditTo }) {
         {seller.nickname.charAt(0)}
       </span>
       <h1 className="text-lg font-bold text-[#111827]">{seller.nickname}</h1>
-      <span aria-hidden="true" className="text-[#d1d5db]">
-        ·
+      {/* 좁은 화면에서 구분점(·)만 줄 끝 · 줄 앞에 남지 않도록 뒤 항목과 묶음. 묶음 사이에서는 줄바꿈됨 */}
+      <span className="inline-flex items-center gap-x-3.5 whitespace-nowrap">
+        <span aria-hidden="true" className="text-[#d1d5db]">
+          ·
+        </span>
+        {seller.noReviews ? (
+          <span className="text-[#4b5563]">아직 리뷰 없음</span>
+        ) : (
+          <span className="inline-flex items-center gap-1 font-semibold text-[#111827] tabular-nums">
+            <StarIcon className="w-[18px] h-[18px] text-[#0f4c3a]" />
+            {`${seller.ratingText} `}
+            <span className="font-normal text-[#4b5563]">{`(${seller.reviewCountText})`}</span>
+          </span>
+        )}
       </span>
-      <span className="text-[#4b5563]">
-        {'판매 완료 '}
-        <strong className="font-semibold text-[#111827] tabular-nums">{seller.soldCountText}</strong>
+      <span className="inline-flex items-center gap-x-3.5 whitespace-nowrap">
+        <span aria-hidden="true" className="text-[#d1d5db]">
+          ·
+        </span>
+        <span className="text-[#4b5563]">
+          {'판매 완료 '}
+          <strong className="font-semibold text-[#111827] tabular-nums">{seller.soldCountText}</strong>
+        </span>
       </span>
       {introEditTo && (
         <Link to={introEditTo} className="ml-auto text-[13px] font-semibold text-[#0f4c3a] underline">

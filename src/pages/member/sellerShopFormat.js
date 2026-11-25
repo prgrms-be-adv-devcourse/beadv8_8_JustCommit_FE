@@ -15,18 +15,20 @@ export function toTagChips(tagCounts) {
     .map((item) => ({ label: getTagLabel(item.tag), count: item.count }));
 }
 
-// GET sellers/{sellerId} 응답 + 리뷰 요약 + 판매 완료 수 → SellerShopBar의 seller
-// soldCount: GET products?sellerId&status=SOLD_OUT 응답의 totalElements (BE 확정, null = 모름 → 「-」)
-export function toShopSeller(seller, reviews, soldCount = null) {
+// GET sellers/{sellerId} 응답 + 리뷰 집계 + 판매 완료 수 → SellerShopBar의 seller
+// summary: GET reviews/summary 응답 (null = 불러오지 못함 → 별점 · 리뷰 수 「-」)
+// soldCount: GET products?sellerId&status=SOLD_OUT 응답의 totalElements (null = 모름 → 「-」)
+export function toShopSeller(seller, summary, soldCount = null) {
+  const reviewCount = summary?.reviewCount ?? null;
   return {
     nickname: seller.nickname,
     // 소개글 (GET sellers/{sellerId}의 intro, 비었으면 줄을 숨김)
     intro: seller.intro ?? '',
-    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」 (시안 02-3-4)
-    noReviews: reviews.totalCount === 0,
-    // TODO: 평균 별점 · 리뷰 수 API 없음 (리뷰 API docs ⬜)
-    ratingText: reviews.averageRating == null ? EMPTY : reviews.averageRating.toFixed(1),
-    reviewCountText: reviews.totalCount == null ? EMPTY : reviews.totalCount.toLocaleString('ko-KR'),
+    // 리뷰 0개면 별점 자리에 「아직 리뷰 없음」
+    noReviews: reviewCount === 0,
+    ratingText: summary?.averageRating == null ? EMPTY : Number(summary.averageRating).toFixed(1),
+    reviewCountText: reviewCount == null ? EMPTY : reviewCount.toLocaleString('ko-KR'),
     soldCountText: soldCount == null ? EMPTY : soldCount.toLocaleString('ko-KR'),
   };
 }
+

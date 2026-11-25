@@ -8,10 +8,10 @@ export const REVIEW_CONTENT_MAX = 300;
 export const REVIEW_WRITE_DAYS = 3; // 구매 확정 후 작성 가능 기간
 export const REVIEW_DELETE_DAYS = 3; // 작성 후 삭제 가능 기간
 
-// 태그 5종 (시안 05-2-1 순서). code는 백엔드 enum이 정해지면 맞춥니다 (TODO: docs ⬜)
+// 태그 5종 (시안 05-2-1 순서). code는 백엔드 ReviewTag enum과 같음
 export const REVIEW_TAGS = [
   { code: 'AS_DESCRIBED', label: '물품 상태가 설명과 같아요' },
-  { code: 'DETAILED', label: '설명이 자세해요' },
+  { code: 'DETAILED_DESCRIPTION', label: '설명이 자세해요' },
   { code: 'CAREFUL_PACKING', label: '포장이 꼼꼼해요' },
   { code: 'HEALTHY_ARRIVAL', label: '식물이 건강하게 도착했어요' },
   { code: 'GOOD_PRICE', label: '저렴하게 판매해요' },
